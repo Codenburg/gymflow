@@ -65,22 +65,22 @@ async function FeriadosWrapper({
 
   if (feriados.length === 0) {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
-        <p className="text-slate-400 text-lg">No hay feriados programados</p>
+      <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
+        <p className="text-[var(--muted)] text-lg">No hay feriados programados</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
       <ul className="space-y-4">
         {feriados.map((feriado) => (
           <li
             key={feriado.id}
-            className="flex items-center gap-3 p-3 bg-white/5 rounded-lg"
+            className="flex items-center gap-3 p-3 bg-[var(--background)] rounded-lg"
           >
             <svg
-              className="w-5 h-5 text-slate-400 flex-shrink-0"
+              className="w-5 h-5 text-[var(--muted)] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -92,7 +92,7 @@ async function FeriadosWrapper({
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-white">{formatDate(feriado.fecha)}</span>
+            <span className="text-[var(--foreground)]">{formatDate(feriado.fecha)}</span>
           </li>
         ))}
       </ul>
@@ -102,12 +102,12 @@ async function FeriadosWrapper({
 
 function FeriadosSkeleton() {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="w-5 h-5 bg-white/10 rounded animate-pulse" />
-            <div className="h-5 w-48 bg-white/10 rounded animate-pulse" />
+            <div className="w-5 h-5 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
+            <div className="h-5 w-48 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
           </div>
         ))}
       </div>

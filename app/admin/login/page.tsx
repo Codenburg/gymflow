@@ -54,12 +54,12 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
       <div className="w-full max-w-md p-8 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-white">Champion Gym</h1>
-          <p className="text-gray-400">Panel de Administración</p>
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">Champion Gym</h1>
+          <p className="text-[var(--muted)]">Panel de Administración</p>
         </div>
 
         {/* Login Form */}
@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="email" className="text-white text-sm font-medium">
+            <label htmlFor="email" className="text-[var(--foreground)] text-sm font-medium">
               Email
             </label>
             <input
@@ -80,13 +80,13 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-md text-[var(--input-foreground)] placeholder:[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors"
               placeholder="admin@championgym.com"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-white text-sm font-medium">
+            <label htmlFor="password" className="text-[var(--foreground)] text-sm font-medium">
               Contraseña
             </label>
             <input
@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-md text-[var(--input-foreground)] placeholder:[var(--input-placeholder)] focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={formState.isLoading}
-            className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors"
+            className="w-full py-3 px-4 bg-[var(--button-primary-bg)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--button-primary-foreground)] font-semibold rounded-md transition-colors"
           >
             {formState.isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </button>
@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
         <div className="text-center">
           <Link
             href="/"
-            className="text-gray-400 hover:text-white text-sm transition-colors"
+            className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm transition-colors"
           >
             ← Volver al inicio
           </Link>

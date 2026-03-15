@@ -124,7 +124,7 @@ export function RutinaCompletaForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nombre */}
           <div className="space-y-2">
-            <label htmlFor="nombre" className="text-white text-sm font-medium">
+            <label htmlFor="nombre" className="text-[var(--foreground)] text-sm font-medium">
               Nombre de la rutina *
             </label>
             <Input
@@ -133,7 +133,7 @@ export function RutinaCompletaForm() {
               type="text"
               required
               placeholder="Ej: Rutina Full Body"
-              className="bg-black/50"
+              className="bg-[var(--input-bg)]"
             />
             {state?.errors?.nombre && (
               <p className="text-red-500 text-xs">{state.errors.nombre[0]}</p>
@@ -142,7 +142,7 @@ export function RutinaCompletaForm() {
 
           {/* Tipo */}
           <div className="space-y-2">
-            <label htmlFor="tipo" className="text-white text-sm font-medium">
+            <label htmlFor="tipo" className="text-[var(--foreground)] text-sm font-medium">
               Tipo *
             </label>
             <select
@@ -150,7 +150,7 @@ export function RutinaCompletaForm() {
               name="tipo"
               required
               defaultValue=""
-              className="flex h-10 w-full rounded-lg border bg-black px-3 py-2 text-sm text-white placeholder:text-white/50 border-white/30 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="flex h-10 w-full rounded-lg border bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--input-foreground)] placeholder:[var(--input-placeholder)] border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="" disabled>
                 Seleccionar tipo
@@ -169,7 +169,7 @@ export function RutinaCompletaForm() {
 
         {/* Descripcion */}
         <div className="space-y-2">
-          <label htmlFor="descripcion" className="text-white text-sm font-medium">
+          <label htmlFor="descripcion" className="text-[var(--foreground)] text-sm font-medium">
             Descripción
           </label>
           <Textarea
@@ -177,7 +177,7 @@ export function RutinaCompletaForm() {
             name="descripcion"
             placeholder="Describe los objetivos de esta rutina..."
             rows={3}
-            className="bg-black/50"
+            className="bg-[var(--input-bg)]"
           />
           {state?.errors?.descripcion && (
             <p className="text-red-500 text-xs">{state.errors.descripcion[0]}</p>
@@ -186,13 +186,13 @@ export function RutinaCompletaForm() {
       </div>
 
       {/* Separator */}
-      <div className="border-t border-white/10 my-6" />
+      <div className="border-t border-[var(--card-border)] my-6" />
 
       {/* Dias Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-white text-lg font-medium">Días de entrenamiento</h2>
-          <span className="text-white/50 text-xs">Al menos 1 día</span>
+          <h2 className="text-[var(--foreground)] text-lg font-medium">Días de entrenamiento</h2>
+          <span className="text-[var(--muted)] text-xs">Al menos 1 día</span>
         </div>
 
         {state?.errors?.dias && (
@@ -221,7 +221,7 @@ export function RutinaCompletaForm() {
       </div>
 
       {/* Separator */}
-      <div className="border-t border-white/10 my-6" />
+      <div className="border-t border-[var(--card-border)] my-6" />
 
       {/* Submit */}
       <div className="flex justify-end gap-3">

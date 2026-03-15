@@ -58,7 +58,7 @@ export default async function RoutineDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[var(--background)]">
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back button */}
         <Link
@@ -86,7 +86,7 @@ export default async function RoutineDetailPage({
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
+              <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
                 {rutina.nombre}
               </h1>
               <span className="inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm font-medium text-red-400">
@@ -94,20 +94,20 @@ export default async function RoutineDetailPage({
               </span>
             </div>
             {rutina.descripcion && (
-              <p className="text-slate-400 mt-2">{rutina.descripcion}</p>
+              <p className="text-[var(--muted)] mt-2">{rutina.descripcion}</p>
             )}
           </div>
         </div>
 
         {/* Days */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-[var(--foreground)]">
             Días de entrenamiento ({rutina.dias.length})
           </h2>
 
           {rutina.dias.length === 0 ? (
-            <Card className="bg-neutral-900 border-white/20">
-              <CardContent className="py-8 text-center text-slate-400">
+            <Card>
+              <CardContent className="py-8 text-center text-[var(--muted)]">
                 No hay días configurados en esta rutina
               </CardContent>
             </Card>
@@ -119,10 +119,10 @@ export default async function RoutineDetailPage({
                   href={`/rutinas/${rutina.id}/dias/${dia.id}`}
                   className="block"
                 >
-                  <Card className="bg-neutral-900 border-white/20 hover:border-red-500/50 hover:bg-neutral-800/80 transition-all cursor-pointer">
+                  <Card className="hover:border-red-500/50 hover:bg-[var(--button-secondary-bg)] transition-all cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg text-white flex items-center gap-3">
+                        <CardTitle className="text-lg text-[var(--foreground)] flex items-center gap-3">
                           <span className="flex items-center justify-center w-8 h-8 rounded-full bg-red-500/20 text-red-400 text-sm font-bold">
                             {index + 1}
                           </span>
@@ -130,7 +130,7 @@ export default async function RoutineDetailPage({
                         </CardTitle>
                         <div className="flex items-center gap-4">
                           {dia.musculosEnfocados && (
-                            <span className="text-sm text-slate-400">
+                            <span className="text-sm text-[var(--muted)]">
                               {dia.musculosEnfocados}
                             </span>
                           )}
@@ -144,7 +144,7 @@ export default async function RoutineDetailPage({
                     </CardHeader>
                       <CardContent>
                         {dia.ejercicios.length === 0 ? (
-                          <p className="text-slate-500 text-sm">
+                          <p className="text-[var(--muted)] text-sm">
                             No hay ejercicios configurados
                           </p>
                         ) : (
@@ -152,10 +152,10 @@ export default async function RoutineDetailPage({
                             {dia.ejercicios.slice(0, 3).map((ejercicio, ejIndex) => (
                               <li
                                 key={ejercicio.id}
-                                className="flex items-center justify-between text-slate-300"
+                                className="flex items-center justify-between text-[var(--foreground)]"
                               >
                                 <div className="flex items-center gap-3">
-                                  <span className="text-slate-500 text-sm w-6">
+                                  <span className="text-[var(--muted)] text-sm w-6">
                                     {ejIndex + 1}.
                                   </span>
                                   {ejercicio.nombre}
