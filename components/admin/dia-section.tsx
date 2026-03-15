@@ -33,10 +33,10 @@ export function DiaSection({
   const baseName = `dias[${diaIndex}]`;
 
   return (
-    <div className="p-4 bg-white/5 rounded-lg border border-white/20 space-y-4">
+    <div className="p-4 bg-[var(--button-secondary-bg)] rounded-lg border border-[var(--card-border)] space-y-4">
       {/* Header with day name and remove button */}
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-white font-medium">Día {diaIndex + 1}</h3>
+        <h3 className="text-[var(--foreground)] font-medium">Día {diaIndex + 1}</h3>
         <Button
           type="button"
           variant="ghost"
@@ -51,12 +51,12 @@ export function DiaSection({
 
       {/* Nombre del día */}
       <div className="space-y-2">
-        <label className="text-white text-sm font-medium">Nombre del día *</label>
+        <label className="text-[var(--foreground)] text-sm font-medium">Nombre del día *</label>
         <Input
           name={`${baseName}.nombre`}
           placeholder="Ej: Pierna, Espalda, Pecho..."
           required
-          className="bg-black/50 max-w-md"
+          className="bg-[var(--input-bg)] max-w-md"
         />
         {errors?.[`${baseName}.nombre`] && (
           <p className="text-red-500 text-xs">{errors[`${baseName}.nombre`][0]}</p>
@@ -65,26 +65,26 @@ export function DiaSection({
 
       {/* Músculos enfocados */}
       <div className="space-y-2">
-        <label className="text-white text-sm font-medium">Músculos enfocados</label>
+        <label className="text-[var(--foreground)] text-sm font-medium">Músculos enfocados</label>
         <Input
           name={`${baseName}.musculosEnfocados`}
           placeholder="Ej: Cuádriceps, isquiotibiales, glúteos..."
-          className="bg-black/50 max-w-md"
+          className="bg-[var(--input-bg)] max-w-md"
         />
       </div>
 
       {/* Ejercicios */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-white text-sm font-medium">Ejercicios *</label>
-          <span className="text-white/50 text-xs">Al menos 1 ejercicio</span>
+          <label className="text-[var(--foreground)] text-sm font-medium">Ejercicios *</label>
+          <span className="text-[var(--muted)] text-xs">Al menos 1 ejercicio</span>
         </div>
 
         {/* Exercise headers */}
         <div className="grid gap-3 pr-16" style={{ gridTemplateColumns: "1fr 80px 80px 36px" }}>
-          <span className="text-white/60 text-xs px-3">Nombre</span>
-          <span className="text-white/60 text-xs text-center">Series</span>
-          <span className="text-white/60 text-xs text-center">Repes</span>
+          <span className="text-[var(--muted)] text-xs px-3">Nombre</span>
+          <span className="text-[var(--muted)] text-xs text-center">Series</span>
+          <span className="text-[var(--muted)] text-xs text-center">Repes</span>
           <span></span>
         </div>
 

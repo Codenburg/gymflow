@@ -23,14 +23,14 @@ export function EjercicioRow({
   const baseName = `dias[${diaIndex}].ejercicios[${ejercicioIndex}]`;
 
   return (
-    <div className="flex gap-3 items-start p-3 bg-white/5 rounded-lg border border-white/10">
+    <div className="flex gap-3 items-start p-3 bg-[var(--button-secondary-bg)] rounded-lg border border-[var(--card-border)]">
       {/* Nombre */}
       <div className="flex-1 min-w-0">
         <Input
           name={`${baseName}.nombre`}
           placeholder="Nombre del ejercicio"
           required
-          className="bg-black/50"
+          className="bg-[var(--input-bg)]"
         />
         {errors?.[`${baseName}.nombre`] && (
           <p className="text-red-500 text-xs mt-1">{errors[`${baseName}.nombre`][0]}</p>
@@ -42,7 +42,7 @@ export function EjercicioRow({
         <Input
           name={`${baseName}.series`}
           placeholder="Series"
-          className="bg-black/50 text-center"
+          className="bg-[var(--input-bg)] text-center"
         />
       </div>
 
@@ -51,7 +51,7 @@ export function EjercicioRow({
         <Input
           name={`${baseName}.repes`}
           placeholder="Repes"
-          className="bg-black/50 text-center"
+          className="bg-[var(--input-bg)] text-center"
         />
       </div>
 

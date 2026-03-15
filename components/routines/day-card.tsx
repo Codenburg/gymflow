@@ -23,10 +23,10 @@ interface DayCardProps {
 export function DayCard({ dia, rutinaId }: DayCardProps) {
   return (
     <Link href={`/rutinas/${rutinaId}/dias/${dia.id}`}>
-      <Card className="group cursor-pointer transition-all duration-200 hover:border-red-500/50 hover:shadow-md hover:shadow-red-500/10 bg-neutral-900 border-white/20">
+      <Card className="group cursor-pointer transition-all duration-200 hover:border-red-500/50 hover:shadow-md hover:shadow-red-500/10">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base group-hover:text-red-400 transition-colors text-white">
+            <CardTitle className="text-base group-hover:text-red-400 transition-colors text-[var(--foreground)]">
               {dia.nombre}
             </CardTitle>
             {dia.musculosEnfocados && (
@@ -41,22 +41,22 @@ export function DayCard({ dia, rutinaId }: DayCardProps) {
             <div className="space-y-1.5">
               {dia.ejercicios.slice(0, 3).map((ejercicio) => (
                 <div key={ejercicio.id} className="flex items-center justify-between text-sm">
-                  <span className="text-white/80 truncate">{ejercicio.nombre}</span>
+                  <span className="text-[var(--foreground)]/80 truncate">{ejercicio.nombre}</span>
                   {ejercicio.series && ejercicio.repes && (
-                    <span className="text-xs text-white/60 shrink-0 ml-2">
+                    <span className="text-xs text-[var(--muted)] shrink-0 ml-2">
                       {ejercicio.series} x {ejercicio.repes}
                     </span>
                   )}
                 </div>
               ))}
               {dia.ejercicios.length > 3 && (
-                <p className="text-xs text-white/60 pt-1">
+                <p className="text-xs text-[var(--muted)] pt-1">
                   +{dia.ejercicios.length - 3} más
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-white/60 italic">Sin ejercicios</p>
+            <p className="text-sm text-[var(--muted)] italic">Sin ejercicios</p>
           )}
         </CardContent>
       </Card>

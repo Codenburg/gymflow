@@ -12,7 +12,9 @@ export function Footer() {
     <footer className="border-t border-[var(--card-border)] bg-[var(--background)] py-8 mt-auto">
       <div className="container mx-auto px-8 max-w-5xl">
         <div className="flex items-center justify-between">
-          <p className="text-[var(--muted)] text-sm text-center">
+          <div className="flex-1" />
+          
+          <p className="text-[var(--muted)] text-sm">
             © 2026 Codenburg
           </p>
           
