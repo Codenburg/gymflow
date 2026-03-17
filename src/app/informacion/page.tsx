@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { House } from "lucide-react";
 
 interface Feriado {
   id: string;
@@ -64,50 +64,52 @@ export default async function InformacionPage() {
   const gymPricePromise = getGymPrice();
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <main className="container mx-auto px-4 sm:px-8 py-8 sm:py-12 max-w-5xl">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--button-secondary-bg)] hover:opacity-80 text-[var(--button-secondary-foreground)] rounded-lg transition-all duration-200 mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver
-        </Link>
-        
-        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-6 sm:mb-8">Información</h1>
+    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center">
+      <main className="w-full max-w-4xl px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/"
+            className="p-2 hover:bg-[var(--button-secondary-bg)] rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+          >
+            <House className="w-5 h-5" />
+          </Link>
+          <h1 className="text-xl font-bold text-[var(--foreground)] tracking-tight">Información</h1>
+          <div className="w-9" />
+        </div>
 
-        <div className="grid gap-6 sm:gap-8">
+        <div className="grid gap-6">
           {/* Price Section */}
           <Suspense fallback={<PriceSectionSkeleton />}>
             <PriceSection pricePromise={gymPricePromise} />
           </Suspense>
 
           {/* Hours Section */}
-          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
-            <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)] mb-4">Horarios</h2>
+          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+            <h2 className="text-lg font-semibold text-[var(--foreground)] mb-3">Horarios</h2>
             <p className="text-lg text-[var(--foreground)]">8:00 a 22:00</p>
-            <p className="text-[var(--muted-foreground)] mt-2">Lunes a viernes</p>
+            <p className="text-[var(--muted-foreground)] mt-1">Lunes a viernes</p>
           </section>
 
           {/* Address Section */}
-          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
-            <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)] mb-4">Dirección</h2>
+          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+            <h2 className="text-lg font-semibold text-[var(--foreground)] mb-3">Dirección</h2>
             <p className="text-lg text-[var(--foreground)]">Sargento Cabral 545</p>
-            <p className="text-[var(--muted-foreground)] mt-2">Esquina Corrientes</p>
+            <p className="text-[var(--muted-foreground)] mt-1">Esquina Corrientes</p>
             <a
               href="https://maps.app.goo.gl/oxcpqAWFmFKpfpMU9"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block mt-4 px-4 py-2 bg-[var(--button-secondary-bg)] hover:opacity-80 text-[var(--button-secondary-foreground)] rounded-lg transition-colors"
+              className="inline-block mt-3 px-3 py-1.5 text-sm bg-[var(--button-secondary-bg)] hover:opacity-80 text-[var(--button-secondary-foreground)] rounded-lg transition-colors"
             >
               Ver en Google Maps
             </a>
           </section>
 
           {/* Holidays Section */}
-          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)]">Feriados</h2>
+          <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">Feriados</h2>
               <Link
                 href="/feriados"
                 className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
@@ -157,8 +159,8 @@ async function HolidaysPreviewWrapper({
 function HolidaysSkeleton() {
   return (
     <div className="space-y-2">
-      <div className="h-5 w-32 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
-      <div className="h-5 w-40 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
+      <div className="h-5 w-32 bg-[var(--background)] rounded animate-pulse" />
+      <div className="h-5 w-40 bg-[var(--background)] rounded animate-pulse" />
     </div>
   );
 }
@@ -171,25 +173,25 @@ async function PriceSection({
   const price = await pricePromise;
 
   return (
-    <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
-      <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)] mb-4">
+    <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+      <h2 className="text-lg font-semibold text-[var(--foreground)] mb-3">
         Precio
       </h2>
-      <p className="text-3xl font-bold text-[var(--foreground)]">
+      <p className="text-2xl font-bold text-[var(--foreground)]">
         {formatPrice(price)}
       </p>
-      <p className="text-[var(--muted-foreground)] mt-2">Abono mensual</p>
+      <p className="text-[var(--muted-foreground)] mt-1">Abono mensual</p>
     </section>
   );
 }
 
 function PriceSectionSkeleton() {
   return (
-    <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
-      <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)] mb-4">
+    <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+      <h2 className="text-lg font-semibold text-[var(--foreground)] mb-3">
         Precio
       </h2>
-      <div className="h-10 w-32 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
+      <div className="h-8 w-28 bg-[var(--background)] rounded animate-pulse" />
     </section>
   );
 }

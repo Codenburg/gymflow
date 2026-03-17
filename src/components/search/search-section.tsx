@@ -3,12 +3,8 @@
 import Link from "next/link";
 import { Info, Calendar } from "lucide-react";
 import { SearchBar } from "@/components/search/search-bar";
-import { ActiveFilters } from "@/components/search/active-filters";
-import { useUnifiedSearch } from "@/hooks/use-unified-search";
 
 export function SearchSection({ defaultValue }: { defaultValue?: string }) {
-  const { activeFilters, removeFilter, clearFilters } = useUnifiedSearch();
-
   return (
     <div className="flex-1 max-w-3xl">
       {/* Search row with buttons */}
@@ -33,13 +29,6 @@ export function SearchSection({ defaultValue }: { defaultValue?: string }) {
           </Link>
         </nav>
       </div>
-      
-      {/* Filter chips below search, aligned with cards */}
-      <ActiveFilters
-        filters={activeFilters}
-        onRemove={removeFilter}
-        onClearAll={clearFilters}
-      />
     </div>
   );
 }
