@@ -124,25 +124,23 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
             </div>
           </div>
 
-          {/* Unified Search Container - aligned with cards grid */}
+          {/* Search + Cards Container - all aligned */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left: Trainer sidebar space */}
-            <div className="hidden lg:block w-64 shrink-0" />
+            {/* Trainer Sidebar */}
+            <TrainerSidebarClient initialTrainers={trainersData} />
 
-            {/* Right: Search + filters + cards */}
-            <SearchSection defaultValue={search ?? ""} />
-          </div>
-        </div>
+            {/* Search + Cards */}
+            <div className="flex-1">
+              {/* Search Section - aligned with cards */}
+              <div className="mb-6">
+                <SearchSection defaultValue={search ?? ""} />
+              </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Trainer Sidebar */}
-          <TrainerSidebarClient initialTrainers={trainersData} />
-
-          {/* Main Content */}
-          <div className="flex-1">
-            <Suspense fallback={<Loading />}>
-              <RoutineListWrapper rutinasPromise={rutinasPromise} />
-            </Suspense>
+              {/* Cards Grid */}
+              <Suspense fallback={<Loading />}>
+                <RoutineListWrapper rutinasPromise={rutinasPromise} />
+              </Suspense>
+            </div>
           </div>
         </div>
       </main>

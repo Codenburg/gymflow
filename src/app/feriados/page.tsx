@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { House, Calendar } from "lucide-react";
 
 interface Feriado {
   id: string;
@@ -35,17 +35,19 @@ export default async function FeriadosPage() {
   const feriadosPromise = getFeriados();
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <main className="container mx-auto px-4 sm:px-8 py-8 sm:py-12 max-w-5xl">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--button-secondary-bg)] hover:opacity-80 text-[var(--button-secondary-foreground)] rounded-lg transition-all duration-200 mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver
-        </Link>
-        
-        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-6 sm:mb-8">Feriados</h1>
+    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center">
+      <main className="w-full max-w-4xl px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/"
+            className="p-2 hover:bg-[var(--button-secondary-bg)] rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+          >
+            <House className="w-5 h-5" />
+          </Link>
+          <h1 className="text-xl font-bold text-[var(--foreground)] tracking-tight">Feriados</h1>
+          <div className="w-9" />
+        </div>
 
         <Suspense fallback={<FeriadosSkeleton />}>
           <FeriadosWrapper feriadosPromise={feriadosPromise} />
@@ -65,21 +67,21 @@ async function FeriadosWrapper({
   if (feriados.length === 0) {
     return (
       <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
-        <p className="text-[var(--muted-foreground)] text-lg">No hay feriados programados</p>
+        <p className="text-[var(--muted-foreground)]">No hay feriados programados</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
-      <ul className="space-y-4">
+    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+      <ul className="space-y-3">
         {feriados.map((feriado) => (
           <li
             key={feriado.id}
-            className="flex items-center gap-3 p-3 bg-[var(--background)] rounded-lg"
+            className="flex items-center gap-3 p-2.5 bg-[var(--background)] rounded-lg"
           >
-            <Calendar className="w-5 h-5 text-[var(--muted-foreground)] flex-shrink-0" />
-            <span className="text-[var(--foreground)]">{formatDate(feriado.fecha)}</span>
+            <Calendar className="w-4 h-4 text-[var(--muted-foreground)] flex-shrink-0" />
+            <span className="text-[var(--foreground)] text-sm">{formatDate(feriado.fecha)}</span>
           </li>
         ))}
       </ul>
@@ -89,12 +91,12 @@ async function FeriadosWrapper({
 
 function FeriadosSkeleton() {
   return (
-    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
-      <div className="space-y-4">
+    <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+      <div className="space-y-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="w-5 h-5 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
-            <div className="h-5 w-48 bg-[var(--button-secondary-bg)] rounded animate-pulse" />
+            <div className="w-4 h-4 bg-[var(--background)] rounded animate-pulse" />
+            <div className="h-4 w-40 bg-[var(--background)] rounded animate-pulse" />
           </div>
         ))}
       </div>
