@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { House } from "lucide-react";
+import { House, AlertCircle } from "lucide-react";
+import { DataResult, ok, err } from "@/lib/data-result";
 
 interface Feriado {
   id: string;
@@ -15,31 +16,43 @@ interface GymConfig {
   updatedAt: string;
 }
 
-async function getFeriados(): Promise<Feriado[]> {
+async function getFeriados(): Promise<DataResult<Feriado[]>> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/feriados`, {
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/feriados`, {
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    return [];
+    if (!response.ok) {
+      console.error("[getFeriados] API returned non-OK status:", response.status);
+      return err([]);
+    }
+
+    return ok(await response.json());
+  } catch (error) {
+    console.error("[getFeriados] Failed to fetch feriados:", error);
+    return err([]);
   }
-
-  return response.json();
 }
 
-async function getGymPrice(): Promise<number> {
+async function getGymPrice(): Promise<DataResult<number | null>> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/gym`, {
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(`${baseUrl}/api/gym`, {
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    return 45000;
+    if (!response.ok) {
+      console.error("[getGymPrice] API returned non-OK status:", response.status);
+      return err(null);
+    }
+
+    const gym: GymConfig = await response.json();
+    return ok(gym.price);
+  } catch (error) {
+    console.error("[getGymPrice] Failed to fetch gym price:", error);
+    return err(null);
   }
-
-  const gym: GymConfig = await response.json();
-  return gym.price;
 }
 
 function formatDate(fechaStr: string): string {
@@ -60,8 +73,10 @@ function formatPrice(price: number): string {
 }
 
 export default async function InformacionPage() {
-  const feriadosPromise = getFeriados();
-  const gymPricePromise = getGymPrice();
+  const [feriadosResult, gymPriceResult] = await Promise.all([
+    getFeriados(),
+    getGymPrice(),
+  ]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col items-center">
@@ -80,9 +95,7 @@ export default async function InformacionPage() {
 
         <div className="grid gap-6">
           {/* Price Section */}
-          <Suspense fallback={<PriceSectionSkeleton />}>
-            <PriceSection pricePromise={gymPricePromise} />
-          </Suspense>
+          <PriceSection price={gymPriceResult.data} priceError={gymPriceResult.error} />
 
           {/* Hours Section */}
           <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
@@ -118,7 +131,7 @@ export default async function InformacionPage() {
               </Link>
             </div>
             <Suspense fallback={<HolidaysSkeleton />}>
-              <HolidaysPreviewWrapper feriadosPromise={feriadosPromise} />
+              <HolidaysPreview feriados={feriadosResult.data} feriadosError={feriadosResult.error} />
             </Suspense>
           </section>
         </div>
@@ -127,13 +140,21 @@ export default async function InformacionPage() {
   );
 }
 
-async function HolidaysPreviewWrapper({
-  feriadosPromise,
+function HolidaysPreview({
+  feriados,
+  feriadosError,
 }: {
-  feriadosPromise: Promise<Feriado[]>;
+  feriados: Feriado[];
+  feriadosError: boolean;
 }) {
-  const feriados = await feriadosPromise;
+  // Error state - don't render holidays
+  if (feriadosError) {
+    return (
+      <p className="text-[var(--muted-foreground)]">No se pudieron cargar los feriados</p>
+    );
+  }
 
+  // Empty state
   if (feriados.length === 0) {
     return (
       <p className="text-[var(--muted-foreground)]">No hay feriados programados</p>
@@ -165,12 +186,30 @@ function HolidaysSkeleton() {
   );
 }
 
-async function PriceSection({
-  pricePromise,
+function PriceSection({
+  price,
+  priceError,
 }: {
-  pricePromise: Promise<number>;
+  price: number | null;
+  priceError: boolean;
 }) {
-  const price = await pricePromise;
+  // Error state - communicate absence, don't fake data
+  if (priceError || price === null) {
+    return (
+      <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
+        <h2 className="text-lg font-semibold text-[var(--foreground)] mb-3">
+          Precio
+        </h2>
+        <div className="flex items-center gap-2">
+          <p className="text-2xl font-bold text-muted-foreground">
+            No disponible
+          </p>
+          <AlertCircle className="w-4 h-4 text-destructive" />
+        </div>
+        <p className="text-[var(--muted-foreground)] mt-1 text-sm">Precio no disponible</p>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">

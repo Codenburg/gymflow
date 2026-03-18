@@ -1,5 +1,5 @@
 import { RoutineCard } from "./routine-card";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, AlertCircle } from "lucide-react";
 
 interface Ejercicio {
   id: string;
@@ -27,9 +27,22 @@ interface Rutina {
 
 interface RoutineListProps {
   rutinas: Rutina[];
+  showError?: boolean;
 }
 
-export function RoutineList({ rutinas }: RoutineListProps) {
+export function RoutineList({ rutinas, showError = false }: RoutineListProps) {
+  // Error state - DB or network failure
+  if (showError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+        <p className="text-foreground text-lg font-medium">No se pudieron cargar las rutinas</p>
+        <p className="text-muted-foreground text-sm mt-1">Por favor, intenta de nuevo más tarde.</p>
+      </div>
+    );
+  }
+
+  // Empty state - no data available
   if (rutinas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">

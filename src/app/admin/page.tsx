@@ -3,12 +3,19 @@ import { getRutinas } from "@/app/actions/rutinas";
 import prisma from "@/lib/prisma";
 import { AuthGuard } from "@/components/auth-guard";
 import { GymPriceEditor } from "@/components/admin/GymPriceEditor";
-import { FileText, Calendar, TrendingUp, Plus } from "lucide-react";
+import { DataResult, ok, err } from "@/lib/data-result";
+import { FileText, Calendar, TrendingUp, Plus, AlertCircle } from "lucide-react";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
 
-async function getStats() {
+interface Stats {
+  rutinasCount: number;
+  diasCount: number;
+  ejerciciosCount: number;
+}
+
+async function getStats(): Promise<DataResult<Stats>> {
   try {
     const [rutinasCount, diasCount, ejerciciosCount] = await Promise.all([
       prisma.rutina.count(),
@@ -16,36 +23,41 @@ async function getStats() {
       prisma.ejercicio.count(),
     ]);
 
-    return {
+    return ok({
       rutinasCount,
       diasCount,
       ejerciciosCount,
-    };
-  } catch {
-    return {
-      rutinasCount: 0,
-      diasCount: 0,
-      ejerciciosCount: 0,
-    };
+    });
+  } catch (error) {
+    console.error("[getStats] Failed to fetch stats:", error);
+    return err({ rutinasCount: 0, diasCount: 0, ejerciciosCount: 0 });
   }
 }
 
-async function getGymPrice(): Promise<number> {
+async function getGymPrice(): Promise<DataResult<number | null>> {
   try {
     const gym = await prisma.gym.findUnique({
       where: { id: "gym" },
     });
-    // Gym auto-created by API if not exists, but we keep fallback for safety
-    return gym ? Number(gym.price) : 45000;
-  } catch {
-    return 45000;
+    // Gym auto-created by API if not exists
+    return ok(gym ? Number(gym.price) : null);
+  } catch (error) {
+    console.error("[getGymPrice] Failed to fetch gym price:", error);
+    return err(null);
   }
 }
 
 export default async function AdminDashboardPage() {
-  const stats = await getStats();
-  const rutinas = await getRutinas();
-  const gymPrice = await getGymPrice();
+  const [statsResult, rutinasResult, gymPriceResult] = await Promise.all([
+    getStats(),
+    getRutinas(),
+    getGymPrice(),
+  ]);
+
+  const stats = statsResult.data;
+  const rutinas = rutinasResult;
+  const gymPrice = gymPriceResult.data;
+  const hasError = statsResult.error || gymPriceResult.error;
 
   return (
     <AuthGuard>
@@ -65,7 +77,10 @@ export default async function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-[var(--muted-foreground)] text-sm">Total Rutinas</p>
-              <p className="text-2xl font-bold text-[var(--foreground)]">{stats.rutinasCount}</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">
+                {stats.rutinasCount}
+                {statsResult.error && <AlertCircle className="inline-block w-4 h-4 text-destructive ml-2" />}
+              </p>
             </div>
           </div>
         </div>
@@ -77,7 +92,10 @@ export default async function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-[var(--muted-foreground)] text-sm">Total Días</p>
-              <p className="text-2xl font-bold text-[var(--foreground)]">{stats.diasCount}</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">
+                {stats.diasCount}
+                {statsResult.error && <AlertCircle className="inline-block w-4 h-4 text-destructive ml-2" />}
+              </p>
             </div>
           </div>
         </div>
@@ -89,7 +107,10 @@ export default async function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-[var(--muted-foreground)] text-sm">Total Ejercicios</p>
-              <p className="text-2xl font-bold text-[var(--foreground)]">{stats.ejerciciosCount}</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">
+                {stats.ejerciciosCount}
+                {statsResult.error && <AlertCircle className="inline-block w-4 h-4 text-destructive ml-2" />}
+              </p>
             </div>
           </div>
         </div>
@@ -126,6 +147,12 @@ export default async function AdminDashboardPage() {
       {/* Recent Routines */}
       <div>
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Rutinas Recientes</h2>
+        {hasError && (
+          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">部分数据无法完全加载。显示的是缓存值。</p>
+          </div>
+        )}
         {rutinas.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rutinas.slice(0, 6).map((rutina) => (
@@ -162,3 +189,4 @@ export default async function AdminDashboardPage() {
     </AuthGuard>
   );
 }
+
