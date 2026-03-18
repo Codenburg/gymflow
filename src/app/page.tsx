@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Info, Calendar } from "lucide-react";
 import { SearchSection } from "@/components/search/search-section";
 import { RoutineList } from "@/components/routines/routine-list";
-import { TrainerSidebar } from "@/components/search/trainer-sidebar";
 import { TrainerSidebarClient } from "@/components/search/trainer-sidebar-client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DataResult, ok, err } from "@/lib/data-result";
 import Loading from "./loading";
 
 interface SearchParams {
@@ -42,7 +42,25 @@ interface Trainer {
   count: number;
 }
 
-async function getRutinas(search?: string, trainers?: string): Promise<Rutina[]> {
+/**
+ * Extract trainers with their routine counts from the rutinas data.
+ * This ensures the sidebar counts are consistent with the displayed routines.
+ */
+function extractTrainers(rutinas: Rutina[]): Trainer[] {
+  const trainerMap = new Map<string, number>();
+
+  for (const rutina of rutinas) {
+    if (rutina.creador) {
+      trainerMap.set(rutina.creador, (trainerMap.get(rutina.creador) || 0) + 1);
+    }
+  }
+
+  return Array.from(trainerMap.entries())
+    .map(([nombre, count]) => ({ nombre, count }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+async function getRutinas(search?: string, trainers?: string): Promise<DataResult<Rutina[]>> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const url = new URL(`${baseUrl}/api/rutinas`);
   if (search) {
@@ -52,35 +70,23 @@ async function getRutinas(search?: string, trainers?: string): Promise<Rutina[]>
     url.searchParams.set("trainers", trainers);
   }
 
-  const response = await fetch(url.toString(), {
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(url.toString(), {
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch rutinas");
+    if (!response.ok) {
+      console.error("[getRutinas] API returned non-OK status:", response.status);
+      return err([]);
+    }
+
+    const result = await response.json();
+    const data = result.data ?? result;
+    return ok(data);
+  } catch (error) {
+    console.error("[getRutinas] Failed to fetch rutinas:", error);
+    return err([]);
   }
-
-  const result = await response.json();
-  // API returns { data: Rutina[], pagination: {...} }
-  return result.data ?? result;
-}
-
-async function getTrainers(): Promise<Trainer[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const url = new URL(`${baseUrl}/api/trainers`);
-
-  const response = await fetch(url.toString(), {
-    // Cache trainers for 60 seconds - they don't change often
-    cache: "force-cache",
-    next: { revalidate: 60 },
-  });
-
-  if (!response.ok) {
-    // Return empty array if API fails - sidebar will be hidden
-    return [];
-  }
-
-  return response.json();
 }
 
 export default async function Home({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -88,8 +94,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   const search = params?.search;
   const trainers = params?.trainers;
 
-  const rutinasPromise = getRutinas(search, trainers);
-  const trainersData = await getTrainers();
+  const rutinasResult = await getRutinas(search, trainers);
+
+  // Derive trainers from rutinas data - single source of truth
+  const trainersData = extractTrainers(rutinasResult.data);
 
   return (
     <div className="min-h-screen bg-background">
@@ -126,8 +134,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
           {/* Search + Cards Container - all aligned */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Trainer Sidebar */}
-            <TrainerSidebarClient initialTrainers={trainersData} />
+            {/* Trainer Sidebar - uses same error state as routines */}
+            <TrainerSidebarClient
+              trainers={trainersData}
+              hasError={rutinasResult.error}
+            />
 
             {/* Search + Cards */}
             <div className="flex-1">
@@ -138,7 +149,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
               {/* Cards Grid */}
               <Suspense fallback={<Loading />}>
-                <RoutineListWrapper rutinasPromise={rutinasPromise} />
+                <RoutineListWrapper rutinasResult={rutinasResult} />
               </Suspense>
             </div>
           </div>
@@ -148,7 +159,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   );
 }
 
-async function RoutineListWrapper({ rutinasPromise }: { rutinasPromise: Promise<Rutina[]> }) {
-  const rutinas = await rutinasPromise;
-  return <RoutineList rutinas={rutinas} />;
+async function RoutineListWrapper({ rutinasResult }: { rutinasResult: DataResult<Rutina[]> }) {
+  return <RoutineList rutinas={rutinasResult.data} showError={rutinasResult.error} />;
 }

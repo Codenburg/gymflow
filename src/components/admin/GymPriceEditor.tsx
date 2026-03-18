@@ -7,15 +7,19 @@ import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 type EditorState = "loading" | "display" | "editing" | "saving" | "error";
 
 interface GymPriceEditorProps {
-  initialPrice: number;
+  initialPrice: number | null;
 }
 
 export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
+  // Determine initial state based on whether we have a valid price
+  const hasValidPrice = initialPrice !== null && initialPrice > 0;
   const [state, setState] = useState<EditorState>(
-    initialPrice === 0 ? "loading" : "display"
+    !hasValidPrice ? "editing" : "display"
   );
-  const [price, setPrice] = useState<number>(initialPrice);
-  const [editValue, setEditValue] = useState<string>(initialPrice.toString());
+  const [price, setPrice] = useState<number | null>(hasValidPrice ? initialPrice : null);
+  const [editValue, setEditValue] = useState<string>(
+    hasValidPrice ? initialPrice.toString() : ""
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formatPrice = useCallback((value: number): string => {
@@ -26,14 +30,19 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
   }, []);
 
   const handleStartEdit = useCallback(() => {
-    setEditValue(price.toString());
+    setEditValue(price !== null ? price.toString() : "");
     setState("editing");
     setErrorMessage(null);
   }, [price]);
 
   const handleCancel = useCallback(() => {
-    setEditValue(price.toString());
-    setState("display");
+    if (price !== null) {
+      setEditValue(price.toString());
+      setState("display");
+    } else {
+      // If we have no price, stay in editing mode
+      setState("editing");
+    }
     setErrorMessage(null);
   }, [price]);
 
@@ -69,10 +78,14 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
 
       // Reset to display state after showing error
       setTimeout(() => {
-        setState("display");
+        if (price !== null) {
+          setState("display");
+        } else {
+          setState("editing");
+        }
       }, 3000);
     }
-  }, [editValue]);
+  }, [editValue, price]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -85,6 +98,7 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
     [handleSave, handleCancel]
   );
 
+  // Loading state - when price is still being fetched (shouldn't happen since parent handles this)
   if (state === "loading") {
     return (
       <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
@@ -96,7 +110,8 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
     );
   }
 
-  if (state === "display") {
+  // Display state - shows the current price
+  if (state === "display" && price !== null) {
     return (
       <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5 sm:p-6">
         <h2 className="text-xl sm:text-2xl font-semibold text-[var(--foreground)] mb-4">
@@ -118,6 +133,7 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
     );
   }
 
+  // Editing/saving/error state - input mode
   if (state === "editing" || state === "saving" || state === "error") {
     const isSaving = state === "saving";
     const isError = state === "error";
@@ -164,13 +180,15 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
                 "Guardar"
               )}
             </button>
-            <button
-              onClick={handleCancel}
-              disabled={isSaving}
-              className="px-4 py-2 bg-[var(--button-secondary-bg)] hover:opacity-80 disabled:opacity-50 text-[var(--button-secondary-foreground)] rounded-lg transition-colors"
-            >
-              Cancelar
-            </button>
+            {price !== null && (
+              <button
+                onClick={handleCancel}
+                disabled={isSaving}
+                className="px-4 py-2 bg-[var(--button-secondary-bg)] hover:opacity-80 disabled:opacity-50 text-[var(--button-secondary-foreground)] rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         </div>
         <p className="text-[var(--muted-foreground)] mt-2">Abono mensual</p>

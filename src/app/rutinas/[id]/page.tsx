@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle, FolderOpen } from "lucide-react";
+import { DataResult, ok, err } from "@/lib/data-result";
 
 interface Ejercicio {
   id: string;
@@ -29,22 +30,28 @@ interface Rutina {
   dias: Dia[];
 }
 
-async function getRutina(id: string): Promise<Rutina | null> {
+async function getRutina(id: string): Promise<DataResult<Rutina | null>> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const url = new URL(`${baseUrl}/api/rutinas/${id}`);
 
-  const response = await fetch(url.toString(), {
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(url.toString(), {
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      return null;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return ok(null); // Not found is a valid result, not an error
+      }
+      console.error("[getRutina] API returned non-OK status:", response.status);
+      return err(null);
     }
-    throw new Error("Failed to fetch rutina");
-  }
 
-  return response.json();
+    return ok(await response.json());
+  } catch (error) {
+    console.error("[getRutina] Failed to fetch rutina:", error);
+    return err(null);
+  }
 }
 
 export default async function RoutineDetailPage({
@@ -53,8 +60,33 @@ export default async function RoutineDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const rutina = await getRutina(id);
+  const rutinaResult = await getRutina(id);
 
+  // Error state - DB or network failure
+  if (rutinaResult.error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-6 py-8 max-w-4xl">
+          <Link
+            href="/"
+            className="inline-flex items-center text-blue-500 hover:text-blue-400 mb-6 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Volver a mis rutinas
+          </Link>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+            <p className="text-foreground text-lg font-medium">No se pudo cargar la rutina</p>
+            <p className="text-muted-foreground text-sm mt-1">Por favor, intenta de nuevo más tarde.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const rutina = rutinaResult.data;
+
+  // Not found - use Next.js notFound()
   if (!rutina) {
     notFound();
   }
