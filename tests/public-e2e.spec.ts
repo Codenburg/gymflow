@@ -246,12 +246,13 @@ test.describe('Public Day Detail', () => {
 // ============================================
 
 test.describe('Public API Endpoints', () => {
-  test('9.4.1 - GET /api/rutinas returns array', async ({ page }) => {
+  test('9.4.1 - GET /api/rutinas returns data wrapper', async ({ page }) => {
     const response = await page.request.get('/api/rutinas');
     expect(response.status()).toBe(200);
     
-    const data = await response.json();
-    expect(Array.isArray(data)).toBe(true);
+    const result = await response.json();
+    expect(result).toHaveProperty('data');
+    expect(Array.isArray(result.data)).toBe(true);
   });
 
   test('9.4.2 - GET /api/rutinas/[id] returns routine', async ({ page }) => {
@@ -315,7 +316,8 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     const response = await page.request.get('/api/rutinas');
-    const rutinas = await response.json();
+    const result = await response.json();
+    const rutinas = result.data;
     
     if (rutinas.length > 0) {
       await page.goto(`/rutinas/${rutinas[0].id}`);

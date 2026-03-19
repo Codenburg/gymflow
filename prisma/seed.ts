@@ -61,8 +61,6 @@ async function main() {
     { name: 'Santi', dni: '33333333', password: 'santi123' },
   ];
 
-  const hashedPassword = await bcrypt.hash('admin123', 12);
-
   for (const admin of admins) {
     const hashedPwd = await bcrypt.hash(admin.password, 12);
     
@@ -82,8 +80,8 @@ async function main() {
     await prisma.account.create({
       data: {
         userId: user.id,
-        accountId: user.id,
-        providerId: 'credential',
+        accountId: admin.dni, // Use DNI as accountId
+        providerId: 'credential', // Must be 'credential' for better-auth username plugin
         providerType: 'credential',
         password: hashedPwd,
       },

@@ -7,43 +7,10 @@ import { RoutineListSkeleton } from "@/components/routines/routine-card-skeleton
 import { TrainerSidebarClient } from "@/components/search/trainer-sidebar-client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getCachedRutinas } from "@/lib/rutinas";
-import type { DataResult } from "@/lib/data-result";
 
 interface SearchParams {
   search?: string;
   trainers?: string;
-}
-
-interface Rutina {
-  id: string;
-  nombre: string;
-  tipo: string;
-  descripcion: string | null;
-  creador: string | null;
-  diasCount: number;
-}
-
-interface Trainer {
-  nombre: string;
-  count: number;
-}
-
-/**
- * Extract trainers with their routine counts from the rutinas data.
- * This ensures the sidebar counts are consistent with the displayed routines.
- */
-function extractTrainers(rutinas: Rutina[]): Trainer[] {
-  const trainerMap = new Map<string, number>();
-
-  for (const rutina of rutinas) {
-    if (rutina.creador) {
-      trainerMap.set(rutina.creador, (trainerMap.get(rutina.creador) || 0) + 1);
-    }
-  }
-
-  return Array.from(trainerMap.entries())
-    .map(([nombre, count]) => ({ nombre, count }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 
 export default async function Home({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -52,10 +19,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   const trainers = params?.trainers;
 
   // Use cached function - avoids repeated DB queries within revalidation period
-  const rutinasResult: DataResult<Rutina[]> = await getCachedRutinas(search, trainers);
-
-  // Derive trainers from rutinas data - single source of truth
-  const trainersData = extractTrainers(rutinasResult.data);
+  // Result contains: rutinas (filtered), trainers (ALL, stable for chips), error
+  const result = await getCachedRutinas(search, trainers);
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,10 +57,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
           {/* Search + Cards Container - all aligned */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Trainer Sidebar - uses same error state as routines */}
+            {/* Trainer Sidebar - trainers from ALL rutinas (stable), error from result */}
             <TrainerSidebarClient
-              trainers={trainersData}
-              hasError={rutinasResult.error}
+              trainers={result.trainers}
+              hasError={result.error}
             />
 
             {/* Search + Cards */}
@@ -107,7 +72,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
               {/* Cards Grid - streaming with skeleton fallback */}
               <Suspense fallback={<RoutineListSkeleton count={6} />}>
-                <RoutineListWrapper rutinasResult={rutinasResult} />
+                <RoutineListWrapper rutinas={result.rutinas} error={result.error} />
               </Suspense>
             </div>
           </div>
@@ -117,6 +82,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   );
 }
 
-async function RoutineListWrapper({ rutinasResult }: { rutinasResult: DataResult<Rutina[]> }) {
-  return <RoutineList rutinas={rutinasResult.data} showError={rutinasResult.error} />;
+async function RoutineListWrapper({ rutinas, error }: { rutinas: import("@/lib/rutinas").Rutina[]; error: boolean }) {
+  return <RoutineList rutinas={rutinas} showError={error} />;
 }

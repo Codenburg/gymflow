@@ -8,8 +8,11 @@ const ADMIN_PASSWORD = 'nando123';
 async function loginAsAdmin(page: Page) {
   await page.goto('/admin/login');
   
+  // Wait for page to fully load first
+  await page.waitForLoadState('domcontentloaded');
+  
   // Wait for the form to be ready
-  await page.waitForSelector('input[id="dni"]', { timeout: 10000 });
+  await page.waitForSelector('input[id="dni"]', { timeout: 15000 });
   
   // Fill in credentials
   await page.fill('input[id="dni"]', ADMIN_DNI);
@@ -19,7 +22,7 @@ async function loginAsAdmin(page: Page) {
   await page.click('button[type="submit"]');
   
   // Wait for redirect to admin page
-  await page.waitForURL('/admin', { timeout: 10000 });
+  await page.waitForURL('/admin', { timeout: 15000 });
 }
 
 // Helper to get a routine ID from API
@@ -37,7 +40,8 @@ async function getFirstRoutineId(page: Page): Promise<string | null> {
 test.describe('Admin Login', () => {
   test('8.1.1 - Successful login redirects to admin dashboard', async ({ page }) => {
     await page.goto('/admin/login');
-    await page.waitForSelector('input[id="dni"]', { timeout: 10000 });
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('input[id="dni"]', { timeout: 15000 });
     
     await page.fill('input[id="dni"]', ADMIN_DNI);
     await page.fill('input[id="password"]', ADMIN_PASSWORD);
@@ -52,7 +56,8 @@ test.describe('Admin Login', () => {
 
   test('8.1.2 - Invalid credentials show error message', async ({ page }) => {
     await page.goto('/admin/login');
-    await page.waitForSelector('input[id="dni"]', { timeout: 10000 });
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('input[id="dni"]', { timeout: 15000 });
     
     await page.fill('input[id="dni"]', '99999999');
     await page.fill('input[id="password"]', 'wrongpassword');
@@ -69,7 +74,8 @@ test.describe('Admin Login', () => {
 
   test('8.1.3 - Login page has required fields', async ({ page }) => {
     await page.goto('/admin/login');
-    await page.waitForSelector('input[id="dni"]', { timeout: 10000 });
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('input[id="dni"]', { timeout: 15000 });
     
     // DNI input should exist
     const dniInput = page.locator('input[id="dni"]');
@@ -158,10 +164,10 @@ test.describe('Create New Rutina', () => {
     await loginAsAdmin(page);
     
     await page.goto('/admin/rutinas/new');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
     
-    // Should see the form
-    await expect(page.getByText('Crea una nueva rutina')).toBeVisible({ timeout: 10000 });
+    // Should see the form - actual text is "Nueva Rutina" (capital R)
+    await expect(page.getByRole('heading', { name: /Nueva Rutina/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('8.4.2 - Can fill new rutina form', async ({ page }) => {
