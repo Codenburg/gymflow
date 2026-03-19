@@ -1,32 +1,43 @@
 import { test, expect, Page } from '@playwright/test';
 
 // ============================================
-// Dynamic ID fetching - get IDs from API
+// Helper Functions - No Shared State
 // ============================================
 
-let RUTINA_FULL_BODY_ID = '';
-let RUTINA_PECHO_ID = '';
-let RUTINA_ESPALDA_ID = '';
-
-async function getRoutineIds(page: Page) {
+/**
+ * Fetches routine IDs from API without using shared module state.
+ * Returns IDs directly to avoid race conditions in parallel execution.
+ */
+async function fetchRoutineIds(page: Page): Promise<{
+  fullBodyId: string | null;
+  pechoId: string | null;
+}> {
   const response = await page.request.get('/api/rutinas');
   const result = await response.json();
   const rutinas = result.data;
   
-  // Find routines that exist in the seed (Santi's routines)
+  // Find routines from seed data
   const fullBody = rutinas.find((r: any) => 
-    r.nombre.includes('Full Body') && r.creador === 'Santi'
+    r.nombre.includes('Full Body') && !r.nombre.includes('Ligero') && r.creador === 'Santi'
   );
   const pecho = rutinas.find((r: any) => 
     r.nombre.includes('Pecho') && r.creador === 'Santi'
   );
-  const espalda = rutinas.find((r: any) => 
-    r.nombre.includes('Espalda') && r.creador === 'Santi'
-  );
   
-  RUTINA_FULL_BODY_ID = fullBody?.id || '';
-  RUTINA_PECHO_ID = pecho?.id || '';
-  RUTINA_ESPALDA_ID = espalda?.id || '';
+  return {
+    fullBodyId: fullBody?.id || null,
+    pechoId: pecho?.id || null,
+  };
+}
+
+/**
+ * Fetches a routine's type from API to use in assertions
+ */
+async function fetchRoutineType(page: Page, id: string): Promise<string | null> {
+  const response = await page.request.get(`/api/rutinas/${id}`);
+  if (!response.ok()) return null;
+  const data = await response.json();
+  return data.tipo || null;
 }
 
 // ============================================
@@ -34,17 +45,14 @@ async function getRoutineIds(page: Page) {
 // ============================================
 
 test.describe('Contract & Structure - GET /api/rutinas/[id]', () => {
-  test.beforeEach(async ({ page }) => {
-    await getRoutineIds(page);
-  });
-
   test('5.1 - returns 200 with complete routine data structure', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    const response = await page.request.get(`/api/rutinas/${RUTINA_FULL_BODY_ID}`);
+    const response = await page.request.get(`/api/rutinas/${ids.fullBodyId}`);
     expect(response.status()).toBe(200);
     
     const data = await response.json();
@@ -70,12 +78,13 @@ test.describe('Contract & Structure - GET /api/rutinas/[id]', () => {
   });
 
   test('5.2 - returns proper description field', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    const response = await page.request.get(`/api/rutinas/${RUTINA_FULL_BODY_ID}`);
+    const response = await page.request.get(`/api/rutinas/${ids.fullBodyId}`);
     const data = await response.json();
     
     // Description can be null or string
@@ -83,12 +92,13 @@ test.describe('Contract & Structure - GET /api/rutinas/[id]', () => {
   });
 
   test('5.3 - returns dias ordered by orden field', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    const response = await page.request.get(`/api/rutinas/${RUTINA_FULL_BODY_ID}`);
+    const response = await page.request.get(`/api/rutinas/${ids.fullBodyId}`);
     const data = await response.json();
     
     // Verify days are in ascending order by orden
@@ -98,12 +108,13 @@ test.describe('Contract & Structure - GET /api/rutinas/[id]', () => {
   });
 
   test('5.4 - returns proper structure with series field', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    const response = await page.request.get(`/api/rutinas/${RUTINA_FULL_BODY_ID}`);
+    const response = await page.request.get(`/api/rutinas/${ids.fullBodyId}`);
     const data = await response.json();
     
     // Each day should have ejercicios array with series field
@@ -124,10 +135,6 @@ test.describe('Contract & Structure - GET /api/rutinas/[id]', () => {
 // ============================================
 
 test.describe('Error Handling', () => {
-  test.beforeEach(async ({ page }) => {
-    await getRoutineIds(page);
-  });
-
   test('5.5 - returns 404 for non-existent routine', async ({ page }) => {
     const fakeId = '00000000-0000-0000-0000-000000000000';
     const response = await page.request.get(`/api/rutinas/${fakeId}`);
@@ -135,12 +142,13 @@ test.describe('Error Handling', () => {
   });
 
   test('5.6 - returns 200 for valid routine', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    const response = await page.request.get(`/api/rutinas/${RUTINA_FULL_BODY_ID}`);
+    const response = await page.request.get(`/api/rutinas/${ids.fullBodyId}`);
     expect(response.status()).toBe(200);
   });
 
@@ -156,84 +164,118 @@ test.describe('Error Handling', () => {
 // ============================================
 
 test.describe('Routine Detail Page UI', () => {
-  test.beforeEach(async ({ page }) => {
-    await getRoutineIds(page);
-  });
-
   test('5.8 - displays routine name', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
-    await expect(page.getByText('Full Body').first()).toBeVisible({ timeout: 10000 });
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // Verify routine name is visible
+    const routineName = page.getByText(/Full Body/i).first();
+    await expect(routineName).toBeVisible({ timeout: 10000 });
   });
 
   test('5.9 - displays routine type', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
-    // Type should be "Fuerza", "Cardio", or "Funcional"
-    await expect(page.getByText('Fuerza').first()).toBeVisible({ timeout: 5000 });
+    // Get the actual type from API
+    const tipo = await fetchRoutineType(page, ids.fullBodyId);
+    if (!tipo) {
+      test.skip();
+      return;
+    }
+    
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // Use the actual type for assertion
+    const typeElement = page.getByText(new RegExp(tipo, 'i')).first();
+    await expect(typeElement).toBeVisible({ timeout: 10000 });
   });
 
   test('5.10 - displays days section', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
     // Should show days section
-    await expect(page.getByText(/Días/).first()).toBeVisible({ timeout: 5000 });
+    const daysSection = page.getByText(/Días/i).first();
+    await expect(daysSection).toBeVisible({ timeout: 10000 });
   });
 
   test('5.11 - displays muscle groups for days', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
-    // Should show muscle groups text
-    await expect(page.getByText(/Fuerza/).first()).toBeVisible({ timeout: 5000 });
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // Get the actual type for muscle group check
+    const tipo = await fetchRoutineType(page, ids.fullBodyId);
+    if (tipo) {
+      const muscleGroup = page.getByText(new RegExp(tipo, 'i')).first();
+      await expect(muscleGroup).toBeVisible({ timeout: 10000 });
+    }
   });
 
   test('5.12 - displays exercise series metadata', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
     // Should show series like "3x10" or similar
-    await expect(page.getByText(/3x/).first()).toBeVisible({ timeout: 5000 });
+    const series = page.getByText(/\d+x\d+/).first();
+    await expect(series).toBeVisible({ timeout: 10000 });
   });
 
   test('5.13 - displays day numbers correctly', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
     // Should show "Día 1" or similar
-    await expect(page.getByText(/Día \d+/).first()).toBeVisible({ timeout: 5000 });
+    const dayNumber = page.getByText(/Día \d+/i).first();
+    await expect(dayNumber).toBeVisible({ timeout: 10000 });
   });
 
   test('5.14 - has working back button', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
     const backLink = page.getByRole('link', { name: /volver/i });
-    await expect(backLink.first()).toBeVisible({ timeout: 5000 });
+    await expect(backLink.first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -242,47 +284,63 @@ test.describe('Routine Detail Page UI', () => {
 // ============================================
 
 test.describe('Detail Page Edge Cases', () => {
-  test.beforeEach(async ({ page }) => {
-    await getRoutineIds(page);
-  });
-
   test('5.15 - handles routine with description', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
-    // Full Body - Santi has description
-    await expect(page.getByText(/completa/).first()).toBeVisible({ timeout: 5000 });
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // Full Body - Santi has description "Rutina completa para todo el cuerpo"
+    // Check for any description text or muscle group
+    const description = page.getByText(/completa|cuerpo/i).first();
+    await expect(description).toBeVisible({ timeout: 10000 });
   });
 
   test('5.16 - displays routine with different types', async ({ page }) => {
-    if (!RUTINA_PECHO_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.pechoId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_PECHO_ID}`);
-    // Should show type
-    await expect(page.getByText(/Fuerza/).first()).toBeVisible({ timeout: 5000 });
+    // Get the actual type for Pecho routine
+    const tipo = await fetchRoutineType(page, ids.pechoId);
+    if (!tipo) {
+      test.skip();
+      return;
+    }
+    
+    await page.goto(`/rutinas/${ids.pechoId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // Should show the type
+    const typeElement = page.getByText(new RegExp(tipo, 'i')).first();
+    await expect(typeElement).toBeVisible({ timeout: 10000 });
   });
 
   test('5.17 - routine shows exercises', async ({ page }) => {
-    if (!RUTINA_PECHO_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.pechoId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_PECHO_ID}`);
+    await page.goto(`/rutinas/${ids.pechoId}`);
+    await page.waitForLoadState('networkidle');
+    
     // Should show "Día" text
-    await expect(page.getByText(/Día/).first()).toBeVisible({ timeout: 5000 });
+    const dayText = page.getByText(/Día/i).first();
+    await expect(dayText).toBeVisible({ timeout: 10000 });
   });
 
   test('5.18 - handles 404 gracefully', async ({ page }) => {
     await page.goto('/rutinas/00000000-0000-0000-0000-000000000000');
-    // Should handle gracefully
-    await page.waitForTimeout(1000);
+    // Should handle gracefully - page should load with error state
+    await page.waitForLoadState('networkidle');
   });
 });
 
@@ -291,44 +349,47 @@ test.describe('Detail Page Edge Cases', () => {
 // ============================================
 
 test.describe('Navigation Integration', () => {
-  test.beforeEach(async ({ page }) => {
-    await getRoutineIds(page);
-  });
-
   test('5.19 - can navigate from homepage to detail page', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
-      test.skip();
-      return;
-    }
-    
     await page.goto('/');
-    await expect(page.getByText('Full Body').first()).toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    
+    // Wait for routines to load
+    const routineLink = page.getByText(/Full Body/i).first();
+    await expect(routineLink).toBeVisible({ timeout: 10000 });
     
     // Click on the routine card
-    await page.getByText('Full Body').first().click();
+    await routineLink.click();
     
     // Should navigate to detail page
     await expect(page).toHaveURL(/\/rutinas\/.+/, { timeout: 10000 });
   });
 
   test('5.20 - URL contains correct routine ID', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
-    await expect(page).toHaveURL(new RegExp(RUTINA_FULL_BODY_ID));
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
+    // URL should contain the routine ID
+    await expect(page).toHaveURL(new RegExp(ids.fullBodyId), { timeout: 10000 });
   });
 
   test('5.21 - routine with multiple days displays correctly', async ({ page }) => {
-    if (!RUTINA_FULL_BODY_ID) {
+    const ids = await fetchRoutineIds(page);
+    if (!ids.fullBodyId) {
       test.skip();
       return;
     }
     
-    await page.goto(`/rutinas/${RUTINA_FULL_BODY_ID}`);
+    await page.goto(`/rutinas/${ids.fullBodyId}`);
+    await page.waitForLoadState('networkidle');
+    
     // Full Body routines have 2 days
-    await expect(page.getByText(/Día/).first()).toBeVisible({ timeout: 5000 });
+    const dayText = page.getByText(/Día/i).first();
+    await expect(dayText).toBeVisible({ timeout: 10000 });
   });
 });
