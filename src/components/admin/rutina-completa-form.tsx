@@ -147,7 +147,7 @@ export function RutinaCompletaForm() {
   };
 
   return (
-    <form ref={formRef} action={action} className="space-y-6">
+    <form ref={formRef} action={action} className="bg-white dark:bg-[#121212] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a]">
       {/* Error Message */}
       {state && !state.success && state.message && (
         <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
@@ -156,7 +156,7 @@ export function RutinaCompletaForm() {
       )}
 
       {/* Routine Basic Info */}
-      <div className="space-y-4">
+      <div className="p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nombre */}
           <AdminFormField variant="default" label="Nombre de la rutina" error={state?.errors?.nombre?.[0]}>
@@ -203,7 +203,7 @@ export function RutinaCompletaForm() {
       <div className="border-t border-border my-6" />
 
       {/* Dias Section */}
-      <div className="space-y-4">
+      <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-foreground text-lg font-medium">Días de entrenamiento</h2>
           <span className="text-muted-foreground text-xs">Al menos 1 día</span>
@@ -252,7 +252,7 @@ export function RutinaCompletaForm() {
       <div className="border-t border-border my-6" />
 
       {/* Submit */}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 p-4">
         <Button
           type="button"
           variant="outline"
