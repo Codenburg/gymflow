@@ -10,7 +10,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, backHref }: PageHeaderProps) {
   return (
-    <div className="flex items-center gap-4 mb-6">
+    <div className="flex items-center gap-4 mb-6 px-4">
       {backHref && (
         <Link
           href={backHref}
