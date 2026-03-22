@@ -19,8 +19,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   const trainers = params?.trainers;
 
   // Use cached function - avoids repeated DB queries within revalidation period
-  // Result contains: rutinas (filtered), trainers (ALL, stable for chips), error
-  const result = await getCachedRutinas(search, trainers);
+  // If DB fails, result is null (not cached) so UI shows error state
+  let result;
+  try {
+    result = await getCachedRutinas(search, trainers);
+  } catch {
+    result = null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,10 +62,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
           {/* Search + Cards Container - all aligned */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Trainer Sidebar - trainers from ALL rutinas (stable), error from result */}
+            {/* Trainer Sidebar - null result means DB error, not empty trainers */}
             <TrainerSidebarClient
-              trainers={result.trainers}
-              hasError={result.error}
+              trainers={result?.trainers ?? null}
             />
 
             {/* Search + Cards */}
@@ -72,7 +76,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 
               {/* Cards Grid - streaming with skeleton fallback */}
               <Suspense fallback={<RoutineListSkeleton count={6} />}>
-                <RoutineListWrapper rutinas={result.rutinas} error={result.error} />
+                <RoutineListWrapper result={result} />
               </Suspense>
             </div>
           </div>
@@ -82,6 +86,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   );
 }
 
-async function RoutineListWrapper({ rutinas, error }: { rutinas: import("@/lib/rutinas").Rutina[]; error: boolean }) {
-  return <RoutineList rutinas={rutinas} showError={error} />;
+interface RoutineListWrapperProps {
+  result: Awaited<ReturnType<typeof getCachedRutinas>>;
+}
+
+async function RoutineListWrapper({ result }: RoutineListWrapperProps) {
+  return <RoutineList rutinas={result?.rutinas ?? null} />;
 }

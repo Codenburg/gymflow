@@ -26,13 +26,12 @@ interface Rutina {
 }
 
 interface RoutineListProps {
-  rutinas: Rutina[];
-  showError?: boolean;
+  rutinas: Rutina[] | null;
 }
 
-export function RoutineList({ rutinas, showError = false }: RoutineListProps) {
-  // Error state - DB or network failure
-  if (showError) {
+export function RoutineList({ rutinas }: RoutineListProps) {
+  // null means DB error - show error state (NOT cached)
+  if (rutinas === null) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center" data-testid="routine-list-error">
         <AlertCircle className="w-16 h-16 text-destructive mb-4" />
@@ -42,7 +41,7 @@ export function RoutineList({ rutinas, showError = false }: RoutineListProps) {
     );
   }
 
-  // Empty state - no data available
+  // Empty state - legitimate empty list (user hasn't created any routines yet)
   if (rutinas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center" data-testid="routine-list-empty">

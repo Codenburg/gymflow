@@ -53,12 +53,10 @@ function extractTrainers(rutinas: Pick<Rutina, "creador">[]): Trainer[] {
  * Result structure that separates filtered rutinas from stable trainer list.
  * - rutinas: filtered routines based on search/trainers params
  * - trainers: ALL trainers derived from unfiltered data (stable source for chips)
- * - error: indicates if there was a database error
  */
 interface RutinasYTrainersResult {
   rutinas: Rutina[];
   trainers: Trainer[];
-  error: boolean;
 }
 
 /**
@@ -149,15 +147,10 @@ async function fetchRutinasFromDb(
         })),
       })),
       trainers: trainersData,
-      error: false,
     };
   } catch (error) {
-    console.error("[getCachedRutinas] DB query failed:", error);
-    return {
-      rutinas: [],
-      trainers: [],
-      error: true,
-    };
+    console.error("[fetchRutinasFromDb] DB query failed:", error);
+    throw error;
   }
 }
 
@@ -167,18 +160,21 @@ const RUTINAS_CACHE_TAG = "rutinas";
 /**
  * Get cached rutinas with optional filters.
  * Results are cached for 60 seconds to avoid repeated DB queries.
+ * Cache key includes search and trainers params to differentiate cached results.
  * 
  * @param search - Optional filter by routine name (case-insensitive)
  * @param trainers - Optional filter by creators (comma-separated)
  */
-export const getCachedRutinas = unstable_cache(
-  fetchRutinasFromDb,
-  ["rutinas"], // cache key parts
-  {
-    revalidate: 60, // seconds
-    tags: [RUTINAS_CACHE_TAG],
-  }
-);
+export async function getCachedRutinas(search?: string, trainers?: string) {
+  return unstable_cache(
+    () => fetchRutinasFromDb(search, trainers),
+    ["rutinas", search ?? "", trainers ?? ""],
+    {
+      revalidate: 60,
+      tags: [RUTINAS_CACHE_TAG],
+    }
+  )();
+}
 
 /**
  * Revalidate rutinas cache. Call this after creating/updating/deleting routines.
