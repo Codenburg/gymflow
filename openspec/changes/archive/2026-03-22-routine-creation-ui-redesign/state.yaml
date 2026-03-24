@@ -1,0 +1,34 @@
+status: archived
+archived_at: "2026-03-22"
+archive_location: openspec/changes/archive/2026-03-22-routine-creation-ui-redesign/
+
+summary:
+  files_modified:
+    - src/app/globals.css
+    - src/components/admin/rutina-completa-form.tsx
+    - src/components/admin/dia-section.tsx
+    - src/components/admin/ejercicio-row.tsx
+  files_created:
+    - src/components/admin/chip-selector.tsx
+
+  specs_synced:
+    - design-system: Created (6 requirements)
+    - components: Created (4 requirements)
+    - ux: Created (8 requirements)
+
+  design_decisions:
+    - Day 1 starts expanded, others collapsed
+    - 7-day maximum limit enforced
+    - Dark mode: bg #0a0a0a, cards #121212, inputs #2a2a2a
+    - Light mode: bg #f9fafb, cards #ffffff, inputs white
+    - Cancel button: hover red
+    - Crear Rutina button: white bg in dark mode, accent border on hover
+    - Placeholder: #d1d5db light, #6b7280 dark
+
+  verification_status: passed
+  acceptance_criteria_met: all
+
+main_specs_updated:
+  - openspec/specs/design-system/spec.md
+  - openspec/specs/components/spec.md
+  - openspec/specs/ux/spec.md

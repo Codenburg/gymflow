@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
-import { createDia, updateDia, deleteDia } from "@/app/actions/dias";
+import { createDia } from "@/app/actions/dias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { AdminFormField } from "@/components/admin/admin-form-field";
+import { DiaCard } from "@/components/admin/dia-card";
 import type { FormState } from "@/lib/schemas";
-import Link from "next/link";
-import { Plus, GripVertical, Pencil, Trash2, ChevronRight } from "lucide-react";
-import { useConfirm } from "@/hooks/use-confirm";
+
+import { toast } from "sonner";
 
 interface Dia {
   id: string;
@@ -38,207 +37,139 @@ const initialState: DiaFormState = {
 
 // Cast server actions to proper type
 const createActionTyped = createDia as unknown as (state: DiaFormState | null, formData: FormData) => Promise<DiaFormState>;
-const updateActionTyped = updateDia as unknown as (state: DiaFormState | null, formData: FormData) => Promise<DiaFormState>;
-const deleteActionTyped = deleteDia as unknown as (state: DiaFormState | null, formData: FormData) => Promise<DiaFormState>;
+
+const MAX_DAYS = 7;
 
 export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const { confirm, Dialog } = useConfirm();
+  const [localDias, setLocalDias] = useState(dias);
 
   const [createState, createActionWrapped, isCreatePending] = useActionState(createActionTyped, initialState);
-  const [updateState, updateActionWrapped, isUpdatePending] = useActionState(updateActionTyped, initialState);
-  const [deleteState, deleteActionWrapped, isDeletePending] = useActionState(deleteActionTyped, initialState);
 
-  // Reset states when they succeed
+  // Sync with props
+  useEffect(() => {
+    setLocalDias(dias);
+  }, [dias]);
+
+  // Handle create success
+  useEffect(() => {
+    if (createState?.success) {
+      setIsAdding(false);
+      toast.success("¡Día agregado exitosamente!");
+    } else if (createState?.success === false && createState.message) {
+      toast.error(createState.message);
+    }
+  }, [createState]);
+
   const handleSuccess = () => {
     setIsAdding(false);
-    setEditingId(null);
-  };
-
-  const handleDelete = async (diaId: string) => {
-    const confirmed = await confirm({
-      title: "¿Eliminar día?",
-      description: "Esta acción no se puede deshacer.",
-      variant: "destructive",
-      confirmText: "Eliminar",
-    });
-    if (!confirmed) return;
-    const formData = new FormData();
-    formData.append("id", diaId);
-    formData.append("rutinaId", rutinaId);
-    await deleteActionTyped(null, formData);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="bg-surface border border-border rounded-xl p-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-[var(--foreground)]">Días de la Rutina</h2>
-          <p className="text-[var(--muted-foreground)] text-sm">Administra los días de entrenamiento</p>
-        </div>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="w-5 h-5 mr-2" />
-          Agregar Día
-        </Button>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">Días de entrenamiento</h2>
+        <p className="text-muted-foreground text-xs">
+          {localDias.length} día{localDias.length !== 1 ? "s" : ""} • Al menos 1 día
+        </p>
       </div>
+
+      {/* Max days warning */}
+      {localDias.length >= MAX_DAYS && (
+        <p className="text-center text-muted-foreground text-sm py-2">
+          Has alcanzado el máximo de {MAX_DAYS} días por rutina
+        </p>
+      )}
 
       {/* Add Day Form */}
       {isAdding && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Nuevo Día</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form
-              action={async (formData: FormData) => {
-                formData.set("rutinaId", rutinaId);
-                const result = await createActionTyped(null, formData);
-                if (result.success) handleSuccess();
-              }}
-              className="space-y-4"
-            >
-              <input type="hidden" name="rutinaId" value={rutinaId} />
+        <div className="p-4 bg-hover rounded-xl border border-border space-y-4">
+          <form
+            action={async (formData: FormData) => {
+              formData.set("rutinaId", rutinaId);
+              const result = await createActionTyped(null, formData);
+              if (result.success) handleSuccess();
+            }}
+            className="space-y-4"
+          >
+            <input type="hidden" name="rutinaId" value={rutinaId} />
 
-              {createState && !createState.success && createState.message && (
-                <div className="p-3 bg-[var(--destructive)]/10 border border-[var(--destructive)]/30 rounded-lg">
-                  <p className="text-[var(--destructive)] text-sm">{createState.message}</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[var(--foreground)] text-sm font-medium">Nombre *</label>
-                  <Input
-                    name="nombre"
-                    required
-                    placeholder="Ej: Día 1 - Pecho"
-                    error={!!createState?.errors?.nombre}
-                  />
-                  {createState?.errors?.nombre && (
-                    <p className="text-[var(--destructive)] text-xs">{createState.errors.nombre[0]}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[var(--foreground)] text-sm font-medium">Músculos Enfocados</label>
-                  <Input
-                    name="musculosEnfocados"
-                    placeholder="Ej: Pecho, tríceps"
-                  />
-                </div>
+            {createState && !createState.success && createState.message && (
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <p className="text-destructive text-sm">{createState.message}</p>
               </div>
+            )}
 
-              <div className="flex gap-3 justify-end">
-                <Button type="button" variant="ghost" onClick={() => setIsAdding(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isCreatePending}>
-                  {isCreatePending ? "Guardando..." : "Crear Día"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Days List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dias.map((dia, index) => (
-          <Card key={dia.id} className="relative group">
-            {/* Drag Handle */}
-            <div className="absolute top-4 left-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
-              <GripVertical className="w-5 h-5 text-[var(--muted-foreground)]" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AdminFormField variant="default" label="Nombre *" error={createState?.errors?.nombre?.[0]}>
+                <Input
+                  name="nombre"
+                  required
+                  placeholder="Ej: Día 1 - Pecho"
+                  error={!!createState?.errors?.nombre}
+                  autoFocus
+                  className="seamless-input w-full placeholder:text-muted-foreground"
+                />
+              </AdminFormField>
+              <AdminFormField variant="default" label="Músculos Enfocados">
+                <Input
+                  name="musculosEnfocados"
+                  placeholder="Ej: Pecho, tríceps"
+                  className="seamless-input w-full placeholder:text-muted-foreground"
+                />
+              </AdminFormField>
             </div>
 
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[var(--muted-foreground)] text-sm font-mono opacity-60">#{index + 1}</span>
-                  <CardTitle className="text-lg">{dia.nombre}</CardTitle>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setEditingId(editingId === dia.id ? null : dia.id)}
-                    className="p-1.5 rounded hover:bg-[var(--button-secondary-bg)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(dia.id)}
-                    className="p-1.5 rounded hover:bg-[var(--destructive)]/10 text-[var(--muted-foreground)] hover:text-[var(--destructive)] transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              {dia.musculosEnfocados && (
-                <p className="text-[var(--muted-foreground)] text-sm opacity-70">{dia.musculosEnfocados}</p>
-              )}
-            </CardHeader>
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsAdding(false)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isCreatePending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                {isCreatePending ? "Guardando..." : "Crear Día"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
 
-            <CardContent>
-              {/* Edit Form */}
-              {editingId === dia.id ? (
-                <form
-                  action={async (formData: FormData) => {
-                    formData.set("id", dia.id);
-                    formData.set("rutinaId", rutinaId);
-                    const result = await updateActionTyped(null, formData);
-                    if (result.success) setEditingId(null);
-                  }}
-                  className="space-y-3"
-                >
-                  <input type="hidden" name="id" value={dia.id} />
-                  <input type="hidden" name="rutinaId" value={rutinaId} />
+      {/* Add day button - dashed border style */}
+      {!isAdding && localDias.length < MAX_DAYS && (
+        <button
+          type="button"
+          onClick={() => setIsAdding(true)}
+          className="w-full border border-dashed border-border bg-transparent hover:bg-surface min-h-[44px] flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-all duration-150 rounded-xl"
+        >
+          <span className="h-4 w-4">+</span>
+          <span>Agregar Día</span>
+        </button>
+      )}
 
-                  <Input
-                    name="nombre"
-                    defaultValue={dia.nombre}
-                    required
-                    placeholder="Nombre del día"
-                  />
-
-                  <Input
-                    name="musculosEnfocados"
-                    defaultValue={dia.musculosEnfocados || ""}
-                    placeholder="Músculos enfocados"
-                  />
-
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm" disabled={isUpdatePending}>
-                      {isUpdatePending ? "Guardando" : "Guardar"}
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <Link
-                  href={`/admin/rutinas/${rutinaId}/dias/${dia.id}`}
-                  className="block p-3 rounded-lg bg-[var(--button-secondary-bg)] hover:opacity-80 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[var(--muted-foreground)] text-sm opacity-80">
-                      {dia.ejercicios.length} ejercicio{dia.ejercicios.length !== 1 ? "s" : ""}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)] opacity-60" />
-                  </div>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+      {/* Days Grid - Responsive: 1 col mobile, 2 col tablet, 3 col desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        {localDias.map((dia, index) => (
+          <DiaCard
+            key={dia.id}
+            dia={dia}
+            rutinaId={rutinaId}
+            index={index}
+          />
         ))}
 
-        {dias.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <p className="text-[var(--muted-foreground)]">No hay días en esta rutina</p>
-            <p className="text-[var(--muted-foreground)] text-sm mt-1 opacity-60">Agrega un día para empezar</p>
+        {localDias.length === 0 && !isAdding && (
+          <div className="col-span-full md:col-span-2 lg:col-span-3 text-center py-12 border-2 border-dashed border-border rounded-xl">
+            <p className="text-muted-foreground">No hay días en esta rutina</p>
+            <p className="text-muted-foreground text-sm mt-1 opacity-60">
+              Agrega un día para empezar
+            </p>
           </div>
         )}
       </div>
-      {Dialog}
     </div>
   );
 }

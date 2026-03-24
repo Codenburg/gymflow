@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { createEjercicio, updateEjercicio } from "@/app/actions/ejercicios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminFormField } from "@/components/admin/admin-form-field";
 import type { FormState } from "@/lib/schemas";
 import { useEffect, useRef } from "react";
 
@@ -51,69 +52,72 @@ export function EjercicioForm({ diaId, initialData, onSuccess, onCancel }: Ejerc
 
       {/* Error Message */}
       {state && !state.success && state.message && (
-        <div className="p-3 bg-[var(--destructive)]/10 border border-[var(--destructive)]/30 rounded-lg">
-          <p className="text-[var(--destructive)] text-sm">{state.message}</p>
+        <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+          <p className="text-destructive text-sm">{state.message}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Nombre */}
-        <div className="space-y-2 md:col-span-2">
-          <label htmlFor="nombre" className="text-[var(--foreground)] text-sm font-medium">
-            Nombre *
-          </label>
-          <Input
-            id="nombre"
-            name="nombre"
-            type="text"
-            required
-            defaultValue={initialData?.nombre}
-            placeholder="Ej: Press de banca"
-            error={!!state?.errors?.nombre}
-          />
-          {state?.errors?.nombre && (
-            <p className="text-[var(--destructive)] text-xs">{state.errors.nombre[0]}</p>
-          )}
+        <div className="md:col-span-2">
+          <AdminFormField variant="default" label="Nombre *" error={state?.errors?.nombre?.[0]}>
+            <Input
+              id="nombre"
+              name="nombre"
+              type="text"
+              required
+              defaultValue={initialData?.nombre}
+              placeholder="Ej: Press de banca"
+              error={!!state?.errors?.nombre}
+              className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+            />
+          </AdminFormField>
         </div>
 
-      {/* Series */}
-      <div className="space-y-2">
-        <label htmlFor="series" className="text-[var(--foreground)] text-sm font-medium">
-          Series
-        </label>
+        {/* Series */}
+        <AdminFormField variant="default" label="Series" error={state?.errors?.series?.[0]}>
           <Input
             id="series"
             name="series"
             type="text"
             defaultValue={initialData?.series}
             placeholder="Ej: 4"
+            className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
           />
-        </div>
+        </AdminFormField>
       </div>
 
       {/* Repes */}
-      <div className="space-y-2">
-        <label htmlFor="repes" className="text-[var(--foreground)] text-sm font-medium">
-          Repeticiones
-        </label>
-        <Input
-          id="repes"
-          name="repes"
-          type="text"
-          defaultValue={initialData?.repes}
-          placeholder="Ej: 10-12"
-          className="max-w-xs"
-        />
+      <div className="max-w-xs">
+        <AdminFormField variant="default" label="Repeticiones" error={state?.errors?.repes?.[0]}>
+          <Input
+            id="repes"
+            name="repes"
+            type="text"
+            defaultValue={initialData?.repes}
+            placeholder="Ej: 10-12"
+            className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+          />
+        </AdminFormField>
       </div>
 
       {/* Submit */}
       <div className="flex gap-3 justify-end">
         {onCancel && (
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            className="text-[#6b7280] hover:text-[#ef4444] dark:text-[#9ca3af] dark:hover:text-[#E11D48]"
+          >
             Cancelar
           </Button>
         )}
-        <Button type="submit" disabled={isPending}>
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="bg-[#48b8c9] hover:bg-[#3da4b3] text-white dark:bg-[#E11D48] dark:hover:bg-[#be123c] dark:text-white"
+        >
           {isPending ? "Guardando..." : isEditing ? "Actualizar" : "Agregar"}
         </Button>
       </div>

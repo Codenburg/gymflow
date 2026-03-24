@@ -26,6 +26,33 @@ export interface Ejercicio {
   repes: string | null;
 }
 
+export interface RutinaDetail {
+  id: string;
+  nombre: string;
+  tipo: string;
+  descripcion: string | null;
+  creador: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  dias: DiaDetail[];
+}
+
+export interface DiaDetail {
+  id: string;
+  nombre: string;
+  musculosEnfocados: string | null;
+  orden: number;
+  ejercicios: EjercicioDetail[];
+}
+
+export interface EjercicioDetail {
+  id: string;
+  nombre: string;
+  series: string | null;
+  repes: string | null;
+  orden: number;
+}
+
 export interface Trainer {
   nombre: string;
   count: number;
@@ -53,12 +80,10 @@ function extractTrainers(rutinas: Pick<Rutina, "creador">[]): Trainer[] {
  * Result structure that separates filtered rutinas from stable trainer list.
  * - rutinas: filtered routines based on search/trainers params
  * - trainers: ALL trainers derived from unfiltered data (stable source for chips)
- * - error: indicates if there was a database error
  */
 interface RutinasYTrainersResult {
   rutinas: Rutina[];
   trainers: Trainer[];
-  error: boolean;
 }
 
 /**
@@ -149,15 +174,10 @@ async function fetchRutinasFromDb(
         })),
       })),
       trainers: trainersData,
-      error: false,
     };
   } catch (error) {
-    console.error("[getCachedRutinas] DB query failed:", error);
-    return {
-      rutinas: [],
-      trainers: [],
-      error: true,
-    };
+    console.error("[fetchRutinasFromDb] DB query failed:", error);
+    throw error;
   }
 }
 
@@ -167,23 +187,85 @@ const RUTINAS_CACHE_TAG = "rutinas";
 /**
  * Get cached rutinas with optional filters.
  * Results are cached for 60 seconds to avoid repeated DB queries.
+ * Cache key includes search and trainers params to differentiate cached results.
  * 
  * @param search - Optional filter by routine name (case-insensitive)
  * @param trainers - Optional filter by creators (comma-separated)
  */
-export const getCachedRutinas = unstable_cache(
-  fetchRutinasFromDb,
-  ["rutinas"], // cache key parts
-  {
-    revalidate: 60, // seconds
-    tags: [RUTINAS_CACHE_TAG],
+export async function getCachedRutinas(search?: string, trainers?: string) {
+  return unstable_cache(
+    () => fetchRutinasFromDb(search, trainers),
+    ["rutinas", search ?? "", trainers ?? ""],
+    {
+      revalidate: 60,
+      tags: [RUTINAS_CACHE_TAG],
+    }
+  )();
+}
+
+async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
+  try {
+    const rutina = await prisma.rutina.findUnique({
+      where: { id },
+      include: {
+        dias: {
+          include: {
+            ejercicios: {
+              orderBy: { orden: "asc" },
+            },
+          },
+          orderBy: { orden: "asc" },
+        },
+      },
+    });
+
+    if (!rutina) {
+      return null;
+    }
+
+    return {
+      id: rutina.id,
+      nombre: rutina.nombre,
+      tipo: rutina.tipo,
+      descripcion: rutina.descripcion,
+      creador: rutina.creador,
+      createdAt: rutina.createdAt,
+      updatedAt: rutina.updatedAt,
+      dias: rutina.dias.map((dia) => ({
+        id: dia.id,
+        nombre: dia.nombre,
+        musculosEnfocados: dia.musculosEnfocados,
+        orden: dia.orden,
+        ejercicios: dia.ejercicios.map((ej) => ({
+          id: ej.id,
+          nombre: ej.nombre,
+          series: ej.series,
+          repes: ej.repes,
+          orden: ej.orden,
+        })),
+      })),
+    };
+  } catch (error) {
+    console.error("[fetchRutinaById] DB query failed:", error);
+    throw error;
   }
-);
+}
+
+export async function getCachedRutinaById(id: string): Promise<RutinaDetail | null> {
+  return unstable_cache(
+    () => fetchRutinaById(id),
+    ["rutina", id],
+    {
+      revalidate: 60,
+      tags: [RUTINAS_CACHE_TAG],
+    }
+  )();
+}
 
 /**
  * Revalidate rutinas cache. Call this after creating/updating/deleting routines.
  */
 export async function revalidateRutinasCache(): Promise<void> {
   const { revalidateTag } = await import("next/cache");
-  revalidateTag(RUTINAS_CACHE_TAG, "dynamic");
+  revalidateTag(RUTINAS_CACHE_TAG, "max");
 }

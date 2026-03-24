@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 import { getRutina } from "@/app/actions/rutinas";
 import { RutinaForm } from "@/components/admin/rutina-form";
 import { DiaManager } from "@/components/admin/dia-manager";
-import Link from "next/link";
 import { DeleteRutinaPageButton } from "@/components/admin/delete-rutina-page-button";
-import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/admin/page-header";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -22,41 +21,25 @@ export default async function EditRutinaPage({ params }: EditRutinaPageProps) {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/rutinas"
-            className="p-2 hover:bg-[var(--button-secondary-bg)] rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--foreground)]">Editar Rutina</h1>
-            <p className="text-[var(--muted-foreground)] mt-1">Modifica los detalles de la rutina</p>
-          </div>
-        </div>
-        <DeleteRutinaPageButton rutinaId={rutina.id} />
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Editar Rutina"
+        backHref="/admin/rutinas"
+        actions={<DeleteRutinaPageButton rutinaId={rutina.id} />}
+      />
 
-      {/* Edit Form */}
-      <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-[var(--foreground)] mb-6">Detalles de la Rutina</h2>
-        <RutinaForm
-          initialData={{
-            id: rutina.id,
-            nombre: rutina.nombre,
-            tipo: rutina.tipo as "fuerza" | "cardio" | "flexibilidad" | "hipertrofia",
-            descripcion: rutina.descripcion || undefined,
-          }}
-        />
-      </div>
+      {/* Days Manager - dominant section */}
+      <DiaManager rutinaId={rutina.id} dias={rutina.dias} />
 
-      {/* Days Manager */}
-      <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-6">
-        <DiaManager rutinaId={rutina.id} dias={rutina.dias} />
-      </div>
+      {/* Edit Form - secondary section */}
+      <RutinaForm
+        initialData={{
+          id: rutina.id,
+          nombre: rutina.nombre,
+          tipo: rutina.tipo as "fuerza" | "cardio" | "flexibilidad" | "hipertrofia",
+          descripcion: rutina.descripcion || undefined,
+        }}
+      />
     </div>
   );
 }

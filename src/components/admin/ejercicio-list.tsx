@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import { deleteEjercicio } from "@/app/actions/ejercicios";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FormState } from "@/lib/schemas";
 import { EjercicioForm } from "./ejercicio-form";
-import { Plus, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
 
 interface Ejercicio {
@@ -55,66 +52,67 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
   };
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white dark:bg-[#121212] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a] p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-[var(--foreground)]">{diaNombre}</h2>
-          <p className="text-[var(--muted-foreground)] text-sm">Administra los ejercicios del día</p>
+          <h2 className="text-lg font-medium text-foreground">Ejercicios del día</h2>
+          <p className="text-muted-foreground text-xs">
+            {ejercicios.length} ejercicio{ejercicios.length !== 1 ? "s" : ""}
+          </p>
         </div>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="w-5 h-5 mr-2" />
-          Agregar Ejercicio
-        </Button>
       </div>
 
       {/* Add Exercise Form */}
       {isAdding && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Nuevo Ejercicio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EjercicioForm
-              diaId={diaId}
-              onSuccess={() => setIsAdding(false)}
-              onCancel={() => setIsAdding(false)}
-            />
-          </CardContent>
-        </Card>
+        <div className="p-4 bg-[#f3f4f6] dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a] space-y-4">
+          <EjercicioForm
+            diaId={diaId}
+            onSuccess={() => setIsAdding(false)}
+            onCancel={() => setIsAdding(false)}
+          />
+        </div>
+      )}
+
+      {/* Add exercise button - gray bar in light mode */}
+      {!isAdding && (
+        <button
+          type="button"
+          onClick={() => setIsAdding(true)}
+          className="w-full py-3 px-4 bg-[#f3f4f6] hover:bg-gray-200 text-[#6b7280] hover:text-[#4b5563] transition-colors rounded-2xl flex items-center justify-center gap-2 text-sm font-medium border border-[#e5e7eb] dark:bg-[#1a1a1a] dark:hover:bg-[#222222] dark:text-[#6b7280] dark:hover:text-[#9ca3af] dark:border-[#2a2a2a]"
+        >
+          <span className="h-4 w-4">+</span>
+          <span>Agregar Ejercicio</span>
+        </button>
       )}
 
       {/* Exercises List */}
       <div className="space-y-3">
         {ejercicios.map((ejercicio, index) => (
-          <Card key={ejercicio.id} className="relative group">
-            {/* Drag Handle */}
-            <div className="absolute top-1/2 left-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
-              <GripVertical className="w-5 h-5 text-[var(--muted-foreground)]" />
-            </div>
-
-            <CardContent className="flex items-center justify-between py-4 pl-10">
-              {editingId === ejercicio.id ? (
-                <div className="flex-1">
-                  <EjercicioForm
-                    initialData={{
-                      id: ejercicio.id,
-                      nombre: ejercicio.nombre,
-                      series: ejercicio.series || undefined,
-                      repes: ejercicio.repes || undefined,
-                    }}
-                    diaId={diaId}
-                    onSuccess={() => setEditingId(null)}
-                    onCancel={() => setEditingId(null)}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-4 flex-1">
-                    <span className="text-[var(--muted-foreground)] text-sm font-mono opacity-60">#{index + 1}</span>
+          <div
+            key={ejercicio.id}
+            className="group bg-[#fafafa] dark:bg-[#1a1a1a] rounded-xl border border-[#e5e7eb] dark:border-[#27272a] p-4"
+          >
+            {editingId === ejercicio.id ? (
+              <EjercicioForm
+                initialData={{
+                  id: ejercicio.id,
+                  nombre: ejercicio.nombre,
+                  series: ejercicio.series || undefined,
+                  repes: ejercicio.repes || undefined,
+                }}
+                diaId={diaId}
+                onSuccess={() => setEditingId(null)}
+                onCancel={() => setEditingId(null)}
+              />
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="text-muted-foreground text-sm font-mono opacity-60">#{index + 1}</span>
                     <div>
-                      <h3 className="text-[var(--foreground)] font-medium">{ejercicio.nombre}</h3>
-                      <div className="flex gap-3 text-[var(--muted-foreground)] text-sm">
+                      <h3 className="text-foreground font-medium">{ejercicio.nombre}</h3>
+                      <div className="flex gap-3 text-muted-foreground text-sm">
                         {ejercicio.series && <span>Series: {ejercicio.series}</span>}
                         {ejercicio.repes && <span>Repes: {ejercicio.repes}</span>}
                       </div>
@@ -124,27 +122,27 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => setEditingId(editingId === ejercicio.id ? null : ejercicio.id)}
-                      className="p-1.5 rounded hover:bg-[var(--button-secondary-bg)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                      className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(ejercicio.id)}
-                      className="p-1.5 rounded hover:bg-[var(--destructive)]/10 text-[var(--muted-foreground)] hover:text-[var(--destructive)] transition-colors"
+                      className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+              </>
+            )}
+          </div>
         ))}
 
-        {ejercicios.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-[var(--muted-foreground)]">No hay ejercicios en este día</p>
-            <p className="text-[var(--muted-foreground)] text-sm mt-1 opacity-60">Agrega un ejercicio para empezar</p>
+        {ejercicios.length === 0 && !isAdding && (
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
+            <p className="text-muted-foreground">No hay ejercicios en este día</p>
+            <p className="text-muted-foreground text-sm mt-1 opacity-60">Agrega un ejercicio para empezar</p>
           </div>
         )}
       </div>

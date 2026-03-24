@@ -1,212 +1,214 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type {
-  ActiveFilter,
-  UnifiedSearchResult,
-} from "@/types/search";
+import type { ActiveFilter } from "@/types/search";
 
 const DEBOUNCE_DELAY = 300;
 
-interface UseUnifiedSearchReturn {
-  query: string;
-  setQuery: (value: string) => void;
-  results: UnifiedSearchResult | null;
-  isLoading: boolean;
-  trainerFilters: string[];
-  toggleTrainerFilter: (name: string) => void;
-  clearTrainerFilters: () => void;
-  activeFilters: ActiveFilter[];
-  removeFilter: (filter: ActiveFilter) => void;
-  clearFilters: () => void;
-}
 
-export function useUnifiedSearch(): UseUnifiedSearchReturn {
+export function useUnifiedSearch() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State
-  const [query, setQueryState] = useState(searchParams.get("search") ?? "");
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const [results, setResults] = useState<UnifiedSearchResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [trainerFilters, setTrainerFilters] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
 
-  // Initialize trainer filters from URL
-  useEffect(() => {
+  const [inputValue, setInputValueState] = useState(searchParams.get("search") ?? "");
+  const isMountedRef = useRef(true);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevUrlRef = useRef(searchParams.toString());
+  const inputValueRef = useRef(inputValue);
+
+
+  inputValueRef.current = inputValue;
+
+
+  const query = searchParams.get("search") ?? "";
+
+  const trainerFilters = (() => {
     const trainersParam = searchParams.get("trainers");
     if (trainersParam) {
-      const trainers = trainersParam
+      return trainersParam
         .split(",")
         .map((t) => t.trim())
-        .filter((t) => t.length > 0);
-      setTrainerFilters(trainers);
-
-      // Build active filters from trainers
-      const filters: ActiveFilter[] = trainers.map((trainer) => ({
-        type: "entrenador",
-        value: trainer,
-        label: `Entrenador: ${trainer}`,
-      }));
-      setActiveFilters(filters);
-    } else {
-      // Backwards compatibility: check old 'creador' param
-      const creador = searchParams.get("creador");
-      if (creador) {
-        setTrainerFilters([creador]);
-        setActiveFilters([
-          {
-            type: "entrenador",
-            value: creador,
-            label: `Entrenador: ${creador}`,
-          },
-        ]);
-      } else {
-        setTrainerFilters([]);
-        setActiveFilters([]);
-      }
-    }
-  }, [searchParams]);
-
-  // Debounce query
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, DEBOUNCE_DELAY);
-
-    return () => clearTimeout(timeoutId);
-  }, [query]);
-
-  // Fetch autocomplete results (only if we still need them for other purposes)
-  useEffect(() => {
-    // Note: Autocomplete is being removed, but we keep this for potential future use
-    // or until we fully remove the SearchAutocomplete component
-    if (!debouncedQuery.trim()) {
-      setResults(null);
-      return;
+        .filter((t) => t.length > 0)
+        .sort();
     }
 
-    const fetchResults = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/search/unified?q=${encodeURIComponent(debouncedQuery)}`
-        );
-        const data = await response.json();
-        setResults(data);
-      } catch (error) {
-        console.error("Failed to fetch search results:", error);
-        setResults(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const creador = searchParams.get("creador");
+    if (creador) {
+      return [creador];
+    }
 
-    fetchResults();
-  }, [debouncedQuery]);
+    return [];
+  })();
 
-  // Sync query with URL (main search, not autocomplete)
-  // Use shallow routing to avoid re-rendering server components
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
+  const activeFilters: ActiveFilter[] = trainerFilters.map((trainer) => ({
+    type: "entrenador" as const,
+    value: trainer,
+    label: `Entrenador: ${trainer}`,
+  }));
+
+  const buildParams = useCallback(
+    (searchToSet: string, trainersToSet: string[]) => {
       const params = new URLSearchParams(searchParams.toString());
-      
-      // Only update if values actually changed from URL
-      const currentSearch = params.get("search") || "";
-      const currentTrainers = params.get("trainers") || "";
-      
-      const newSearch = query.trim() || "";
-      const newTrainers = trainerFilters.join(",");
-      
-      // Skip if nothing changed
-      if (currentSearch === newSearch && currentTrainers === newTrainers) {
-        return;
-      }
-      
-      if (newSearch) {
-        params.set("search", newSearch);
+
+      if (searchToSet.trim()) {
+        params.set("search", searchToSet);
       } else {
         params.delete("search");
       }
-      // Remove old 'creador' param if we have trainers
-      if (trainerFilters.length > 0) {
+
+      if (trainersToSet.length > 0) {
         params.delete("creador");
-        params.set("trainers", newTrainers);
+
+        params.set("trainers", [...trainersToSet].sort().join(","));
       } else {
         params.delete("creador");
         params.delete("trainers");
       }
-      
-      // Use replace with shallow to avoid server re-render
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }, DEBOUNCE_DELAY);
 
-    return () => clearTimeout(timeoutId);
-  }, [query, searchParams, router, trainerFilters]);
+      return params;
+    },
+    [searchParams]
+  );
 
-  // Set query and update URL
-  const setQuery = useCallback((value: string) => {
-    setQueryState(value);
-  }, []);
 
-  // Toggle trainer filter
-  const toggleTrainerFilter = useCallback((name: string) => {
-    setTrainerFilters((prev) => {
-      const newFilters = prev.includes(name)
-        ? prev.filter((t) => t !== name)
-        : [...prev, name];
+  const executeReplace = useCallback(
+    (params: URLSearchParams): boolean => {
+      const newUrl = params.toString();
 
-      // Update active filters
-      const filters: ActiveFilter[] = newFilters.map((trainer) => ({
-        type: "entrenador",
-        value: trainer,
-        label: `Entrenador: ${trainer}`,
-      }));
-      setActiveFilters(filters);
+      if (newUrl === prevUrlRef.current) {
+        return false;
+      }
 
-      return newFilters;
-    });
-  }, []);
+      router.replace(`?${newUrl}`, { scroll: false });
+      prevUrlRef.current = newUrl;
+      return true;
+    },
+    [router]
+  );
 
-  // Clear all trainer filters
-  const clearTrainerFilters = useCallback(() => {
-    setTrainerFilters([]);
-    setActiveFilters([]);
-  }, []);
-
-  // Remove filter (for active filter chips)
-  const removeFilter = useCallback((filter: ActiveFilter) => {
-    if (filter.type === "entrenador") {
-      setTrainerFilters((prev) => {
-        const newFilters = prev.filter((t) => t !== filter.value);
-        const filters: ActiveFilter[] = newFilters.map((trainer) => ({
-          type: "entrenador",
-          value: trainer,
-          label: `Entrenador: ${trainer}`,
-        }));
-        setActiveFilters(filters);
-        return newFilters;
-      });
+  const cancelDebounce = useCallback(() => {
+    if (debounceTimeoutRef.current !== null) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
     }
   }, []);
 
-  // Clear all filters
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      cancelDebounce();
+    };
+  }, [cancelDebounce]);
+
+
+  useEffect(() => {
+    const currentUrl = searchParams.toString();
+
+    // No hubo navegación real si la URL es igual a la última que escribimos
+    if (currentUrl === prevUrlRef.current) {
+      return;
+    }
+
+    // Hubo navegación real: cancelar debounce y sincronizar
+    cancelDebounce();
+
+    const urlSearch = searchParams.get("search") ?? "";
+    setInputValueState(urlSearch);
+    inputValueRef.current = urlSearch;
+    prevUrlRef.current = currentUrl;
+  }, [searchParams, cancelDebounce]);
+
+
+  const setInputValue = useCallback(
+    (value: string) => {
+      // Update local state immediately for responsive UI
+      setInputValueState(value);
+      inputValueRef.current = value;
+
+      // Cancel any pending debounce
+      cancelDebounce();
+
+      // Schedule new debounced URL update
+      debounceTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+
+        const params = buildParams(value, trainerFilters);
+        executeReplace(params);
+        debounceTimeoutRef.current = null;
+      }, DEBOUNCE_DELAY);
+    },
+    [cancelDebounce, buildParams, trainerFilters, executeReplace]
+  );
+
+  const setQuery = setInputValue;
+
+  const toggleTrainerFilter = useCallback(
+    (name: string) => {
+      cancelDebounce();
+
+      const newFilters = trainerFilters.includes(name)
+        ? trainerFilters.filter((t) => t !== name)
+        : [...trainerFilters, name];
+
+      const params = buildParams(query, newFilters);
+      executeReplace(params);
+    },
+    [trainerFilters, query, buildParams, executeReplace, cancelDebounce]
+  );
+
+  const clearTrainerFilters = useCallback(() => {
+    cancelDebounce();
+
+    const params = buildParams(query, []);
+    executeReplace(params);
+  }, [query, buildParams, executeReplace, cancelDebounce]);
+
+  const removeFilter = useCallback(
+    (filter: ActiveFilter) => {
+      if (filter.type === "entrenador") {
+        cancelDebounce();
+
+        const newFilters = trainerFilters.filter((t) => t !== filter.value);
+        const params = buildParams(query, newFilters);
+        executeReplace(params);
+      }
+    },
+    [trainerFilters, query, buildParams, executeReplace, cancelDebounce]
+  );
+
   const clearFilters = useCallback(() => {
-    setTrainerFilters([]);
-    setActiveFilters([]);
+    cancelDebounce();
+
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("search");
     params.delete("creador");
     params.delete("trainers");
-    router.push(`?${params.toString()}`);
-  }, [searchParams, router]);
+
+    setInputValueState("");
+    inputValueRef.current = "";
+    executeReplace(params);
+  }, [searchParams, executeReplace, cancelDebounce]);
+
+  const clearInput = useCallback(() => {
+    cancelDebounce();
+
+    setInputValueState("");
+    inputValueRef.current = "";
+
+    const params = buildParams("", trainerFilters);
+    executeReplace(params);
+  }, [trainerFilters, buildParams, executeReplace, cancelDebounce]);
 
   return {
+    inputValue,
+    setInputValue,
     query,
     setQuery,
-    results,
-    isLoading,
+    clearInput,
+    results: null,
+    isLoading: false,
     trainerFilters,
     toggleTrainerFilter,
     clearTrainerFilters,

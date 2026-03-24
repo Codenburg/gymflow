@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createRutina, updateRutina } from "@/app/actions/rutinas";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminFormField } from "@/components/admin/admin-form-field";
+import { SegmentedControl } from "@/components/admin/segmented-control";
 import type { FormState } from "@/lib/schemas";
-import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 interface RutinaFormProps {
   initialData?: {
@@ -23,7 +24,7 @@ const tipos = [
   { value: "cardio", label: "Cardio" },
   { value: "flexibilidad", label: "Flexibilidad" },
   { value: "hipertrofia", label: "Hipertrofia" },
-] as const;
+];
 
 type RutinaFormState = FormState<{ id: string }>;
 
@@ -43,97 +44,101 @@ export function RutinaForm({ initialData, onSuccess }: RutinaFormProps) {
   );
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Local state for SegmentedControl value
+  const [tipo, setTipo] = useState(initialData?.tipo || "");
+
+  // Handle success/error - stay on page and show toast
   useEffect(() => {
     if (state?.success) {
-      formRef.current?.reset();
+      // Reset form only if creating new
+      if (!isEditing) {
+        formRef.current?.reset();
+        setTipo("");
+      }
+      toast.success(
+        isEditing
+          ? "¡Rutina actualizada exitosamente!"
+          : "¡Rutina creada exitosamente!"
+      );
       onSuccess?.();
+    } else if (state?.success === false && state.message) {
+      toast.error(state.message);
     }
-  }, [state, onSuccess]);
+  }, [state, isEditing, onSuccess]);
 
   return (
-    <form ref={formRef} action={action} className="space-y-6">
+    <form
+      ref={formRef}
+      action={action}
+      className="space-y-3"
+    >
+      <h2 className="text-base font-medium text-muted-foreground">Detalles de la Rutina</h2>
+
       {initialData && <input type="hidden" name="id" value={initialData.id} />}
 
       {/* Error Message */}
       {state && !state.success && state.message && (
-        <div className="p-4 bg-[var(--destructive)]/10 border border-[var(--destructive)]/30 rounded-lg">
-          <p className="text-[var(--destructive)] text-sm">{state.message}</p>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {state?.success && (
-        <div className="p-4 bg-[var(--success)] border border-[var(--success)]/30 rounded-lg">
-          <p className="text-[var(--success-foreground)] text-sm">{state.message}</p>
+        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+          <p className="text-destructive text-sm">{state.message}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Nombre */}
-      <div className="space-y-2">
-        <label htmlFor="nombre" className="text-[var(--foreground)] text-sm font-medium">
-          Nombre *
-        </label>
-          <Input
+        {/* Nombre */}
+        <AdminFormField variant="default" label="Nombre *" error={state?.errors?.nombre?.[0]}>
+          <input
             id="nombre"
             name="nombre"
             type="text"
             required
-            defaultValue={initialData?.nombre}
+            defaultValue={initialData?.nombre ?? ""}
             placeholder="Ej: Rutina Full Body"
-            error={!!state?.errors?.nombre}
+            disabled={isPending}
+            className="seamless-input h-8 w-full min-w-0 rounded-lg px-2.5 py-1 text-sm transition-colors placeholder:text-muted-foreground"
           />
-          {state?.errors?.nombre && (
-            <p className="text-[var(--destructive)] text-xs">{state.errors.nombre[0]}</p>
-          )}
-        </div>
+        </AdminFormField>
 
-      {/* Tipo */}
-      <div className="space-y-2">
-        <label htmlFor="tipo" className="text-[var(--foreground)] text-sm font-medium">
-          Tipo *
-        </label>
-        <select
-          id="tipo"
-          name="tipo"
-          required
-          defaultValue={initialData?.tipo || ""}
-            className="flex h-10 w-full rounded-lg border bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] border-[var(--card-border)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
-        >
-            <option value="">Seleccionar tipo</option>
-            {tipos.map((tipo) => (
-              <option key={tipo.value} value={tipo.value}>
-                {tipo.label}
-              </option>
-            ))}
-          </select>
-          {state?.errors?.tipo && (
-            <p className="text-[var(--destructive)] text-xs">{state.errors.tipo[0]}</p>
-          )}
-        </div>
+        {/* Tipo - SegmentedControl */}
+        <AdminFormField variant="default" label="Tipo *" error={state?.errors?.tipo?.[0]}>
+          <input type="hidden" name="tipo" value={tipo} />
+          <SegmentedControl
+            name="tipo"
+            options={tipos}
+            value={tipo}
+            onChange={setTipo}
+            disabled={isPending}
+            error={state?.errors?.tipo?.[0]}
+          />
+        </AdminFormField>
       </div>
 
       {/* Descripcion */}
-      <div className="space-y-2">
-        <label htmlFor="descripcion" className="text-[var(--foreground)] text-sm font-medium">
-          Descripción
-        </label>
+      <AdminFormField variant="default" label="Descripción" error={state?.errors?.descripcion?.[0]}>
         <Textarea
           id="descripcion"
           name="descripcion"
-          defaultValue={initialData?.descripcion || ""}
+          defaultValue={initialData?.descripcion ?? ""}
           placeholder="Describe los objetivos de esta rutina..."
           rows={3}
+          disabled={isPending}
+          className="seamless-input w-full placeholder:text-muted-foreground"
         />
-        {state?.errors?.descripcion && (
-            <p className="text-[var(--destructive)] text-xs">{state.errors.descripcion[0]}</p>
-        )}
-      </div>
+      </AdminFormField>
 
       {/* Submit */}
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Guardando..." : isEditing ? "Actualizar Rutina" : "Crear Rutina"}
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          {isPending
+            ? isEditing
+              ? "Actualizando..."
+              : "Guardando..."
+            : isEditing
+            ? "Actualizar Rutina"
+            : "Crear Rutina"}
         </Button>
       </div>
     </form>

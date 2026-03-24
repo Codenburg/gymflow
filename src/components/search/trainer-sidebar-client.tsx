@@ -9,15 +9,14 @@ interface Trainer {
 }
 
 interface TrainerSidebarClientProps {
-  trainers: Trainer[];
-  hasError: boolean;
+  trainers: Trainer[] | null;
 }
 
-export function TrainerSidebarClient({ trainers, hasError }: TrainerSidebarClientProps) {
+export function TrainerSidebarClient({ trainers }: TrainerSidebarClientProps) {
   const { trainerFilters, toggleTrainerFilter, clearTrainerFilters } = useUnifiedSearch();
 
-  // Single source of truth: when routines have error, sidebar shows unavailable
-  if (hasError) {
+  // null means DB error - show unavailable
+  if (trainers === null) {
     return (
       <aside className="w-full lg:w-64 flex-shrink-0 mt-0" data-testid="trainer-sidebar-error">
         <div className="bg-card border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm">
@@ -30,7 +29,7 @@ export function TrainerSidebarClient({ trainers, hasError }: TrainerSidebarClien
     );
   }
 
-  // Empty state
+  // Empty state - legitimate empty list, not an error
   if (trainers.length === 0) {
     return null;
   }
