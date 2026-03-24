@@ -29,11 +29,10 @@ const defaultDia = {
 };
 
 // Default values for the entire form
-const defaultValues: RutinaCompletaInput & { dias: typeof defaultDia[] } = {
+const defaultValues: Omit<RutinaCompletaInput, "creador"> & { dias: typeof defaultDia[] } = {
   nombre: "",
   tipo: "fuerza",
   descripcion: "",
-  creador: "",
   dias: [{ ...defaultDia }],
 };
 
@@ -182,9 +181,6 @@ export function RutinaCompletaForm() {
     formData.append("tipo", data.tipo || "");
     if (data.descripcion) {
       formData.append("descripcion", data.descripcion);
-    }
-    if (data.creador) {
-      formData.append("creador", data.creador);
     }
 
     // Add nested dias and ejercicios

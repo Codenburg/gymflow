@@ -15,12 +15,18 @@ interface Dia {
   ejercicios: Ejercicio[];
 }
 
+interface CreadorUser {
+  id: string;
+  name: string;
+}
+
 interface Rutina {
   id: string;
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  creadorId: string;
+  creadorUser: CreadorUser;
   diasCount: number;
   dias?: Dia[];
 }

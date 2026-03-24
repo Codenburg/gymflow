@@ -258,3 +258,122 @@ The Account model MUST be configured to store credentials for the username plugi
 | value | String | required | The verification value/token |
 | expiresAt | DateTime | required | When verification expires |
 | createdAt | DateTime | @default(now()) | Creation timestamp |
+
+---
+
+## Ownership Audit & Soft Delete Models
+
+This section defines requirements for the User soft delete and OwnershipTransfer audit trail system.
+
+### Requirement: User Soft Delete
+
+The system MUST implement soft delete on the User model to preserve historical data integrity.
+
+#### Scenario: Soft delete marks user as deleted
+
+- GIVEN a user exists in the database
+- WHEN `deleteUser` action is called
+- THEN `deletedAt` MUST be set to current timestamp
+- AND the user record MUST NOT be physically deleted
+- AND all user queries for active users MUST filter `deletedAt IS NULL`
+
+#### Scenario: Soft-deleted users excluded from queries
+
+- GIVEN a user has `deletedAt` set to a timestamp
+- WHEN any user listing or dropdown query executes
+- THEN the soft-deleted user MUST NOT appear in results
+- UNLESS explicitly querying for deleted users
+
+### Data Model: User (Extended)
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | String | @id @default(uuid()) | User identifier |
+| deletedAt | DateTime? | @db.Timestamp, indexed | NULL = active, timestamp = soft-deleted |
+| outgoingTransfers | OwnershipTransfer[] | relation | Transfers initiated by this user |
+| incomingTransfers | OwnershipTransfer[] | relation | Transfers received by this user |
+
+### Requirement: OwnershipTransfer Audit Table
+
+The system MUST track all routine ownership changes in the OwnershipTransfer table.
+
+#### Scenario: Initial routine creation logged
+
+- GIVEN a new routine is created via `createRutina` or `createRutinaCompleta`
+- THEN an OwnershipTransfer record MUST be created atomically
+- AND `fromUserId` MUST be NULL (creation, not transfer)
+- AND `toUserId` MUST be the routine creator
+
+#### Scenario: Ownership transfer logged
+
+- GIVEN `transferRutinasOwnership` is called
+- THEN an OwnershipTransfer record MUST be created for each transferred routine
+- AND `fromUserId` MUST be the previous owner
+- AND `toUserId` MUST be the new owner
+
+### Data Model: OwnershipTransfer
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | String | @id @default(uuid()) | Transfer record identifier |
+| rutinaId | String | @db.Uuid, indexed | Foreign key to Rutina |
+| fromUserId | String? | @db.Uuid, nullable | Previous owner (NULL for creation) |
+| toUserId | String | @db.Uuid | New owner |
+| createdAt | DateTime | @default(now()) | When transfer occurred |
+| rutina | Rutina | @relation | Relation to routine |
+| fromUser | User? | @relation("FromUser") | Relation to previous owner |
+| toUser | User | @relation("ToUser") | Relation to new owner |
+
+### Requirement: Unique Routine Names Per User
+
+The system MUST enforce that routine names are unique per creator, not globally unique.
+
+#### Scenario: Duplicate name by same user rejected
+
+- GIVEN user "Nando" has a routine named "Full Body"
+- WHEN another routine named "Full Body" is created for "Nando"
+- THEN the creation MUST fail with unique constraint violation
+
+#### Scenario: Same name by different user allowed
+
+- GIVEN user "Nando" has a routine named "Full Body"
+- WHEN user "Leo" creates a routine named "Full Body"
+- THEN the creation MUST succeed (different creators)
+
+### Data Model: Rutina (Extended)
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | String | @id @default(uuid()) | Routine identifier |
+| nombre | String | required | Routine name |
+| creadorId | String | @db.Uuid | Foreign key to User (creator) |
+| @@unique | | [creadorId, nombre] | Unique name per user |
+
+### Requirement: Transfer to Active Users Only
+
+The system MUST reject ownership transfers to soft-deleted users.
+
+#### Scenario: Transfer to deleted user rejected
+
+- GIVEN user "Nando" is soft-deleted (deletedAt is set)
+- WHEN `transferRutinasOwnership` is called with `toUserId = Nando's id`
+- THEN the transfer MUST be rejected with error
+- AND no OwnershipTransfer record MUST be created
+
+### Requirement: Creator Change Guard
+
+The system MUST prevent direct `creadorId` updates outside of ownership transfer actions.
+
+#### Scenario: Direct creadorId update blocked
+
+- GIVEN a routine has `creadorId = Nando`
+- WHEN `updateRutina` is called with a new `creadorId = Leo`
+- THEN the update MUST be rejected with error
+- AND the routine's `creadorId` MUST remain unchanged
+
+#### Scenario: Transfer updates creadorId correctly
+
+- GIVEN a routine has `creadorId = Nando`
+- WHEN `transferRutinasOwnership(Nando, Leo)` is called
+- THEN the routine's `creadorId` MUST be updated to Leo
+- AND an OwnershipTransfer record MUST be created

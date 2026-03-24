@@ -35,6 +35,7 @@ async function main() {
   // Clear existing data
   await prisma.ejercicio.deleteMany();
   await prisma.dia.deleteMany();
+  await prisma.ownershipTransfer.deleteMany();
   await prisma.rutina.deleteMany();
   await prisma.feriado.deleteMany();
   await prisma.gym.deleteMany();
@@ -53,6 +54,20 @@ async function main() {
   });
 
   console.log('Gym config created with price: $45.000');
+
+  // Routine templates
+  const routineTemplates = [
+    { nombre: 'Full Body', tipo: 'Fuerza', descripcion: 'Rutina completa para todo el cuerpo' },
+    { nombre: 'Pecho y Tríceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de empujes' },
+    { nombre: 'Espalda y Bíceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de tirones' },
+    { nombre: 'Piernas', tipo: 'Fuerza', descripcion: 'Cuádriceps, isquiotibiales, gemelos' },
+    { nombre: 'Hombros', tipo: 'Fuerza', descripcion: 'Deltoides y manguito rotador' },
+    { nombre: 'Cardio HIIT', tipo: 'Cardio', descripcion: 'High intensity interval training' },
+    { nombre: 'Core y Abdominales', tipo: 'Funcional', descripcion: 'Fuerza central' },
+    { nombre: 'Full Body Ligero', tipo: 'Funcional', descripcion: 'Rutina accesible para todos' },
+    { nombre: 'Potencia', tipo: 'Fuerza', descripcion: 'Ejercicios pliométricos' },
+    { nombre: 'Resistencia', tipo: 'Cardio', descripcion: 'Endurance y stamina' },
+  ];
 
   // Create admin users
   const admins = [
@@ -88,23 +103,8 @@ async function main() {
     });
 
     console.log(`Admin ${admin.name} created with DNI: ${admin.dni}`);
-  }
 
-  // Create 10 routines for each admin
-  const routineTemplates = [
-    { nombre: 'Full Body', tipo: 'Fuerza', descripcion: 'Rutina completa para todo el cuerpo' },
-    { nombre: 'Pecho y Tríceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de empujes' },
-    { nombre: 'Espalda y Bíceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de tirones' },
-    { nombre: 'Piernas', tipo: 'Fuerza', descripcion: 'Cuádriceps, isquiotibiales, gemelos' },
-    { nombre: 'Hombros', tipo: 'Fuerza', descripcion: 'Deltoides y manguito rotador' },
-    { nombre: 'Cardio HIIT', tipo: 'Cardio', descripcion: 'High intensity interval training' },
-    { nombre: 'Core y Abdominales', tipo: 'Funcional', descripcion: 'Fuerza central' },
-    { nombre: 'Full Body Ligero', tipo: 'Funcional', descripcion: 'Rutina accesible para todos' },
-    { nombre: 'Potencia', tipo: 'Fuerza', descripcion: 'Ejercicios pliométricos' },
-    { nombre: 'Resistencia', tipo: 'Cardio', descripcion: 'Endurance y stamina' },
-  ];
-
-  for (const admin of admins) {
+    // Create 10 routines for this admin using user.id as FK
     for (let i = 0; i < routineTemplates.length; i++) {
       const template = routineTemplates[i];
       
@@ -114,7 +114,16 @@ async function main() {
           nombre: `${template.nombre} - ${admin.name}`,
           tipo: template.tipo,
           descripcion: template.descripcion,
-          creador: admin.name,
+          creadorId: user.id,
+        },
+      });
+
+      // Create initial ownership record (creation, not transfer)
+      await prisma.ownershipTransfer.create({
+        data: {
+          rutinaId: rutina.id,
+          fromUserId: null, // Creation, not a transfer
+          toUserId: user.id,
         },
       });
 
