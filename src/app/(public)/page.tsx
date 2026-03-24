@@ -87,7 +87,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
 }
 
 interface RoutineListWrapperProps {
-  result: Awaited<ReturnType<typeof getCachedRutinas>>;
+  result: Awaited<ReturnType<typeof getCachedRutinas>> | null;
 }
 
 async function RoutineListWrapper({ result }: RoutineListWrapperProps) {

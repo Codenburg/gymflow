@@ -59,6 +59,7 @@ export type DiaNestedInput = z.infer<typeof diaNestedSchema>;
 
 // ======================
 // Rutina Schema (Flat - for separate creation)
+// NOTE: creadorId is set server-side from session user.id
 // ======================
 
 export const rutinaSchema = z.object({
@@ -67,7 +68,6 @@ export const rutinaSchema = z.object({
     error: "Tipo inválido",
   }),
   descripcion: z.string().max(500).optional(),
-  creador: z.string().max(100).optional(),
 });
 
 export const rutinaUpdateSchema = rutinaSchema.partial();
@@ -77,6 +77,7 @@ export type RutinaUpdateInput = z.infer<typeof rutinaUpdateSchema>;
 
 // ======================
 // Rutina Completa Schema (Nested - for routine creation)
+// NOTE: creadorId is set server-side from session user.id
 // ======================
 
 export const rutinaCompletaSchema = z.object({
@@ -85,7 +86,6 @@ export const rutinaCompletaSchema = z.object({
     error: "Tipo inválido",
   }),
   descripcion: z.string().max(500).optional(),
-  creador: z.string().max(100).optional(),
   dias: z
     .array(diaNestedSchema)
     .min(1, { error: "La rutina debe tener al menos un día" }),
