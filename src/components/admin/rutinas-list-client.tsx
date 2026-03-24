@@ -13,12 +13,18 @@ import { cn } from "@/lib/utils";
 import { deleteRutina, duplicateRutina } from "@/app/actions/rutinas";
 import { useConfirm } from "@/hooks/use-confirm";
 
+interface CreadorUser {
+  id: string;
+  name: string;
+}
+
 interface RutinaWithCount {
   id: string;
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  creadorId: string;
+  creadorUser: CreadorUser;
   diasCount: number;
 }
 
@@ -65,14 +71,11 @@ const columns: ColumnDef<RutinaWithCount, unknown>[] = [
     ),
   },
   {
-    accessorKey: "descripcion",
-    header: "Descripción",
+    accessorKey: "creadorUser.name",
+    header: "Creador",
     cell: ({ row }) => (
-      <span
-        className="text-muted-foreground text-sm max-w-xs truncate block"
-        title={row.original.descripcion || undefined}
-      >
-        {row.original.descripcion || "—"}
+      <span className="text-muted-foreground text-sm">
+        {row.original.creadorUser?.name || "—"}
       </span>
     ),
   },
@@ -216,7 +219,7 @@ export function RutinasListClient({ rutinas }: RutinasListClientProps) {
     return (
       rutina.nombre.toLowerCase().includes(term) ||
       rutina.tipo.toLowerCase().includes(term) ||
-      rutina.descripcion?.toLowerCase().includes(term)
+      rutina.creadorUser?.name.toLowerCase().includes(term)
     );
   });
 

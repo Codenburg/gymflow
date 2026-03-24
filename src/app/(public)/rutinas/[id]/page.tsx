@@ -64,11 +64,12 @@ export default async function RoutineDetailPage({
                 <span className="inline-block rounded-full bg-blue-500/20 px-3 py-1 text-sm font-medium text-blue-500">
                   {rutina.tipo}
                 </span>
-                {rutina.creador && (
-                  <span className="text-sm text-muted-foreground">
-                    Creado por <span className="text-foreground font-medium">{rutina.creador}</span>
+                <span className="text-sm text-muted-foreground">
+                  Creado por{" "}
+                  <span className="text-foreground font-medium">
+                    {rutina.creadorUser.name}
                   </span>
-                )}
+                </span>
               </div>
             </div>
             {rutina.descripcion && (

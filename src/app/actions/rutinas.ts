@@ -45,9 +45,12 @@ export async function createRutina(
   if (!session) {
     return { success: false, message: "Debes iniciar sesión" };
   }
-  const user = session.user as { admin?: boolean; name?: string } | undefined;
+  const user = session.user as { admin?: boolean; name?: string; id?: string } | undefined;
   if (!user?.admin) {
     return { success: false, message: "No tienes permisos de administrador" };
+  }
+  if (!user.id) {
+    return { success: false, message: "Error: ID de usuario no encontrado" };
   }
 
   // Validate form data
@@ -63,11 +66,28 @@ export async function createRutina(
   }
 
   try {
-    const rutina = await prisma.rutina.create({
-      data: {
-        ...parsed.data,
-        creador: user.name ?? null,
-      },
+    const creadorId = user.id;
+
+    // Create routine and log ownership transfer in a transaction
+    const rutina = await prisma.$transaction(async (tx) => {
+      const newRutina = await tx.rutina.create({
+        data: {
+          ...parsed.data,
+          // Required FK to User.id
+          creadorId: creadorId,
+        },
+      });
+
+      // Log creation in ownership transfer audit (fromUserId = null means initial creation)
+      await tx.ownershipTransfer.create({
+        data: {
+          rutinaId: newRutina.id,
+          fromUserId: null,
+          toUserId: creadorId,
+        },
+      });
+
+      return newRutina;
     });
 
     // Invalidate rutinas cache so homepage reflects changes immediately
@@ -92,6 +112,10 @@ export async function createRutina(
 
 /**
  * Update an existing Rutina
+ * 
+ * NOTE: creadorId CANNOT be changed via this function.
+ * To change ownership, use transferRutinasOwnership() instead.
+ * This prevents accidental or malicious transfers of routine ownership.
  */
 export async function updateRutina(
   prevState: FormState,
@@ -127,6 +151,11 @@ export async function updateRutina(
   }
 
   try {
+    // SECURITY NOTE: creadorId cannot be changed via this function
+    // The schema does not include creadorId, and updateRutina should only
+    // modify nombre, tipo, descripcion. Ownership transfers are handled
+    // exclusively by transferRutinasOwnership()
+
     const rutina = await prisma.rutina.update({
       where: { id: idParsed.data },
       data: parsed.data,
@@ -206,7 +235,8 @@ export async function duplicateRutina(
           nombre: `${original.nombre} (Copia)`,
           tipo: original.tipo,
           descripcion: original.descripcion,
-          creador: original.creador,
+          // Required FK to User.id
+          creadorId: original.creadorId,
         },
       });
 
@@ -366,7 +396,20 @@ export async function deleteRutinas(
 export async function getRutinas() {
   try {
     const rutinas = await prisma.rutina.findMany({
-      include: {
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        descripcion: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
         dias: {
           include: {
             ejercicios: true,
@@ -394,7 +437,20 @@ export async function getRutina(id: string) {
   try {
     const rutina = await prisma.rutina.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        descripcion: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
         dias: {
           include: {
             ejercicios: {
@@ -505,10 +561,14 @@ export async function createRutinaCompleta(
   if (!session) {
     return { success: false, message: "Debes iniciar sesión" };
   }
-  const user = session.user as { admin?: boolean; name?: string } | undefined;
+  const user = session.user as { admin?: boolean; name?: string; id?: string } | undefined;
   if (!user?.admin) {
     return { success: false, message: "No tienes permisos de administrador" };
   }
+  if (!user.id) {
+    return { success: false, message: "Error: ID de usuario no encontrado" };
+  }
+  const creadorId = user.id;
 
   // Parse nested FormData
   const rawData = parseNestedFormData(formData);
@@ -534,7 +594,17 @@ export async function createRutinaCompleta(
           nombre: data.nombre,
           tipo: data.tipo,
           descripcion: data.descripcion,
-          creador: user.name ?? null,
+          // Required FK to User.id
+          creadorId: creadorId,
+        },
+      });
+
+      // Log creation in ownership transfer audit (fromUserId = null means initial creation)
+      await tx.ownershipTransfer.create({
+        data: {
+          rutinaId: createdRutina.id,
+          fromUserId: null,
+          toUserId: creadorId,
         },
       });
 

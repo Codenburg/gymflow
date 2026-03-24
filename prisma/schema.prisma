@@ -15,10 +15,22 @@ model Rutina {
   nombre      String
   tipo        String
   descripcion String?
-  creador     String?
+  // Required FK to User.id - every routine must have a creator
+  creadorId   String   @db.Uuid
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   dias        Dia[]
+
+  // Relation to User (creator) - RESTRICT: deletion blocked if user has rutinas
+  // Transfer ownership before deleting a user with rutinas
+  creadorUser User     @relation(fields: [creadorId], references: [id], onDelete: Restrict)
+
+  // Ownership transfer history for this rutina
+  ownershipTransfers OwnershipTransfer[]
+
+  // Unique constraint: same user cannot have two routines with the same name
+  @@unique([creadorId, nombre])
+  @@index([creadorId])
 }
 
 model Dia {
@@ -68,9 +80,21 @@ model User {
   admin          Boolean   @default(false)
   role           String    @default("user")
   banned         Boolean   @default(false)
+  // Soft delete timestamp - if set, user is considered deleted
+  // All queries must filter: where: { deletedAt: null }
+  deletedAt      DateTime? @db.Timestamp
+
+  // Index for soft-delete query performance
+  @@index([deletedAt])
 
   sessions       Session[]
   accounts       Account[]
+  // Routines created by this user
+  rutinas        Rutina[]
+  // Ownership transfers where user was the source
+  transfersFrom  OwnershipTransfer[] @relation("FromUser")
+  // Ownership transfers where user was the target
+  transfersTo    OwnershipTransfer[] @relation("ToUser")
 }
 
 model Session {
@@ -118,6 +142,27 @@ model Verification {
   createdAt  DateTime @default(now())
 
   @@unique([identifier, value])
+}
+
+// ======================
+// Ownership Transfer Audit
+// ======================
+
+model OwnershipTransfer {
+  id        String   @id @default(uuid())
+  rutinaId  String
+  // null fromUserId means initial creation (not a transfer)
+  fromUserId String?
+  toUserId  String
+  createdAt DateTime @default(now())
+
+  rutina    Rutina @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
+  fromUser  User?   @relation("FromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser    User   @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([rutinaId])
+  @@index([fromUserId])
+  @@index([toUserId])
 }
 
 // ======================

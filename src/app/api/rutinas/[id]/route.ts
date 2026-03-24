@@ -27,7 +27,20 @@ export async function GET(
   try {
     const rutina = await prisma.rutina.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        descripcion: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
         dias: {
           orderBy: { orden: "asc" },
           include: {
@@ -52,7 +65,8 @@ export async function GET(
       nombre: rutina.nombre,
       tipo: rutina.tipo,
       descripcion: rutina.descripcion,
-      creador: rutina.creador,
+      creadorId: rutina.creadorId,
+      creadorUser: rutina.creadorUser,
       createdAt: rutina.createdAt.toISOString(),
       updatedAt: rutina.updatedAt.toISOString(),
       dias: rutina.dias.map((dia) => ({

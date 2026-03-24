@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { rankSearchResults } from "@/lib/search-utils";
 
 interface RutinaQueryResult {
   id: string;
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  creadorId: string;
+  creadorUser: { id: string; name: string };
   createdAt: Date;
   updatedAt: Date;
   _count: {
@@ -30,26 +30,11 @@ interface RutinaQueryResult {
 /**
  * GET /api/rutinas
  * Returns a list of routines with optional search filter
- *
- * Query Parameters:
- * - search (optional): Filter by nombre only (case-insensitive)
- * - trainers (optional): Filter by multiple creators (comma-separated)
- * - creador (optional): Filter by specific creator (for backwards compatibility)
- * - page (optional, default: 1): Page number for pagination
- * - limit (optional, default: 12): Results per page
- *
- * Response 200:
- * - data: Array of Rutina objects with id, nombre, tipo, descripcion, createdAt, updatedAt, diasCount
- * - pagination: { total, page, limit, totalPages }
- *
- * Response 500:
- * - Error message indicating service unavailability
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? "";
   const trainersParam = searchParams.get("trainers") ?? "";
-  const creador = searchParams.get("creador") ?? "";
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "12", 10)));
   const skip = (page - 1) * limit;
@@ -66,7 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       };
     }
 
-    // Filter by multiple trainers (comma-separated)
+    // Filter by multiple trainers (comma-separated) - use creadorUser.name
     if (trainersParam.trim().length > 0) {
       const trainersList = trainersParam
         .split(",")
@@ -74,19 +59,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .filter((t) => t.length > 0);
 
       if (trainersList.length > 0) {
-        where.creador = {
-          in: trainersList,
-          mode: "insensitive" as const,
+        where.creadorUser = {
+          name: {
+            in: trainersList,
+            mode: "insensitive" as const,
+          },
         };
       }
-    }
-
-    // Filter by specific creator (for backwards compatibility)
-    if (creador.trim().length > 0 && trainersParam.trim().length === 0) {
-      where.creador = {
-        equals: creador.trim(),
-        mode: "insensitive" as const,
-      };
     }
 
     // Get total count for pagination
@@ -100,7 +79,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         nombre: true,
         tipo: true,
         descripcion: true,
-        creador: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -138,29 +123,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
 
-    // Apply ranking if there's a search query
-    let rankedRutinas = rutinas;
-    if (search.trim().length > 0) {
-      rankedRutinas = rankSearchResults(
-        rutinas.map((r) => ({
-          id: r.id,
-          nombre: r.nombre,
-          creador: r.creador,
-        })),
-        search
-      ).map((r) => {
-        const original = rutinas.find((orig) => orig.id === r.id);
-        return original!;
-      });
-    }
-
     // Transform the response to match the expected format
-    const response = rankedRutinas.map((rutina) => ({
+    const response = rutinas.map((rutina) => ({
       id: rutina.id,
       nombre: rutina.nombre,
       tipo: rutina.tipo,
       descripcion: rutina.descripcion,
-      creador: rutina.creador,
+      creadorId: rutina.creadorId,
+      creadorUser: rutina.creadorUser,
       createdAt: rutina.createdAt.toISOString(),
       updatedAt: rutina.updatedAt.toISOString(),
       diasCount: rutina._count.dias,

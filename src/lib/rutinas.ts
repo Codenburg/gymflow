@@ -2,12 +2,23 @@ import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 import { DataResult, ok, err } from "@/lib/data-result";
 
+/**
+ * Creator user (from FK relation)
+ * Only includes id and name - minimal payload
+ */
+export interface CreadorUser {
+  id: string;
+  name: string;
+}
+
 export interface Rutina {
   id: string;
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  // Required FK to User.id
+  creadorId: string;
+  creadorUser: CreadorUser;
   diasCount: number;
   dias?: Dia[];
 }
@@ -31,7 +42,9 @@ export interface RutinaDetail {
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  // Required FK to User.id
+  creadorId: string;
+  creadorUser: CreadorUser;
   createdAt: Date;
   updatedAt: Date;
   dias: DiaDetail[];
@@ -60,14 +73,15 @@ export interface Trainer {
 
 /**
  * Extract trainers with their routine counts from ALL rutinas (unfiltered).
- * This is the source of truth for the trainer sidebar chips.
+ * Uses creadorUser.name for reliable creator identification.
  */
-function extractTrainers(rutinas: Pick<Rutina, "creador">[]): Trainer[] {
+function extractTrainers(rutinas: { creadorUser: CreadorUser | null }[]): Trainer[] {
   const trainerMap = new Map<string, number>();
 
   for (const rutina of rutinas) {
-    if (rutina.creador) {
-      trainerMap.set(rutina.creador, (trainerMap.get(rutina.creador) || 0) + 1);
+    if (rutina.creadorUser?.name) {
+      const current = trainerMap.get(rutina.creadorUser.name) || 0;
+      trainerMap.set(rutina.creadorUser.name, current + 1);
     }
   }
 
@@ -78,8 +92,6 @@ function extractTrainers(rutinas: Pick<Rutina, "creador">[]): Trainer[] {
 
 /**
  * Result structure that separates filtered rutinas from stable trainer list.
- * - rutinas: filtered routines based on search/trainers params
- * - trainers: ALL trainers derived from unfiltered data (stable source for chips)
  */
 interface RutinasYTrainersResult {
   rutinas: Rutina[];
@@ -89,13 +101,6 @@ interface RutinasYTrainersResult {
 /**
  * Fetch rutinas from database with caching.
  * Uses unstable_cache to avoid repeated DB queries within revalidation period.
- * 
- * IMPORTANT: Trainer list is always derived from ALL rutinas (unfiltered),
- * while filtered rutinas are used for display. This ensures chips never disappear.
- * 
- * @param search - Optional filter by routine name
- * @param trainers - Optional filter by creators (comma-separated)
- * @returns RutinasYTrainersResult with filtered rutinas and stable trainer list
  */
 async function fetchRutinasFromDb(
   search?: string,
@@ -124,22 +129,36 @@ async function fetchRutinasFromDb(
     // CRITICAL: First query for ALL trainers (unfiltered) - this is the stable source
     // We need this BEFORE applying trainer filter so chips never disappear
     const allRutinasForTrainers = await prisma.rutina.findMany({
-      select: { creador: true },
+      select: { creadorUser: { select: { id: true, name: true } } },
     });
     const trainersData = extractTrainers(allRutinasForTrainers);
 
     // Apply trainer filter to WHERE clause for rutinas query
+    // Filter by creadorUser.name since that's now the identity field
     if (trainersList.length > 0) {
-      where.creador = {
-        in: trainersList,
-        mode: "insensitive",
+      where.creadorUser = {
+        name: {
+          in: trainersList,
+          mode: "insensitive",
+        },
       };
     }
 
     // Second query: fetch filtered rutinas with dias and ejercicios
     const rutinas = await prisma.rutina.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        descripcion: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         dias: {
           include: {
             ejercicios: {
@@ -164,7 +183,8 @@ async function fetchRutinasFromDb(
         nombre: rutina.nombre,
         tipo: rutina.tipo,
         descripcion: rutina.descripcion,
-        creador: rutina.creador,
+        creadorId: rutina.creadorId,
+        creadorUser: rutina.creadorUser,
         diasCount: rutina.dias.length,
         dias: rutina.dias.map((dia) => ({
           id: dia.id,
@@ -186,11 +206,6 @@ const RUTINAS_CACHE_TAG = "rutinas";
 
 /**
  * Get cached rutinas with optional filters.
- * Results are cached for 60 seconds to avoid repeated DB queries.
- * Cache key includes search and trainers params to differentiate cached results.
- * 
- * @param search - Optional filter by routine name (case-insensitive)
- * @param trainers - Optional filter by creators (comma-separated)
  */
 export async function getCachedRutinas(search?: string, trainers?: string) {
   return unstable_cache(
@@ -207,7 +222,20 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
   try {
     const rutina = await prisma.rutina.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        nombre: true,
+        tipo: true,
+        descripcion: true,
+        creadorId: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
         dias: {
           include: {
             ejercicios: {
@@ -228,7 +256,8 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
       nombre: rutina.nombre,
       tipo: rutina.tipo,
       descripcion: rutina.descripcion,
-      creador: rutina.creador,
+      creadorId: rutina.creadorId,
+      creadorUser: rutina.creadorUser,
       createdAt: rutina.createdAt,
       updatedAt: rutina.updatedAt,
       dias: rutina.dias.map((dia) => ({

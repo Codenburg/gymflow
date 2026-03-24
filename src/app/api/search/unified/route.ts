@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import {
-  filterRoutinesByQuery,
-  rankSearchResults,
-  groupByTrainer,
-} from "@/lib/search-utils";
 
 const MAX_AUTOCOMPLETE_RESULTS = 5;
+
+interface RutinaSearchResult {
+  id: string;
+  nombre: string;
+  creadorUser: { id: string; name: string } | null;
+}
+
+interface TrainerResult {
+  nombre: string;
+  count: number;
+}
 
 /**
  * GET /api/search/unified
  * Returns unified search results for autocomplete
- *
- * Query Parameters:
- * - q (required): Search query
- *
- * Response 200:
- * - rutinas: Array of routines matching the query (max 5)
- * - trainers: Array of unique trainers matching the query (max 5)
- * - message: Optional message when no results found
  */
 export async function GET(
   request: NextRequest
@@ -35,29 +33,48 @@ export async function GET(
   }
 
   try {
-    // Fetch all routines (lightweight query for autocomplete)
-    const rutinas = await prisma.rutina.findMany({
+    // Fetch all routines with creator info (lightweight query for autocomplete)
+    const rutinas: RutinaSearchResult[] = await prisma.rutina.findMany({
       select: {
         id: true,
         nombre: true,
-        creador: true,
+        creadorUser: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         nombre: "asc",
       },
     });
 
-    // Filter by query
-    const filteredRutinas = filterRoutinesByQuery(rutinas, query);
-
-    // Rank results
-    const rankedRutinas = rankSearchResults(filteredRutinas, query);
+    // Filter by query (match against nombre or creadorUser.name)
+    const lowerQuery = query.toLowerCase().trim();
+    const filteredRutinas = rutinas.filter(
+      (r) =>
+        r.nombre.toLowerCase().includes(lowerQuery) ||
+        r.creadorUser?.name.toLowerCase().includes(lowerQuery)
+    );
 
     // Get top results
-    const topRutinas = rankedRutinas.slice(0, MAX_AUTOCOMPLETE_RESULTS);
+    const topRutinas = filteredRutinas.slice(0, MAX_AUTOCOMPLETE_RESULTS).map((r) => ({
+      id: r.id,
+      nombre: r.nombre,
+    }));
 
-    // Group by trainer
-    const allTrainers = groupByTrainer(filteredRutinas);
+    // Group by trainer (using creadorUser.name)
+    const trainerMap = new Map<string, number>();
+    for (const rutina of rutinas) {
+      if (rutina.creadorUser?.name) {
+        const current = trainerMap.get(rutina.creadorUser.name) || 0;
+        trainerMap.set(rutina.creadorUser.name, current + 1);
+      }
+    }
+    const allTrainers: TrainerResult[] = Array.from(trainerMap.entries())
+      .map(([nombre, count]) => ({ nombre, count }))
+      .sort((a, b) => b.count - a.count || a.nombre.localeCompare(b.nombre));
     const topTrainers = allTrainers.slice(0, MAX_AUTOCOMPLETE_RESULTS);
 
     // Check if no results

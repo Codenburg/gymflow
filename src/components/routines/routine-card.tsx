@@ -2,12 +2,18 @@ import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface CreadorUser {
+  id: string;
+  name: string;
+}
+
 interface Rutina {
   id: string;
   nombre: string;
   tipo: string;
   descripcion: string | null;
-  creador: string | null;
+  creadorId: string;
+  creadorUser: CreadorUser;
   diasCount: number;
 }
 
@@ -35,11 +41,12 @@ export function RoutineCard({ rutina }: RoutineCardProps) {
           {rutina.descripcion && (
             <p className="text-sm text-muted-foreground line-clamp-2">{rutina.descripcion}</p>
           )}
-          {rutina.creador && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Creado por <span className="text-foreground font-medium">{rutina.creador}</span>
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground mt-2">
+            Creado por{" "}
+            <span className="text-foreground font-medium">
+              {rutina.creadorUser.name}
+            </span>
+          </p>
         </CardContent>
         <CardFooter className="mt-auto">
           <span className="text-xs text-muted-foreground flex items-center gap-1">
