@@ -1,0 +1,13 @@
+change: update-readme-and-prd
+created: 2026-03-25
+current_phase: spec
+phases_completed:
+  - proposal
+arts:
+  - proposal.md
+pending_arts:
+  - specs/readme/spec.md
+  - specs/prd/spec.md
+  - design.md
+  - tasks.md
+  - verify-report.md

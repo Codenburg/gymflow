@@ -409,27 +409,28 @@ User → múltiples Accounts
 
 - Next.js 16.1.6
 - React 19.2.3
-- TypeScript 5
-- Tailwind CSS 4
+- React DOM 19.2.3
+- TypeScript ^5
+- Tailwind CSS ^4
 - shadcn/ui
 
 **Estado**
 
-- Zustand 5
+- Zustand ^5.0.11
 
 **Validación**
 
-- Zod 4
-- React Hook Form 7
+- Zod ^4.3.6
+- React Hook Form ^7.71.2
 
 **Backend**
 
 - Next.js App Router (Server Actions)
-- Better Auth 1.5.4
+- Better Auth ^1.5.4
 
 **ORM**
 
-- Prisma 7
+- Prisma ^7.4.2
 
 **Base de datos**
 
@@ -437,7 +438,7 @@ User → múltiples Accounts
 
 **Testing**
 
-- Playwright
+- Playwright ^1.58.2
 
 ---
 
@@ -517,9 +518,11 @@ Indicadores de funcionamiento del sistema:
 
 # Open Issues
 
-- optimización de rendimiento (lazy loading, code splitting)
-- tests E2E con Playwright
-- documentación de API
+| Issue | Status | Resolution |
+|-------|--------|------------|
+| Optimización de rendimiento | Deferred | Low traffic doesn't justify complexity; revisit at >10k monthly users |
+| Tests E2E con Playwright | In Progress | Part of Phase 4 |
+| Documentación de API | In Progress | Part of Phase 4 |
 
 ---
 
@@ -547,6 +550,58 @@ Indicadores de funcionamiento del sistema:
 
 ## Fase 4 — Pendiente
 
-- tests E2E
-- documentación de API
--cache warming para SEO
+### Tests E2E
+
+| Test Area | Priority | Description |
+|-----------|----------|-------------|
+| Public routing | High | Home page loads, routine listing, routine detail |
+| Admin auth flow | High | Login success/failure, session persistence |
+| CRUD operations | High | Create/edit/delete routines, days, exercises |
+| PDF generation | Medium | PDF download triggers and completes |
+| Search/filter | Medium | Search returns correct results |
+| Theme toggle | Low | Light/dark mode persists |
+
+**Rationale:** E2E coverage should focus on critical user paths. Admin CRUD is highest value since that's where data integrity matters most.
+
+### Documentación de API
+
+**Documentation Format:** MDX-based (no Swagger UI — not SSR-friendly in Next.js App Router)
+
+**API Surface to Document:**
+- All Server Actions in `src/app/actions/`
+- Request/response shapes for each action
+- Error codes and handling
+- Auth requirements per endpoint
+
+**Approach:**
+- Use hand-written MDX or `nextjs-api-docs`
+- Deploy as static page
+
+### Cache Warming para SEO
+
+**Problem:** Next.js cache may be cold after deployment or idle periods, causing slow initial page loads for SEO.
+
+**Solution Options:**
+1. **On-demand revalidation** (preferred): Use `revalidatePath` on mutations to keep pages fresh
+2. **Scheduled cron job**: Call `/api/revalidate` periodically to warm cache
+3. **Static generation at build**: Use `generateStaticParams` for known routine IDs
+
+**Recommendation:** Implement option 1 (on-demand) + a lightweight cron for `/` and `/rutinas` listing pages.
+
+**Implementation:**
+- Add an API route `/api/revalidate` that calls `revalidatePath('/')` and `revalidatePath('/rutinas')`
+- Set up Railway cron or Vercel cron to hit this route every 15 minutes
+
+---
+
+## Roadmap Futura (Post-Fase 4)
+
+### Posibles Mejoras
+
+| Feature | Prioridad | Notas |
+|---------|-----------|-------|
+| Métricas de uso | Baja | Google Analytics ya está en uso |
+| Exportación CSV | Baja | Para rutinas bulk |
+| i18n (multi-idioma) | Baja | Solo español por ahora |
+| PWA support | Baja | Offline PDF access |
+| Multi-gym support | Muy Baja | Extensión futura |

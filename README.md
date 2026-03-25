@@ -1,5 +1,7 @@
 # Champion Gym - Gestor de Rutinas de Gimnasio
 
+v0.1.0 | Last updated: 2026-03-25
+
 Sistema web para gestionar y visualizar rutinas de entrenamiento de gimnasio. Administradores crean rutinas estructuradas (Rutina → Día → Ejercicio). Usuarios públicos exploran, visualizan y descargan rutinas en PDF.
 
 ---
@@ -8,15 +10,16 @@ Sistema web para gestionar y visualizar rutinas de entrenamiento de gimnasio. Ad
 
 | Capa | Tecnología |
 |------|------------|
-| Framework | Next.js 16 + React 19 |
-| Lenguaje | TypeScript 5 |
-| Estilos | Tailwind CSS 4 + shadcn/ui |
-| Estado | Zustand 5 |
-| Validación | Zod 4 + React Hook Form 7 |
-| ORM | Prisma 7 |
-| Base de datos | PostgreSQL 18 |
-| Auth | Better Auth |
-| Testing | Playwright |
+| Framework | Next.js 16.1.6 + React 19.2.3 |
+| Lenguaje | TypeScript ^5 |
+| Estilos | Tailwind CSS ^4 + shadcn/ui |
+| Estado | Zustand ^5.0.11 |
+| Validación | Zod ^4.3.6 + React Hook Form ^7.71.2 |
+| ORM | Prisma ^7.4.2 |
+| Base de datos | PostgreSQL 18.3 |
+| Auth | Better Auth ^1.5.4 |
+| Testing | Playwright ^1.58.2 |
+| React DOM | 19.2.3 |
 
 ---
 
@@ -148,6 +151,52 @@ npm run dev
 
 ---
 
+## Docker (Opcional)
+
+Si prefieres usar Docker para PostgreSQL:
+
+```bash
+# Iniciar PostgreSQL en Docker
+docker-compose up -d
+
+# La DATABASE_URL debe ser:
+DATABASE_URL="postgresql://gym_user:gym_password@localhost:5432/gym_routines"
+```
+
+El archivo `docker-compose.yml` usa:
+- Imagen: `postgres:18.3`
+- Puerto: `5432`
+- Credenciales por defecto: `gym_user` / `gym_password`
+- Base de datos: `gym_routines`
+- Volumen: `postgres_data` para persistencia de datos
+
+---
+
+## Deployment
+
+### Vercel (Recomendado)
+
+Vercel es la plataforma recomendada para desplegar Next.js.
+
+1. Conectar el repositorio a Vercel
+2. Configurar las variables de entorno:
+   - `DATABASE_URL` — URL de PostgreSQL
+   - `BETTER_AUTH_SECRET` — Secret para autenticación (32+ caracteres)
+   - `BETTER_AUTH_URL` — URL de producción (ej: `https://tu-dominio.vercel.app`)
+
+### Railway (Alternativo)
+
+Railway es una alternativa para desplegar Next.js con PostgreSQL.
+
+1. Crear proyecto en Railway
+2. Añadir plugin PostgreSQL
+3. Configurar variables de entorno:
+   - `DATABASE_URL` — Proveído por Railway
+   - `BETTER_AUTH_SECRET` — Secret para autenticación (32+ caracteres)
+   - `BETTER_AUTH_URL` — URL de producción
+
+---
+
 ## Variables de Entorno
 
 ```env
@@ -165,12 +214,15 @@ BETTER_AUTH_URL="http://localhost:3000"
 
 ```bash
 npm run dev          # Dev server en puerto 3000
-npm run build        # Build de producción
+npm run build        # Build de producción (incluye prisma generate)
 npm run start        # Iniciar producción
 npm run lint         # ESLint
 npm run test         # Playwright tests
 npm run test:ui      # Playwright con UI
 npm run db:seed      # Seed de datos
+npm run db:generate  # Generar cliente Prisma
+npm run db:push      # Push schema a la base de datos
+npm run db:studio    # Abrir Prisma Studio
 ```
 
 ---
@@ -236,6 +288,32 @@ El proyecto usa CSS custom properties para theming:
 
 ---
 
+## Troubleshooting / FAQ
+
+### Prisma client out of sync
+Si after updating dependencies you get Prisma errors, run:
+```bash
+npm run db:generate
+```
+
+### Database connection errors
+1. Verify `DATABASE_URL` is correctly set in `.env`
+2. If using Docker, verify the container is running: `docker-compose ps`
+3. Check Docker logs: `docker-compose logs postgres`
+
+### Auth issues
+1. Verify `BETTER_AUTH_SECRET` is set (32+ characters recommended)
+2. Verify `BETTER_AUTH_URL` matches your production URL exactly
+3. For local development, ensure `BETTER_AUTH_URL="http://localhost:3000"`
+
+---
+
+## Contribución
+
+Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para guías de contribución.
+
+---
+
 ## Licencia
 
-Privado - Champion Gym
+UNLICENSED
