@@ -119,9 +119,43 @@ export type LoginInput = z.infer<typeof loginSchema>;
 // Feriado Schema
 // ======================
 
-export const feriadoSchema = z.object({
-  fecha: z.string().min(1, { error: "La fecha es requerida" }).transform((val) => new Date(val)),
-});
+export const feriadoSchema = z
+  .object({
+    fecha: z
+      .string()
+      .min(1, { message: "La fecha es requerida" })
+      .transform((val) => new Date(val)),
+    todo_dia: z
+      .union([z.literal("on"), z.literal("true"), z.literal("false")])
+      .transform((v) => v === "on" || v === "true")
+      .default(true),
+    hora_inicio: z.string().optional(),
+    hora_fin: z.string().optional(),
+  })
+  // If todo_dia=false, both times are required
+  .refine(
+    (data) => {
+      if (data.todo_dia === false) {
+        return Boolean(data.hora_inicio && data.hora_fin);
+      }
+      return true;
+    },
+    {
+      message: "Hora de inicio y fin son requeridas para horarios parciales",
+    }
+  )
+  // hora_inicio must be strictly less than hora_fin
+  .refine(
+    (data) => {
+      if (data.hora_inicio && data.hora_fin) {
+        return data.hora_inicio < data.hora_fin;
+      }
+      return true;
+    },
+    {
+      message: "La hora de inicio debe ser anterior a la hora de fin",
+    }
+  );
 
 export type FeriadoInput = z.infer<typeof feriadoSchema>;
 

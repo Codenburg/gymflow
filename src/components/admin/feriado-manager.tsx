@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createFeriado, deleteFeriado } from "@/app/actions/feriados";
 import type { FormState } from "@/lib/schemas";
-import { Plus, Calendar, Trash2 } from "lucide-react";
+import { Plus, Calendar, Trash2, Clock } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
 import { AdminCard } from "@/components/admin/admin-card";
 import { AdminFormField } from "@/components/admin/admin-form-field";
@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 interface Feriado {
   id: string;
   fecha: Date;
+  todo_dia: boolean;
+  hora_inicio: string | null;
+  hora_fin: string | null;
 }
 
 interface FeriadoManagerProps {
@@ -23,6 +26,9 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
   const [feriados, setFeriados] = useState<Feriado[]>(initialFeriados);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
+  const [isFullDay, setIsFullDay] = useState(true);
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFin, setHoraFin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { confirm, Dialog } = useConfirm();
 
@@ -38,6 +44,11 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
     try {
       const formData = new FormData();
       formData.append("fecha", selectedDate);
+      formData.append("todo_dia", isFullDay.toString());
+      if (!isFullDay) {
+        formData.append("hora_inicio", horaInicio);
+        formData.append("hora_fin", horaFin);
+      }
 
       const result: FormState<{ id: string }> = await createFeriado({ success: false }, formData);
 
@@ -47,10 +58,16 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
         const newFeriado: Feriado = {
           id: result.data?.id || crypto.randomUUID(),
           fecha: new Date(selectedDate),
+          todo_dia: isFullDay,
+          hora_inicio: isFullDay ? null : horaInicio,
+          hora_fin: isFullDay ? null : horaFin,
         };
         setFeriados((prev) => [...prev, newFeriado].sort((a, b) => a.fecha.getTime() - b.fecha.getTime()));
         toast.success("Feriado agregado exitosamente");
         setSelectedDate("");
+        setIsFullDay(true);
+        setHoraInicio("");
+        setHoraFin("");
       } else {
         toast.error(result.message || "Error al agregar feriado");
       }
@@ -122,6 +139,40 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
               />
             </AdminFormField>
           </div>
+          <div className="flex items-center gap-2 pb-2">
+            <input
+              type="checkbox"
+              id="todo_dia"
+              checked={isFullDay}
+              onChange={(e) => setIsFullDay(e.target.checked)}
+              className="w-4 h-4 accent-primary rounded"
+            />
+            <label htmlFor="todo_dia" className="text-sm text-foreground cursor-pointer">
+              Día completo
+            </label>
+          </div>
+          {!isFullDay && (
+            <>
+              <AdminFormField variant="default" label="Hora inicio">
+                <input
+                  type="time"
+                  id="hora_inicio"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+                />
+              </AdminFormField>
+              <AdminFormField variant="default" label="Hora fin">
+                <input
+                  type="time"
+                  id="hora_fin"
+                  value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+                />
+              </AdminFormField>
+            </>
+          )}
           <Button onClick={handleAdd} disabled={isAdding}>
             <Plus className="w-5 h-5 mr-2" />
             {isAdding ? "Agregando..." : "Agregar"}
@@ -150,8 +201,18 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                   </div>
                   <div>
                     <p className="text-foreground font-medium">{formatDate(feriado.fecha)}</p>
-                    <p className="text-muted-foreground text-sm">
-                      {new Date(feriado.fecha).toLocaleDateString("es-AR")}
+                    <p className="text-muted-foreground text-sm flex items-center gap-2">
+                      <span>{new Date(feriado.fecha).toLocaleDateString("es-AR")}</span>
+                      {feriado.todo_dia ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                          Día completo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          <Clock className="w-3 h-3" />
+                          {feriado.hora_inicio} - {feriado.hora_fin}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { feriadoSchema } from "@/lib/schemas";
 
 /**
- * Feriado schema for API validation
+ * Feriado schema for API validation - imported from lib/schemas.ts
  */
-const feriadoSchema = z.object({
-  fecha: z.string().min(1, { message: "La fecha es requerida" }).transform((val) => new Date(val)),
-});
 
-interface FeriadoResponse {
+/**
+ * Extended response interface for API (includes new fields)
+ */
+interface FeriadoApiResponse {
   id: string;
   fecha: string;
+  todo_dia: boolean;
+  hora_inicio: string | null;
+  hora_fin: string | null;
   createdAt: string;
 }
 
@@ -51,9 +55,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       orderBy: { fecha: "asc" },
     });
 
-    const response: FeriadoResponse[] = feriados.map((feriado) => ({
+    const response: FeriadoApiResponse[] = feriados.map((feriado) => ({
       id: feriado.id,
       fecha: feriado.fecha.toISOString(),
+      todo_dia: feriado.todo_dia,
+      hora_inicio: feriado.hora_inicio,
+      hora_fin: feriado.hora_fin,
       createdAt: feriado.createdAt.toISOString(),
     }));
 
@@ -113,9 +120,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: parsed.data,
     });
 
-    const response: FeriadoResponse = {
+    const response: FeriadoApiResponse = {
       id: feriado.id,
       fecha: feriado.fecha.toISOString(),
+      todo_dia: feriado.todo_dia,
+      hora_inicio: feriado.hora_inicio,
+      hora_fin: feriado.hora_fin,
       createdAt: feriado.createdAt.toISOString(),
     };
 

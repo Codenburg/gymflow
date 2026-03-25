@@ -6,6 +6,9 @@ import { DataResult, ok, err } from "@/lib/data-result";
 interface Feriado {
   id: string;
   fecha: string;
+  todo_dia: boolean;
+  hora_inicio: string | null;
+  hora_fin: string | null;
   createdAt: string;
 }
 
@@ -36,6 +39,16 @@ function formatDate(fechaStr: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+function formatFeriadoDisplay(feriado: Feriado): string {
+  if (feriado.todo_dia) {
+    return "Todo el día";
+  }
+  if (feriado.hora_inicio && feriado.hora_fin) {
+    return `Abierto de ${feriado.hora_inicio} a ${feriado.hora_fin}`;
+  }
+  return "Todo el día";
 }
 
 export default async function FeriadosPage() {
@@ -97,10 +110,15 @@ async function FeriadosWrapper({
         {feriados.map((feriado) => (
           <li
             key={feriado.id}
-            className="flex items-center gap-3 p-2.5 bg-[var(--background)] rounded-lg"
+            className="flex flex-col gap-1 p-2.5 bg-[var(--background)] rounded-lg"
           >
-            <Calendar className="w-4 h-4 text-[var(--muted-foreground)] flex-shrink-0" />
-            <span className="text-[var(--foreground)] text-sm">{formatDate(feriado.fecha)}</span>
+            <div className="flex items-center gap-3">
+              <Calendar className="w-4 h-4 text-[var(--foreground)] flex-shrink-0" />
+              <span className="text-[var(--foreground)] text-sm">{formatDate(feriado.fecha)}</span>
+            </div>
+            <span className="text-[var(--muted-foreground)] text-xs pl-7">
+              {formatFeriadoDisplay(feriado)}
+            </span>
           </li>
         ))}
       </ul>

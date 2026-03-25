@@ -409,3 +409,20 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Dark mode: native date/time picker icons visible */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.8);
+}
+
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.dark input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.8);
+}

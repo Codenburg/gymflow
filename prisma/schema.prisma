@@ -182,11 +182,14 @@ model Gym {
 // ======================
 
 model Feriado {
-  id        String   @id @default(uuid())
-  fecha     DateTime
-  createdAt DateTime @default(now())
-  gymId     String   @default("gym")
-  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  fecha       DateTime
+  todo_dia    Boolean   @default(true)
+  hora_inicio String?
+  hora_fin    String?
+  createdAt   DateTime  @default(now())
+  gymId       String    @default("gym")
+  gym         Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
   @@index([gymId])
 }

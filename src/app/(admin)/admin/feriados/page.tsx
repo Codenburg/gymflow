@@ -12,6 +12,9 @@ export default async function AdminFeriadosPage() {
   const serializableFeriados = feriados.map((f) => ({
     id: f.id,
     fecha: new Date(f.fecha),
+    todo_dia: f.todo_dia,
+    hora_inicio: f.hora_inicio,
+    hora_fin: f.hora_fin,
   }));
 
   return (

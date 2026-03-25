@@ -6,6 +6,9 @@ import { DataResult, ok, err } from "@/lib/data-result";
 interface Feriado {
   id: string;
   fecha: string;
+  todo_dia: boolean;
+  hora_inicio: string | null;
+  hora_fin: string | null;
   createdAt: string;
 }
 
@@ -63,6 +66,16 @@ function formatDate(fechaStr: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+function formatFeriadoDisplay(feriado: Feriado): string {
+  if (feriado.todo_dia) {
+    return "Todo el día";
+  }
+  if (feriado.hora_inicio && feriado.hora_fin) {
+    return `Abierto de ${feriado.hora_inicio} a ${feriado.hora_fin}`;
+  }
+  return "Todo el día";
 }
 
 function formatPrice(price: number): string {
@@ -165,7 +178,10 @@ function HolidaysPreview({
     <ul className="space-y-2">
       {feriados.slice(0, 3).map((feriado) => (
         <li key={feriado.id} className="text-[var(--foreground)]">
-          {formatDate(feriado.fecha)}
+          <span>{formatDate(feriado.fecha)}</span>
+          <span className="text-[var(--muted-foreground)] text-sm ml-2">
+            — {formatFeriadoDisplay(feriado)}
+          </span>
         </li>
       ))}
       {feriados.length > 3 && (
