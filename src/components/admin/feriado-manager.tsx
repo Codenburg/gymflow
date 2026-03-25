@@ -202,7 +202,6 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                   <div>
                     <p className="text-foreground font-medium">{formatDate(feriado.fecha)}</p>
                     <p className="text-muted-foreground text-sm flex items-center gap-2">
-                      <span>{new Date(feriado.fecha).toLocaleDateString("es-AR")}</span>
                       {feriado.todo_dia ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
                           Día completo
