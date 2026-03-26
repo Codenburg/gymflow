@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
               <p className="text-muted-foreground text-lg">Explora las mejores rutinas de entrenamiento</p>
             </div>
             <div className="flex items-center justify-between w-full sm:w-auto gap-2">
-              <nav className="flex gap-2 sm:hidden">
+              <nav className="flex gap-2">
                 <Link
                   href="/informacion"
                   className="inline-flex items-center justify-center gap-2 px-4 py-2 min-w-[130px] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap"

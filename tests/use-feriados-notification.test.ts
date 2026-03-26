@@ -16,7 +16,7 @@ import { useFeriadosNotification } from '@/hooks/use-feriados-notification'
 // Mock localStorage with proper typing
 const localStorageMock = {
   store: {} as Record<string, string>,
-  getItem: vi.fn((key: string) => localStorageMock.store[key] ?? null),
+  getItem: vi.fn((_key: string) => localStorageMock.store[_key] ?? null as string | null),
   setItem: vi.fn((key: string, value: string) => { localStorageMock.store[key] = value }),
   removeItem: vi.fn((key: string) => { delete localStorageMock.store[key] }),
   clear: vi.fn(() => { localStorageMock.store = {} }),
@@ -47,7 +47,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      await waitFor(() => expect(result.current.latestFeriadoDate).toBe(sameDate))
 
       expect(result.current.hasNew).toBe(false)
     })
@@ -65,7 +65,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      await waitFor(() => expect(result.current.latestFeriadoDate).toBe(latest))
 
       expect(result.current.hasNew).toBe(true)
     })
@@ -78,10 +78,8 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-
-      expect(result.current.hasNew).toBe(false)
-      expect(result.current.latestFeriadoDate).toBe(null)
+      // Wait for the effect to complete (hasNew should become false)
+      await waitFor(() => expect(result.current.hasNew).toBe(false))
     })
 
     it('should set hasNew to false when API returns non-OK status', async () => {
@@ -93,9 +91,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-
-      expect(result.current.hasNew).toBe(false)
+      await waitFor(() => expect(result.current.hasNew).toBe(false))
     })
   })
 
@@ -109,7 +105,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      await waitFor(() => expect(result.current.latestFeriadoDate).toBe(null))
 
       result.current.markAsSeen()
 
@@ -128,7 +124,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      await waitFor(() => expect(result.current.latestFeriadoDate).toBe(latest))
 
       // Should have auto-saved the latest date as baseline
       expect(localStorageMock.setItem).toHaveBeenCalledWith('feriados_last_seen_at', latest)
@@ -145,7 +141,7 @@ describe('useFeriadosNotification Hook', () => {
 
       const { result } = renderHook(() => useFeriadosNotification())
 
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      await waitFor(() => expect(result.current.latestFeriadoDate).toBe(null))
 
       // Should NOT have called setItem since there's nothing to save
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(0)

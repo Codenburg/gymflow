@@ -9,7 +9,6 @@ interface UseFeriadosNotificationReturn {
   hasNew: boolean;
   markAsSeen: () => void;
   latestFeriadoDate: string | null;
-  isLoading: boolean;
 }
 
 /**
@@ -30,7 +29,6 @@ interface UseFeriadosNotificationReturn {
 export function useFeriadosNotification(): UseFeriadosNotificationReturn {
   const [hasNew, setHasNew] = useState(false);
   const [latestFeriadoDate, setLatestFeriadoDate] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   function markAsSeen() {
     if (latestFeriadoDate) {
@@ -44,7 +42,6 @@ export function useFeriadosNotification(): UseFeriadosNotificationReturn {
 
     async function checkForNew() {
       try {
-        // Read localStorage inside the async function
         const lastSeen = localStorage.getItem(STORAGE_KEY);
 
         const res = await fetch(API_URL);
@@ -73,16 +70,11 @@ export function useFeriadosNotification(): UseFeriadosNotificationReturn {
         if (cancelled) return;
         // FAIL-SAFE: on any error, don't show badge
         setHasNew(false);
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
       }
     }
 
     checkForNew();
 
-    // Re-fetch on window focus (user returns to tab/page)
     function handleFocus() {
       checkForNew();
     }
@@ -95,5 +87,5 @@ export function useFeriadosNotification(): UseFeriadosNotificationReturn {
     };
   }, []);
 
-  return { hasNew, markAsSeen, latestFeriadoDate, isLoading };
+  return { hasNew, markAsSeen, latestFeriadoDate };
 }
