@@ -5,6 +5,7 @@ import { useUnifiedSearch } from "@/hooks/use-unified-search";
 
 interface SearchBarProps {
   defaultValue?: string;
+  className?: string;
 }
 
 /**
@@ -20,13 +21,13 @@ interface SearchBarProps {
  * Data flow:
  * User types → setInputValue (immediate) → debounce → router.replace() → URL
  */
-export function SearchBar({ defaultValue }: SearchBarProps) {
+export function SearchBar({ defaultValue, className = "" }: SearchBarProps) {
   // inputValue is LOCAL state for immediate UI response
   // query is DERIVED from URL (applied state after debounce)
   const { inputValue, setInputValue, clearInput } = useUnifiedSearch();
 
   return (
-    <div className="w-full">
+    <div className={className || "w-full"}>
       <SearchInput
         value={inputValue}
         onChange={setInputValue}
