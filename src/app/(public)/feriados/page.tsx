@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { House, Calendar, AlertCircle } from "lucide-react";
 import { DataResult, ok, err } from "@/lib/data-result";
+import { MarkAsSeenWrapper } from "@/components/feriados/mark-as-seen-wrapper";
 
 interface Feriado {
   id: string;
@@ -31,6 +32,26 @@ async function getFeriados(): Promise<DataResult<Feriado[]>> {
   }
 }
 
+async function getLatestFeriadoDate(): Promise<string | null> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  try {
+    const response = await fetch(`${baseUrl}/api/feriados/latest`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("[getLatestFeriadoDate] API returned non-OK status:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.latestFeriadoDate ?? null;
+  } catch (error) {
+    console.error("[getLatestFeriadoDate] Failed to fetch:", error);
+    return null;
+  }
+}
+
 function formatDate(fechaStr: string): string {
   const fecha = new Date(fechaStr);
   return fecha.toLocaleDateString("es-AR", {
@@ -53,6 +74,7 @@ function formatFeriadoDisplay(feriado: Feriado): string {
 
 export default async function FeriadosPage() {
   const feriadosResult = await getFeriados();
+  const latestFeriadoDate = await getLatestFeriadoDate();
 
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col items-center">
@@ -70,7 +92,9 @@ export default async function FeriadosPage() {
         </div>
 
         <Suspense fallback={<FeriadosSkeleton />}>
-          <FeriadosWrapper feriadosResult={feriadosResult} />
+          <MarkAsSeenWrapper latestFeriadoDate={latestFeriadoDate}>
+            <FeriadosWrapper feriadosResult={feriadosResult} />
+          </MarkAsSeenWrapper>
         </Suspense>
       </main>
     </div>
