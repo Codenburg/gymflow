@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { createFeriado, deleteFeriado } from "@/app/actions/feriados";
+import { getToday } from "@/lib/dates";
 import type { FormState } from "@/lib/schemas";
 import { Plus, Calendar, Trash2, Clock } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -35,6 +36,12 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
   const handleAdd = async () => {
     if (!selectedDate) {
       setError("Por favor selecciona una fecha");
+      return;
+    }
+
+    // Validate date is not in the past
+    if (selectedDate < getToday()) {
+      toast.error("No se pueden seleccionar fechas pasadas");
       return;
     }
 
@@ -139,6 +146,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                 id="fecha"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                min={getToday()}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
               />
             </AdminFormField>

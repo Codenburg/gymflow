@@ -3,6 +3,7 @@ import Link from "next/link";
 import { House, Calendar, AlertCircle } from "lucide-react";
 import { DataResult, ok, err } from "@/lib/data-result";
 import { MarkAsSeenWrapper } from "@/components/feriados/mark-as-seen-wrapper";
+import { getToday } from "@/lib/dates";
 
 interface Feriado {
   id: string;
@@ -120,8 +121,12 @@ async function FeriadosWrapper({
 
   const feriados = feriadosResult.data;
 
+  // Filter to only show today and future holidays
+  const today = getToday();
+  const feriadosVisibles = feriados.filter((f) => f.fecha >= today);
+
   // Empty state - no data available
-  if (feriados.length === 0) {
+  if (feriadosVisibles.length === 0) {
     return (
       <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
         <p className="text-[var(--muted-foreground)]">No hay feriados programados</p>
@@ -132,7 +137,7 @@ async function FeriadosWrapper({
   return (
     <div className="bg-[var(--button-secondary-bg)] border border-[var(--card-border)] rounded-xl p-5">
       <ul className="space-y-3">
-        {feriados.map((feriado) => (
+        {feriadosVisibles.map((feriado) => (
           <li
             key={feriado.id}
             className="flex flex-col gap-1 p-2.5 bg-[var(--background)] rounded-lg"

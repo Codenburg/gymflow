@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { House, AlertCircle } from "lucide-react";
 import { DataResult, ok, err } from "@/lib/data-result";
+import { getToday } from "@/lib/dates";
 
 interface Feriado {
   id: string;
@@ -175,9 +176,19 @@ function HolidaysPreview({
     );
   }
 
+  // Filter to only show today and future holidays
+  const today = getToday();
+  const feriadosVisibles = feriados.filter((f) => f.fecha >= today);
+
+  if (feriadosVisibles.length === 0) {
+    return (
+      <p className="text-[var(--muted-foreground)]">No hay feriados programados</p>
+    );
+  }
+
   return (
     <ul className="space-y-2">
-      {feriados.slice(0, 3).map((feriado) => (
+      {feriadosVisibles.slice(0, 3).map((feriado) => (
         <li key={feriado.id} className="text-[var(--foreground)]">
           <span>{formatDate(feriado.fecha)}</span>
           <span className="text-[var(--muted-foreground)] text-sm ml-2">
@@ -185,9 +196,9 @@ function HolidaysPreview({
           </span>
         </li>
       ))}
-      {feriados.length > 3 && (
+      {feriadosVisibles.length > 3 && (
         <li className="text-[var(--muted-foreground)] text-sm">
-          +{feriados.length - 3} más...
+          +{feriadosVisibles.length - 3} más...
         </li>
       )}
     </ul>

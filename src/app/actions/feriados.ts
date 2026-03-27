@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { normalizeToDate } from "@/lib/dates";
+import { normalizeToDate, getToday } from "@/lib/dates";
 import { createFeriadoSchema, updateFeriadoSchema, idSchema, type FormState } from "@/lib/schemas";
 
 /**
@@ -68,6 +68,12 @@ export async function createFeriado(
 
   // Normalize fecha to YYYY-MM-DD (string, calendar date only)
   const normalizedFecha = normalizeToDate(parsed.data.fecha);
+
+  // Block past dates at security layer
+  const today = getToday();
+  if (normalizedFecha < today) {
+    return { success: false, message: "No se pueden crear feriados en fechas pasadas", statusCode: 400 };
+  }
 
   // Pre-check for duplicate (UX optimization before DB constraint check)
   // Note: gymId defaults to "gym" since there's only one gym
@@ -163,6 +169,12 @@ export async function updateFeriado(
   let normalizedFecha: string | undefined;
   if (parsed.data.fecha) {
     normalizedFecha = normalizeToDate(parsed.data.fecha);
+  }
+
+  // Block past dates at security layer (only if fecha is being updated)
+  const today = getToday();
+  if (normalizedFecha && normalizedFecha < today) {
+    return { success: false, message: "No se pueden crear feriados en fechas pasadas", statusCode: 400 };
   }
 
   // Pre-check for duplicate (excluding current record)

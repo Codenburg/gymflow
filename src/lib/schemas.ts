@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getToday } from "@/lib/dates";
 
 // ======================
 // Ejercicio Schemas (Flat - for separate creation)
@@ -164,7 +165,11 @@ export const createFeriadoSchema = baseFeriadoSchema
     todo_dia: data.todo_dia,
     hora_inicio: data.hora_inicio,
     hora_fin: data.hora_fin,
-  }));
+  }))
+  .refine(
+    (data) => data.fecha >= getToday(),
+    { message: "No se pueden seleccionar fechas pasadas", path: ["fecha"] }
+  );
 
 // Schema for updating a Feriado (fecha is optional and kept as string if provided)
 export const updateFeriadoSchema = baseFeriadoSchema
@@ -174,7 +179,11 @@ export const updateFeriadoSchema = baseFeriadoSchema
     todo_dia: data.todo_dia,
     hora_inicio: data.hora_inicio,
     hora_fin: data.hora_fin,
-  }));
+  }))
+  .refine(
+    (data) => !data.fecha || data.fecha >= getToday(),
+    { message: "No se pueden seleccionar fechas pasadas", path: ["fecha"] }
+  );
 
 // Keep antiguo name as alias for backwards compatibility
 export const feriadoSchema = createFeriadoSchema;

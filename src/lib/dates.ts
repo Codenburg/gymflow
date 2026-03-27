@@ -31,3 +31,15 @@ export function normalizeToDate(input: string | Date): string {
 
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Returns today's date as YYYY-MM-DD string using local time.
+ * Used for comparing against holiday dates which are calendar values.
+ */
+export function getToday(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
