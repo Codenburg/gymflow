@@ -68,8 +68,11 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
         setIsFullDay(true);
         setHoraInicio("");
         setHoraFin("");
+      } else if (result.statusCode === 409) {
+        // Duplicate holiday error
+        toast.error("Ya existe un feriado para esta fecha");
       } else {
-        toast.error(result.message || "Error al agregar feriado");
+        toast.error(result.message || "Error al guardar");
       }
     } catch (err) {
       toast.error("Error al agregar feriados");

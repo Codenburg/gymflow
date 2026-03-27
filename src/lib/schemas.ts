@@ -119,19 +119,19 @@ export type LoginInput = z.infer<typeof loginSchema>;
 // Feriado Schema
 // ======================
 
-export const feriadoSchema = z
-  .object({
-    fecha: z
-      .string()
-      .min(1, { message: "La fecha es requerida" })
-      .transform((val) => new Date(val)),
-    todo_dia: z
-      .union([z.literal("on"), z.literal("true"), z.literal("false")])
-      .transform((v) => v === "on" || v === "true")
-      .default(true),
-    hora_inicio: z.string().optional(),
-    hora_fin: z.string().optional(),
-  })
+// Base Feriado schema without transforms (for shared refinements)
+const baseFeriadoSchema = z.object({
+  fecha: z.string().min(1, { message: "La fecha es requerida" }),
+  todo_dia: z
+    .union([z.literal("on"), z.literal("true"), z.literal("false")])
+    .transform((v) => v === "on" || v === "true")
+    .default(true),
+  hora_inicio: z.string().optional(),
+  hora_fin: z.string().optional(),
+});
+
+// Feriado refinements shared between create and update
+const feriadoRefinements = baseFeriadoSchema
   // If todo_dia=false, both times are required
   .refine(
     (data) => {
@@ -157,7 +157,30 @@ export const feriadoSchema = z
     }
   );
 
-export type FeriadoInput = z.infer<typeof feriadoSchema>;
+// Schema for creating a Feriado (fecha is transformed to Date)
+export const createFeriadoSchema = baseFeriadoSchema
+  .transform((data) => ({
+    fecha: new Date(data.fecha),
+    todo_dia: data.todo_dia,
+    hora_inicio: data.hora_inicio,
+    hora_fin: data.hora_fin,
+  }));
+
+// Schema for updating a Feriado (fecha is optional and transformed to Date if provided)
+export const updateFeriadoSchema = baseFeriadoSchema
+  .partial()
+  .transform((data) => ({
+    fecha: data.fecha ? new Date(data.fecha) : undefined,
+    todo_dia: data.todo_dia,
+    hora_inicio: data.hora_inicio,
+    hora_fin: data.hora_fin,
+  }));
+
+// Keep antiguo name as alias for backwards compatibility
+export const feriadoSchema = createFeriadoSchema;
+
+export type FeriadoInput = z.infer<typeof createFeriadoSchema>;
+export type FeriadoUpdateInput = z.infer<typeof updateFeriadoSchema>;
 
 // ======================
 // ID Validation Schema
@@ -174,4 +197,6 @@ export interface FormState<T = void> {
   data?: T;
   errors?: Record<string, string[]>;
   message?: string;
+  statusCode?: number;
+  code?: string;
 }

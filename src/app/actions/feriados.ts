@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { feriadoSchema, idSchema, type FormState } from "@/lib/schemas";
+import { normalizeToDate } from "@/lib/dates";
+import { createFeriadoSchema, updateFeriadoSchema, idSchema, type FormState } from "@/lib/schemas";
 
 /**
  * Helper function to verify admin access
@@ -55,7 +56,7 @@ export async function createFeriado(
 
   // Validate form data
   const rawData = Object.fromEntries(formData.entries());
-  const parsed = feriadoSchema.safeParse(rawData);
+  const parsed = createFeriadoSchema.safeParse(rawData);
 
   if (!parsed.success) {
     return {
@@ -65,9 +66,33 @@ export async function createFeriado(
     };
   }
 
+  // Normalize fecha to YYYY-MM-DD
+  const normalizedFecha = normalizeToDate(parsed.data.fecha);
+
+  // Pre-check for duplicate (UX optimization before DB constraint check)
+  // Note: gymId defaults to "gym" since there's only one gym
+  const existing = await prisma.feriado.findFirst({
+    where: {
+      gymId: "gym",
+      fecha: new Date(normalizedFecha),
+    },
+  });
+
+  if (existing) {
+    return {
+      success: false,
+      message: "Ya existe un feriado para esta fecha",
+      statusCode: 409,
+      code: "DUPLICATE",
+    };
+  }
+
   try {
     const feriado = await prisma.feriado.create({
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        fecha: new Date(normalizedFecha),
+      },
     });
 
     revalidatePath("/admin/informacion");
@@ -79,9 +104,126 @@ export async function createFeriado(
     };
   } catch (error) {
     console.error("Error creating feriado:", error);
+
+    // Check for P2002 from race condition (pre-check passed but create failed)
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return {
+        success: false,
+        message: "Ya existe un feriado para esta fecha",
+        statusCode: 409,
+        code: "DUPLICATE",
+      };
+    }
+
     return {
       success: false,
       message: "Error al crear el feriado",
+    };
+  }
+}
+
+/**
+ * Update an existing Feriado
+ */
+export async function updateFeriado(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState<{ id: string }>> {
+  // Verify admin access
+  const authCheck = await verifyAdmin(await headers());
+  if (!authCheck.authorized) {
+    return { success: false, message: authCheck.message };
+  }
+
+  // Get ID from formData
+  const id = formData.get("id") as string;
+
+  // Validate UUID format
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) {
+    return {
+      success: false,
+      message: "ID de feriado inválido",
+    };
+  }
+
+  // Validate form data
+  const rawData = Object.fromEntries(formData.entries());
+  const parsed = updateFeriadoSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors,
+      message: "Error de validación",
+    };
+  }
+
+  // If fecha is being updated, normalize it
+  let normalizedFecha: string | undefined;
+  if (parsed.data.fecha) {
+    normalizedFecha = normalizeToDate(parsed.data.fecha);
+  }
+
+  // Pre-check for duplicate (excluding current record)
+  // Note: gymId defaults to "gym" since there's only one gym
+  if (normalizedFecha) {
+    const existing = await prisma.feriado.findFirst({
+      where: {
+        gymId: "gym",
+        fecha: new Date(normalizedFecha),
+        NOT: { id: parsedId.data },
+      },
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        message: "Ya existe un feriado para esta fecha",
+        statusCode: 409,
+        code: "DUPLICATE",
+      };
+    }
+  }
+
+  try {
+    const updateData: { fecha?: Date; todo_dia?: boolean; hora_inicio?: string | null; hora_fin?: string | null } = {
+      ...parsed.data,
+    };
+
+    // Normalize fecha if provided
+    if (normalizedFecha) {
+      updateData.fecha = new Date(normalizedFecha);
+    }
+
+    const feriado = await prisma.feriado.update({
+      where: { id: parsedId.data },
+      data: updateData,
+    });
+
+    revalidatePath("/admin/informacion");
+
+    return {
+      success: true,
+      data: { id: feriado.id },
+      message: "Feriado actualizado exitosamente",
+    };
+  } catch (error) {
+    console.error("Error updating feriado:", error);
+
+    // Check for P2002 from race condition
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return {
+        success: false,
+        message: "Ya existe un feriado para esta fecha",
+        statusCode: 409,
+        code: "DUPLICATE",
+      };
+    }
+
+    return {
+      success: false,
+      message: "Error al actualizar el feriado",
     };
   }
 }

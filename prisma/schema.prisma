@@ -66,7 +66,7 @@ model Ejercicio {
 // ======================
 
 model User {
-  id             String    @id @default(uuid())
+  id             String    @id @default(uuid()) @db.Uuid
   name           String
   dni            String    @unique
   // Username para login con DNI (requerido por username plugin)
@@ -99,7 +99,7 @@ model User {
 
 model Session {
   id        String   @id @default(uuid())
-  userId    String
+  userId    String   @db.Uuid
   expiresAt DateTime
   token     String   @unique
   ipAddress String?
@@ -114,7 +114,7 @@ model Session {
 
 model Account {
   id                String  @id @default(uuid())
-  userId            String
+  userId            String  @db.Uuid
   accountId         String
   providerId        String
   providerType      String
@@ -152,8 +152,8 @@ model OwnershipTransfer {
   id        String   @id @default(uuid())
   rutinaId  String
   // null fromUserId means initial creation (not a transfer)
-  fromUserId String?
-  toUserId  String
+  fromUserId String? @db.Uuid
+  toUserId  String   @db.Uuid
   createdAt DateTime @default(now())
 
   rutina    Rutina @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
@@ -191,5 +191,6 @@ model Feriado {
   gymId       String    @default("gym")
   gym         Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
+  @@unique([gymId, fecha])
   @@index([gymId])
 }
