@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 interface Feriado {
   id: string;
-  fecha: Date;
+  fecha: string; // YYYY-MM-DD calendar date, not timestamp
   todo_dia: boolean;
   hora_inicio: string | null;
   hora_fin: string | null;
@@ -57,12 +57,12 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
         // For immediate UI update, we can parse the date
         const newFeriado: Feriado = {
           id: result.data?.id || crypto.randomUUID(),
-          fecha: new Date(selectedDate),
+          fecha: selectedDate, // String directly
           todo_dia: isFullDay,
           hora_inicio: isFullDay ? null : horaInicio,
           hora_fin: isFullDay ? null : horaFin,
         };
-        setFeriados((prev) => [...prev, newFeriado].sort((a, b) => a.fecha.getTime() - b.fecha.getTime()));
+        setFeriados((prev) => [...prev, newFeriado].sort((a, b) => a.fecha.localeCompare(b.fecha)));
         toast.success("Feriado agregado exitosamente");
         setSelectedDate("");
         setIsFullDay(true);
@@ -109,13 +109,14 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: string) => {
+    // Convert string to Date using local time to avoid timezone offset
     return new Intl.DateTimeFormat("es-AR", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
-    }).format(new Date(date));
+    }).format(new Date(`${dateStr}T00:00:00`));
   };
 
   return (

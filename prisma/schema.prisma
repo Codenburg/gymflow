@@ -183,7 +183,7 @@ model Gym {
 
 model Feriado {
   id          String    @id @default(uuid())
-  fecha       DateTime
+  fecha       String    // Calendar date in YYYY-MM-DD format (NOT timestamp)
   todo_dia    Boolean   @default(true)
   hora_inicio String?
   hora_fin    String?

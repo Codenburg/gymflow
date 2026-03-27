@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminFeriadosPage() {
   const feriados = await getFeriados();
 
-  // Transform dates for client component
+  // Pass dates as strings directly (calendar date, not timestamp)
   const serializableFeriados = feriados.map((f) => ({
     id: f.id,
-    fecha: new Date(f.fecha),
+    fecha: f.fecha, // String in YYYY-MM-DD format
     todo_dia: f.todo_dia,
     hora_inicio: f.hora_inicio,
     hora_fin: f.hora_fin,

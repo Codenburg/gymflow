@@ -54,7 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const response: FeriadoApiResponse[] = feriados.map((feriado) => ({
       id: feriado.id,
-      fecha: feriado.fecha.toISOString(),
+      fecha: normalizeToDate(feriado.fecha),
       todo_dia: feriado.todo_dia,
       hora_inicio: feriado.hora_inicio,
       hora_fin: feriado.hora_fin,
@@ -119,13 +119,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const feriado = await prisma.feriado.create({
       data: {
         ...parsed.data,
-        fecha: new Date(normalizedFecha),
+        fecha: normalizedFecha, // Keep as string
       },
     });
 
     const response: FeriadoApiResponse = {
       id: feriado.id,
-      fecha: feriado.fecha.toISOString(),
+      fecha: normalizeToDate(feriado.fecha), // Use normalizeToDate for output
       todo_dia: feriado.todo_dia,
       hora_inicio: feriado.hora_inicio,
       hora_fin: feriado.hora_fin,
@@ -235,14 +235,14 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Normalize fecha if provided
-    const updateData: { fecha?: Date; todo_dia?: boolean; hora_inicio?: string | null; hora_fin?: string | null } = {
+    // Normalize fecha if provided (keep as string)
+    const updateData: { fecha?: string; todo_dia?: boolean; hora_inicio?: string | null; hora_fin?: string | null } = {
       ...parsed.data,
     };
 
     if (parsed.data.fecha) {
       const normalizedFecha = normalizeToDate(parsed.data.fecha);
-      updateData.fecha = new Date(normalizedFecha);
+      updateData.fecha = normalizedFecha; // Keep as string
     }
 
     const feriado = await prisma.feriado.update({
@@ -252,7 +252,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     const response: FeriadoApiResponse = {
       id: feriado.id,
-      fecha: feriado.fecha.toISOString(),
+      fecha: normalizeToDate(feriado.fecha),
       todo_dia: feriado.todo_dia,
       hora_inicio: feriado.hora_inicio,
       hora_fin: feriado.hora_fin,

@@ -157,20 +157,20 @@ const feriadoRefinements = baseFeriadoSchema
     }
   );
 
-// Schema for creating a Feriado (fecha is transformed to Date)
+// Schema for creating a Feriado (fecha stays as string YYYY-MM-DD)
 export const createFeriadoSchema = baseFeriadoSchema
   .transform((data) => ({
-    fecha: new Date(data.fecha),
+    fecha: data.fecha, // Keep as string, calendar date only
     todo_dia: data.todo_dia,
     hora_inicio: data.hora_inicio,
     hora_fin: data.hora_fin,
   }));
 
-// Schema for updating a Feriado (fecha is optional and transformed to Date if provided)
+// Schema for updating a Feriado (fecha is optional and kept as string if provided)
 export const updateFeriadoSchema = baseFeriadoSchema
   .partial()
   .transform((data) => ({
-    fecha: data.fecha ? new Date(data.fecha) : undefined,
+    fecha: data.fecha, // Keep as string, calendar date only
     todo_dia: data.todo_dia,
     hora_inicio: data.hora_inicio,
     hora_fin: data.hora_fin,

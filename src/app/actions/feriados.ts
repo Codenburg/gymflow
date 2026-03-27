@@ -66,7 +66,7 @@ export async function createFeriado(
     };
   }
 
-  // Normalize fecha to YYYY-MM-DD
+  // Normalize fecha to YYYY-MM-DD (string, calendar date only)
   const normalizedFecha = normalizeToDate(parsed.data.fecha);
 
   // Pre-check for duplicate (UX optimization before DB constraint check)
@@ -74,7 +74,7 @@ export async function createFeriado(
   const existing = await prisma.feriado.findFirst({
     where: {
       gymId: "gym",
-      fecha: new Date(normalizedFecha),
+      fecha: normalizedFecha, // String comparison directly
     },
   });
 
@@ -91,7 +91,7 @@ export async function createFeriado(
     const feriado = await prisma.feriado.create({
       data: {
         ...parsed.data,
-        fecha: new Date(normalizedFecha),
+        fecha: normalizedFecha, // String directly, not Date
       },
     });
 
@@ -171,7 +171,7 @@ export async function updateFeriado(
     const existing = await prisma.feriado.findFirst({
       where: {
         gymId: "gym",
-        fecha: new Date(normalizedFecha),
+        fecha: normalizedFecha, // String comparison directly
         NOT: { id: parsedId.data },
       },
     });
@@ -187,13 +187,13 @@ export async function updateFeriado(
   }
 
   try {
-    const updateData: { fecha?: Date; todo_dia?: boolean; hora_inicio?: string | null; hora_fin?: string | null } = {
+    const updateData: { fecha?: string; todo_dia?: boolean; hora_inicio?: string | null; hora_fin?: string | null } = {
       ...parsed.data,
     };
 
-    // Normalize fecha if provided
+    // Normalize fecha if provided (keep as string)
     if (normalizedFecha) {
-      updateData.fecha = new Date(normalizedFecha);
+      updateData.fecha = normalizedFecha;
     }
 
     const feriado = await prisma.feriado.update({

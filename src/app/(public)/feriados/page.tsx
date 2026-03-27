@@ -53,7 +53,8 @@ async function getLatestFeriadoDate(): Promise<string | null> {
 }
 
 function formatDate(fechaStr: string): string {
-  const fecha = new Date(fechaStr);
+  // Use local time to avoid timezone offset issues
+  const fecha = new Date(`${fechaStr}T00:00:00`);
   return fecha.toLocaleDateString("es-AR", {
     weekday: "long",
     year: "numeric",
