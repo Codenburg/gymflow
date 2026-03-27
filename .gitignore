@@ -2,7 +2,6 @@
 .priv/**
 *.priv/
 .claude/**
-.agentes/**
 AGENTS.md
 # dependencies
 /node_modules
@@ -51,3 +50,7 @@ next-env.d.ts
 
 #SKILLs
 .agents/
+skills-lock.json
+
+#locals
+components.json
