@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { deleteEjercicio } from "@/app/actions/ejercicios";
 import type { FormState } from "@/lib/schemas";
 import { EjercicioForm } from "./ejercicio-form";
@@ -35,8 +36,21 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const { confirm, Dialog } = useConfirm();
+  const router = useRouter();
 
   const [deleteState, deleteActionWrapped, isDeletePending] = useActionState(deleteActionTyped, initialState);
+
+  // Handler for successful create - refresh server data then update local state
+  const handleCreateSuccess = () => {
+    router.refresh();
+    setIsAdding(false);
+  };
+
+  // Handler for successful edit - refresh server data then update local state
+  const handleEditSuccess = () => {
+    router.refresh();
+    setEditingId(null);
+  };
 
   const handleDelete = async (ejercicioId: string) => {
     const confirmed = await confirm({
@@ -68,7 +82,7 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
         <div className="p-4 bg-[#f3f4f6] dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a] space-y-4">
           <EjercicioForm
             diaId={diaId}
-            onSuccess={() => setIsAdding(false)}
+            onSuccess={handleCreateSuccess}
             onCancel={() => setIsAdding(false)}
           />
         </div>
@@ -102,7 +116,7 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
                   repes: ejercicio.repes || undefined,
                 }}
                 diaId={diaId}
-                onSuccess={() => setEditingId(null)}
+                onSuccess={handleEditSuccess}
                 onCancel={() => setEditingId(null)}
               />
             ) : (
