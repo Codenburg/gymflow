@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteEjercicio } from "@/app/actions/ejercicios";
@@ -8,6 +8,7 @@ import type { FormState } from "@/lib/schemas";
 import { EjercicioForm } from "./ejercicio-form";
 import { Pencil, Trash2 } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
+import { toast } from "sonner";
 
 interface Ejercicio {
   id: string;
@@ -40,14 +41,25 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
 
   const [deleteState, deleteActionWrapped, isDeletePending] = useActionState(deleteActionTyped, initialState);
 
+  // Handle delete success/error
+  useEffect(() => {
+    if (deleteState?.success) {
+      toast.success("Ejercicio eliminado");
+    } else if (deleteState?.success === false && deleteState.message) {
+      toast.error(deleteState.message);
+    }
+  }, [deleteState]);
+
   // Handler for successful create - refresh server data then update local state
   const handleCreateSuccess = () => {
+    toast.success("¡Ejercicio creado!");
     router.refresh();
     setIsAdding(false);
   };
 
   // Handler for successful edit - refresh server data then update local state
   const handleEditSuccess = () => {
+    toast.success("¡Ejercicio actualizado!");
     router.refresh();
     setEditingId(null);
   };
