@@ -45,6 +45,7 @@ export function AdminTable<T extends { id: string }>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableRowSelection,
+    getRowId: (row) => row.id,
     onRowSelectionChange: (updater) => {
       const newSelection = typeof updater === 'function' ? updater(rowSelection) : updater;
       onRowSelectionChange?.(newSelection);
