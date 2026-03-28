@@ -51,8 +51,8 @@ model Ejercicio {
   id        String   @id @default(uuid())
   diaId     String
   nombre    String
-  series    String?
-  repes     String?
+  series    Int?
+  repes     Int?
   orden     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -13,8 +13,8 @@ interface EjercicioFormProps {
   initialData?: {
     id: string;
     nombre: string;
-    series?: string;
-    repes?: string;
+    series?: string | null;
+    repes?: string | null;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -57,9 +57,9 @@ export function EjercicioForm({ diaId, initialData, onSuccess, onCancel }: Ejerc
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Nombre */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-1">
           <AdminFormField variant="default" label="Nombre *" error={state?.errors?.nombre?.[0]}>
             <Input
               id="nombre"
@@ -74,37 +74,24 @@ export function EjercicioForm({ diaId, initialData, onSuccess, onCancel }: Ejerc
           </AdminFormField>
         </div>
 
-        {/* Series */}
-        <AdminFormField variant="default" label="Series" error={state?.errors?.series?.[0]}>
-          <Input
-            id="series"
-            name="series"
-            type="number"
-            min={1}
-            max={99}
-            maxLength={2}
-            defaultValue={initialData?.series}
-            placeholder="Ej: 4"
-            className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
-          />
-        </AdminFormField>
-      </div>
-
-      {/* Repes */}
-      <div className="max-w-xs">
-        <AdminFormField variant="default" label="Repeticiones" error={state?.errors?.repes?.[0]}>
-          <Input
-            id="repes"
-            name="repes"
-            type="number"
-            min={1}
-            max={99}
-            maxLength={2}
-            defaultValue={initialData?.repes}
-            placeholder="Ej: 10-12"
-            className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
-          />
-        </AdminFormField>
+        {/* Formato 4x12 */}
+        <div>
+          <AdminFormField variant="default" label="Formato" error={state?.errors?.formato?.[0]}>
+            <Input
+              id="formato"
+              name="formato"
+              type="text"
+              inputMode="numeric"
+              defaultValue={
+                initialData?.series && initialData?.repes
+                  ? `${initialData.series}x${initialData.repes}`
+                  : ""
+              }
+              placeholder="4x12"
+              className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+            />
+          </AdminFormField>
+        </div>
       </div>
 
       {/* Submit */}

@@ -2,23 +2,20 @@ import { z } from "zod";
 import { getToday } from "@/lib/dates";
 
 // ======================
-// Preprocess helpers for FormData handling
+// Formato 4x12 helper
 // ======================
 
-const emptyToUndefined = (v: unknown) => {
-  if (v === "" || v === null || v === undefined) return undefined;
-  return v;
-};
+const parseFormato = (value: string | undefined) => {
+  if (!value) return { series: undefined, repes: undefined };
 
-const stringToNumber = (v: unknown) => {
-  if (v === undefined) return undefined;
-  const num = typeof v === "string" ? Number(v) : v;
-  return isNaN(num as number) ? undefined : num;
-};
+  const match = value.match(/^(\d+)x(\d+)$/);
 
-const numberToString = (v: unknown) => {
-  if (v === undefined) return undefined;
-  return String(v);
+  if (!match) return null;
+
+  return {
+    series: Number(match[1]),
+    repes: Number(match[2]),
+  };
 };
 
 // ======================
@@ -27,31 +24,31 @@ const numberToString = (v: unknown) => {
 
 export const ejercicioSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
-  series: z
-    .preprocess(emptyToUndefined, z.any())
-    .transform(stringToNumber)
-    .pipe(z.number().int().positive().max(99).optional())
-    .transform(numberToString),
-  repes: z
-    .preprocess(emptyToUndefined, z.any())
-    .transform(stringToNumber)
-    .pipe(z.number().int().positive().max(99).optional())
-    .transform(numberToString),
+  formato: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+x\d+$/.test(val), {
+      message: "Formato inválido (usar 4x12)",
+    })
+    .transform((val) => {
+      if (!val) return { series: undefined, repes: undefined };
+      return parseFormato(val);
+    }),
   diaId: z.string().uuid({ error: "ID de día inválido" }),
 });
 
 export const ejercicioUpdateSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
-  series: z
-    .preprocess(emptyToUndefined, z.any())
-    .transform(stringToNumber)
-    .pipe(z.number().int().positive().max(99).optional())
-    .transform(numberToString),
-  repes: z
-    .preprocess(emptyToUndefined, z.any())
-    .transform(stringToNumber)
-    .pipe(z.number().int().positive().max(99).optional())
-    .transform(numberToString),
+  formato: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+x\d+$/.test(val), {
+      message: "Formato inválido (usar 4x12)",
+    })
+    .transform((val) => {
+      if (!val) return { series: undefined, repes: undefined };
+      return parseFormato(val);
+    }),
   diaId: z.string().uuid({ error: "ID de día inválido" }),
 });
 
@@ -73,6 +70,11 @@ export type EjercicioNestedInput = z.infer<typeof ejercicioNestedSchema>;
 // ======================
 // Dia Schemas (Flat - for separate creation)
 // ======================
+
+// Backend-only: nombre is generated automatically
+export const createDiaSchema = z.object({
+  rutinaId: z.string().uuid({ error: "ID de rutina inválido" }),
+});
 
 export const diaSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(50),

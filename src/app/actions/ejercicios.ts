@@ -59,9 +59,15 @@ export async function createEjercicio(
 
     const newOrden = (lastEjercicio?.orden ?? -1) + 1;
 
+    // Extract formato (series/repes) from parsed data
+    const { formato, ...rest } = parsed.data;
+    const formatoData = formato ?? { series: undefined, repes: undefined };
+
     const ejercicio = await prisma.ejercicio.create({
       data: {
-        ...parsed.data,
+        ...rest,
+        series: formatoData.series,
+        repes: formatoData.repes,
         orden: newOrden,
       },
     });
@@ -134,9 +140,17 @@ export async function updateEjercicio(
       return { success: false, message: "Ejercicio no encontrado" };
     }
 
+    // Extract formato (series/repes) from parsed data
+    const { formato, ...rest } = parsed.data;
+    const formatoData = formato ?? { series: undefined, repes: undefined };
+
     const updatedEjercicio = await prisma.ejercicio.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...rest,
+        series: formatoData.series,
+        repes: formatoData.repes,
+      },
     });
 
     // Revalidate exact path to the day page
