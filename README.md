@@ -353,7 +353,7 @@ npm run db:generate
 ### ⏳ Pendiente
 
 #### Alta Prioridad
-- [ ] Tests E2E覆盖率 completa (Playwright) — Fase 4
+- [ ] Tests E2E con cobertura completa (Playwright) — Fase 4
 - [ ] Documentación de API (MDX-based)
 
 #### Media Prioridad

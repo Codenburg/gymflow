@@ -40,24 +40,43 @@ Para features significativas, usar el workflow SDD:
 /sdd-archive <change>               # Archivar
 ```
 
-## Skills
+## Agent Setup
 
-El proyecto tiene skills especializados. Antes de trabajar en un área:
+Este proyecto usa **opencode** con skills especializados. Los skills son necesarios para mantener los estándares del proyecto.
 
-| Área | Skill |
-|------|-------|
-| React 19 | react-19 |
-| Next.js | nextjs-best-practices |
-| TypeScript | typescript |
-| Tailwind | tailwind-design-system |
-| Prisma | prisma |
-| Zod | zod-4 |
-| Zustand | zustand-5 |
-| Forms | react-hook-form |
-| shadcn/ui | shadcn |
-| Auth | better-auth-best-practices |
-| PostgreSQL | postgresql-best-practices |
-| API testing | api-testing-patterns |
+### Skills requeridos
+
+Los skills se instalan en `~/.agents/skills/` o `~/.config/opencode/skills/`:
+
+| Área | Skill | Path |
+|------|-------|------|
+| React 19 + Compiler | react-19 | react-19/SKILL.md |
+| Next.js App Router | nextjs-best-practices | nextjs-best-practices/SKILL.md |
+| TypeScript strict | typescript | typescript/SKILL.md |
+| Tailwind CSS v4 | tailwind-design-system | tailwind-design-system/SKILL.md |
+| Prisma ORM | prisma | prisma/SKILL.md |
+| Zod validation | zod-4 | zod-4/SKILL.md |
+| Zustand state | zustand-5 | zustand-5/SKILL.md |
+| React Hook Form | react-hook-form | react-hook-form/SKILL.md |
+| shadcn/ui | shadcn | shadcn/SKILL.md |
+| Auth (Better Auth) | better-auth-best-practices | better-auth-best-practices/SKILL.md |
+| Server-side auth | nextjs-auth-server-side | nextjs-auth-server-side/SKILL.md |
+| PostgreSQL | postgresql-best-practices | postgresql-best-practices/SKILL.md |
+| API testing | api-testing-patterns | api-testing-patterns/SKILL.md |
+| Frontend design | frontend-design | frontend-design/SKILL.md |
+| URL search debounce | url-search-debounce | url-search-debounce/SKILL.md |
+| README versioning | readme-guardian | readme-guardian/SKILL.md |
+
+### Instalación
+
+1. Asegurate de tener **opencode** instalado
+2. Los skills van en `~/.agents/skills/` (o `~/.config/opencode/skills/` según la config)
+3. Usar el skill `find-skills` para buscar e instalar skills
+4. O clonar/linkear manualmente desde el origen de cada skill
+
+### Verificación
+
+Al trabajar en el proyecto, el agente debería leer automáticamente los skills desde `AGENTS.md`. Si un skill no está disponible, el agente loindicará.
 
 ## Código
 
