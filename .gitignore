@@ -3,6 +3,7 @@
 *.priv/
 .claude/**
 AGENTS.md
+.agents/**
 
 # dependencies
 /node_modules
