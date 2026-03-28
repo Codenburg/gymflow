@@ -72,6 +72,8 @@ export function EjercicioRow({
               type="number"
               placeholder="3"
               min={1}
+              max={99}
+              maxLength={2}
               className="seamless-input w-12 h-9 text-center placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
             />
           )}
@@ -89,6 +91,8 @@ export function EjercicioRow({
               type="number"
               placeholder="10"
               min={1}
+              max={99}
+              maxLength={2}
               className="seamless-input w-12 h-9 text-center placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
             />
           )}

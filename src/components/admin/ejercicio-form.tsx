@@ -79,7 +79,10 @@ export function EjercicioForm({ diaId, initialData, onSuccess, onCancel }: Ejerc
           <Input
             id="series"
             name="series"
-            type="text"
+            type="number"
+            min={1}
+            max={99}
+            maxLength={2}
             defaultValue={initialData?.series}
             placeholder="Ej: 4"
             className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
@@ -93,7 +96,10 @@ export function EjercicioForm({ diaId, initialData, onSuccess, onCancel }: Ejerc
           <Input
             id="repes"
             name="repes"
-            type="text"
+            type="number"
+            min={1}
+            max={99}
+            maxLength={2}
             defaultValue={initialData?.repes}
             placeholder="Ej: 10-12"
             className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"

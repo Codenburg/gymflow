@@ -2,17 +2,58 @@ import { z } from "zod";
 import { getToday } from "@/lib/dates";
 
 // ======================
+// Preprocess helpers for FormData handling
+// ======================
+
+const emptyToUndefined = (v: unknown) => {
+  if (v === "" || v === null || v === undefined) return undefined;
+  return v;
+};
+
+const stringToNumber = (v: unknown) => {
+  if (v === undefined) return undefined;
+  const num = typeof v === "string" ? Number(v) : v;
+  return isNaN(num as number) ? undefined : num;
+};
+
+const numberToString = (v: unknown) => {
+  if (v === undefined) return undefined;
+  return String(v);
+};
+
+// ======================
 // Ejercicio Schemas (Flat - for separate creation)
 // ======================
 
 export const ejercicioSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
-  series: z.string().max(20).optional(),
-  repes: z.string().max(20).optional(),
+  series: z
+    .preprocess(emptyToUndefined, z.any())
+    .transform(stringToNumber)
+    .pipe(z.number().int().positive().max(99).optional())
+    .transform(numberToString),
+  repes: z
+    .preprocess(emptyToUndefined, z.any())
+    .transform(stringToNumber)
+    .pipe(z.number().int().positive().max(99).optional())
+    .transform(numberToString),
   diaId: z.string().uuid({ error: "ID de día inválido" }),
 });
 
-export const ejercicioUpdateSchema = ejercicioSchema.partial();
+export const ejercicioUpdateSchema = z.object({
+  nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
+  series: z
+    .preprocess(emptyToUndefined, z.any())
+    .transform(stringToNumber)
+    .pipe(z.number().int().positive().max(99).optional())
+    .transform(numberToString),
+  repes: z
+    .preprocess(emptyToUndefined, z.any())
+    .transform(stringToNumber)
+    .pipe(z.number().int().positive().max(99).optional())
+    .transform(numberToString),
+  diaId: z.string().uuid({ error: "ID de día inválido" }),
+});
 
 export type EjercicioInput = z.infer<typeof ejercicioSchema>;
 export type EjercicioUpdateInput = z.infer<typeof ejercicioUpdateSchema>;
@@ -23,8 +64,8 @@ export type EjercicioUpdateInput = z.infer<typeof ejercicioUpdateSchema>;
 
 const ejercicioNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del ejercicio es requerido" }).max(100),
-  series: z.string().max(20).optional(),
-  repes: z.string().max(20).optional(),
+  series: z.coerce.number().int().positive().max(99).optional(),
+  repes: z.coerce.number().int().positive().max(99).optional(),
 });
 
 export type EjercicioNestedInput = z.infer<typeof ejercicioNestedSchema>;
