@@ -17,3 +17,4 @@ When Workin with Shadcn UI, read `~/.agents/skills/shadcn/SKILL.md` first.
 When implementing URL-based search with debounce and dual-state pattern, read `.agents/skills/url-search-debounce/SKILL.md` first.
 When maintaining README as single source of truth with versioning after commits, read `.agents/skills/readme-guardian/SKILL.md` first.
 For config and rules related to project management,rules, logics and more, read `~/openspec/config.yaml` first.
+For testing and debugging, read `~/.agents/skills/testing-debugging/SKILL.md` first.

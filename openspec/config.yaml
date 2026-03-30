@@ -12,7 +12,7 @@ context: |
   Architecture: Next.js App Router
   Runtime: Node.js
   Package manager: npm
-  Testing: None configured
+  Testing: E2E tests with Playwright, unit tests with Vitest (baseline required, real assertions only, no false green, classify failures: baseline/regression/invalid, regression_policy: fix_tests_if_behavior_changed, selectors: data-testid, invalid_tests: remove_or_rewrite, DnD must validate state+DOM+persistencia)
   Style: ESLint 9 flat config
   Dev server: MUST always use port 3000 (never 3001, 3002, etc.)
 
@@ -256,3 +256,45 @@ ui_state_management:
     - Hardcoded fallback values that mimic real data (e.g. counts, prices)
     - Multiple independent data fetches for the same resource in the same view
     - Mixing error state with visible valid-looking data
+Testing:
+  stack:
+    e2e: Playwright
+    unit: Vitest
+
+  baseline:
+    required: true
+    policy: do_not_fix
+
+  assertions:
+    required: true
+    forbid_console_validation: true
+
+  regression_policy:
+    strategy: fix_tests_if_behavior_changed
+
+  classification:
+    required: true
+    types:
+      - baseline
+      - regression
+      - invalid
+
+  selectors:
+    strategy: data-testid
+
+  invalid_tests:
+    policy: remove_or_rewrite
+
+  dnd:
+    required_checks:
+      - state
+      - dom
+      - persistence
+
+  policies:
+    no_false_green: true
+    no_silent_failures: true
+
+  stop_conditions:
+    block_on_regressions: true
+    require_zero_new_fails: true
