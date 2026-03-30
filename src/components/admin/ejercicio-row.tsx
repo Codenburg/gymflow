@@ -58,6 +58,7 @@ export const EjercicioRow = memo(function EjercicioRow({
     <div
       ref={setNodeRef}
       style={style}
+      data-testid={`ejercicio-row-${diaIndex}-${ejercicioIndex}`}
       className={cn(
         "flex items-center gap-2 py-1 px-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group",
         isDragging && "opacity-50 z-50 pointer-events-none shadow-lg",
@@ -67,6 +68,7 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* Drag handle button - listeners ONLY on this */}
       <button
         type="button"
+        data-testid={`ejercicio-drag-handle-${diaIndex}-${ejercicioIndex}`}
         className={cn(
           "cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors",
           isDragging && "cursor-grabbing"
@@ -87,6 +89,7 @@ export const EjercicioRow = memo(function EjercicioRow({
           rules={{ required: "El nombre del ejercicio es requerido" }}
           render={({ field }) => (
             <Input
+              data-testid={`ejercicio-nombre-${diaIndex}-${ejercicioIndex}`}
               {...field}
               type="text"
               placeholder="Ej: Sentadillas con barra"

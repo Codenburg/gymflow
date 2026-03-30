@@ -129,6 +129,7 @@ function DiaSectionComponent({
           {/* Drag handle for the day - ONLY this gets the listeners */}
           <button
             type="button"
+            data-testid={`dia-drag-handle-${diaIndex}`}
             className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-colors"
             {...attributes}
             {...listeners}
@@ -144,7 +145,7 @@ function DiaSectionComponent({
               isExpanded && "rotate-90"
             )}
           />
-          <h3 className="text-[#111827] dark:text-white font-semibold text-base">Día {diaIndex + 1}</h3>
+          <h3 className="text-[#111827] dark:text-white font-semibold text-base" data-testid={`dia-title-${diaIndex}`}>Día {diaIndex + 1}</h3>
         </div>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
