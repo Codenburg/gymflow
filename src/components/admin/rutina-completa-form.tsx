@@ -545,12 +545,14 @@ export function RutinaCompletaForm() {
             <div className="space-y-4">
               {diasFields.map((field, index) => {
                 const diaValues = diasValues?.[index];
+                const baseName = `dias[${index}]`;
                 return (
                   <DiaSection
-                    key={field.id}
+                    key={`${field.id}-${index}`}
                     field={field}
-                    control={control}
+                    baseName={baseName}
                     diaIndex={index}
+                    control={control}
                     isExpanded={expandedDayIds.has(field.id)}
                     onToggle={() => toggleDay(field.id)}
                     onRemove={() => removeDay(field.id, index)}

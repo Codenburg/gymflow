@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -13,6 +13,7 @@ import type { Control, FieldErrors } from "react-hook-form";
 
 interface DiaSectionProps {
   field: { id: string };
+  baseName: string;
   diaIndex: number;
   control: Control<any>;
   isExpanded: boolean;
@@ -25,6 +26,7 @@ interface DiaSectionProps {
 
 function DiaSectionComponent({
   field,
+  baseName,
   diaIndex,
   control,
   isExpanded,
@@ -33,7 +35,6 @@ function DiaSectionComponent({
   errors,
   onRegisterEjerciciosMove,
 }: DiaSectionProps) {
-  const baseName = `dias[${diaIndex}]`;
   const diasErrors = errors?.dias as any;
   const diaErrors = diasErrors?.[diaIndex];
 
@@ -77,7 +78,7 @@ function DiaSectionComponent({
   }, [moveEjercicio]);
 
   // Register this day's ejercicios move function with parent form
-  // Cleanup: unregister on unmount or when diaIndex changes
+  // Cleanup: unregister on unmount or when baseName changes
   useEffect(() => {
     if (!onRegisterEjerciciosMove) return;
 
@@ -86,7 +87,7 @@ function DiaSectionComponent({
     return () => {
       // Unregister by setting to null (handled by parent)
     };
-  }, [onRegisterEjerciciosMove, diaIndex]);
+  }, [onRegisterEjerciciosMove, baseName]);
 
   // Memoized ejercicio IDs for SortableContext
   const sortableEjercicioIds = useCallback(
@@ -230,6 +231,7 @@ function DiaSectionComponent({
                   control={control}
                   name={`${baseName}.ejercicios.${index}`}
                   index={index}
+                  diaIndex={diaIndex}
                   diaId={field.id}
                   onRemove={() => removeEjercicio(index)}
                   errors={diaErrors?.ejercicios}
@@ -262,4 +264,4 @@ function DiaSectionComponent({
   );
 }
 
-export const DiaSection = memo(DiaSectionComponent);
+export const DiaSection = DiaSectionComponent;

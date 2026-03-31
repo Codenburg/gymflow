@@ -14,6 +14,7 @@ interface EjercicioRowProps {
   id: string;
   name: string;
   index: number;
+  diaIndex: number;
   diaId: string;
   onRemove: () => void;
   errors?: FieldErrors<any>;
@@ -24,6 +25,7 @@ export const EjercicioRow = memo(function EjercicioRow({
   id,
   name,
   index,
+  diaIndex,
   diaId,
   onRemove,
   errors,
@@ -44,7 +46,9 @@ export const EjercicioRow = memo(function EjercicioRow({
     id,
     data: {
       type: "ejercicio",
+      diaIndex,
       diaId,
+      ejercicioIndex: index,
     },
   });
 
