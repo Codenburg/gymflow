@@ -4,6 +4,50 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.2] - 2026-03-31
+
+### Fixed
+- RutinaCompletaForm: ejercicio drag-and-drop no funcionaba (faltaban `ejercicioIndex` y `diaIndex` en sortable data)
+- RutinaCompletaForm: day reorder causaba pérdida de campos `nombre` y `musculosEnfocados` en drags subsiguientes (memo causaba re-renders omitidos, key forzada `${field.id}-${index}` + `diaIndex` prop directo)
+- usePersistedForm: state corruption durante drag (persistía estados transitorios via `useWatch`), agregado flag `skipPersistence` para pausar persistencia durante operaciones DnD
+
+### Changed
+- EjercicioRow: props ahora incluyen `diaIndex` y pasa `ejercicioIndex` en sortable data
+- DiaSection: sin `React.memo()`, usa key forzada `${field.id}-${index}`, `baseName` calculado en el map del padre y pasado como prop
+
+## [0.2.1] - 2026-03-30
+
+### Fixed
+- RutinaCompletaForm: error "uncontrolled to controlled" en inputs (forwardRef + value ?? "")
+- RutinaCompletaForm: form reset al drag de ejercicios (name del map() en vez de indices reconstruidos)
+- RutinaCompletaForm: form reset al drag de dias (shouldUnregister: false en useFieldArray)
+- RutinaCompletaForm: hydration mismatch por IDs de dnd-kit (ssr: false en wrapper client)
+- Input/Textarea: falta de forwardRef para integracion correcta con RHF Controller
+- Schemas: .default("") en campos opcionales (formato, musculosEnfocados)
+
+### Changed
+- Arquitectura: page.tsx ahora es Server Component, form aislado en wrapper client
+- rutinax-form-client.tsx: nuevo archivo para encapsular DnD con dynamic ssr:false
+- uso de Controller en vez de register para nombre, descripcion, tipo de rutina
+
+## [0.2.0] - 2026-03-28
+
+### Fixed
+- Ejercicio form: unified series/repes to single "4x12" formato input
+- Ejercicio form: validation error when leaving series/repes empty (NaN bug)
+- Ejercicio mutations: revalidatePath now uses exact route (/admin/rutinas/[id]/dias/[diaId])
+- Dia creation: auto-generates "Día N" nombre instead of requiring user input
+- Series/repes: changed from String to Int in Prisma schema
+
+### Changed
+- ejercicio-form.tsx: single formato input instead of separate series/repes
+- dia-manager.tsx: no longer requires nombre input for new days
+- Schemas: new createDiaSchema (rutinaId only), formato field with refine+transform
+
+### Added
+- Toast notifications for ejercicio CRUD operations
+- router.refresh() after mutations for immediate UI updates
+
 ## [0.1.1] - 2026-03-27
 
 ### Changed

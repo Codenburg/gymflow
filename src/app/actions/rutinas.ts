@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidateRutinasCache } from "@/lib/rutinas";
@@ -9,6 +10,7 @@ import {
   rutinaUpdateSchema,
   rutinaCompletaSchema,
   idSchema,
+  parseFormato,
   type FormState,
 } from "@/lib/schemas";
 import type { RutinaCompletaInput } from "@/lib/schemas";
@@ -308,6 +310,7 @@ export async function deleteRutina(
 
     // Invalidate rutinas cache so homepage reflects changes immediately
     await revalidateRutinasCache();
+    revalidatePath("/admin/rutinas");
 
     return {
       success: true,
@@ -359,6 +362,7 @@ export async function deleteRutinas(
 
     // Invalidate rutinas cache so homepage reflects changes immediately
     await revalidateRutinasCache();
+    revalidatePath("/admin/rutinas");
 
     return {
       success: true,
@@ -528,13 +532,14 @@ export async function createRutinaCompleta(
         // Create Ejercicios for this Dia
         for (let ejercicioIndex = 0; ejercicioIndex < diaData.ejercicios.length; ejercicioIndex++) {
           const ejercicioData = diaData.ejercicios[ejercicioIndex];
+          const parsedFormato = parseFormato(ejercicioData.formato);
 
           await tx.ejercicio.create({
             data: {
               diaId: createdDia.id,
               nombre: ejercicioData.nombre,
-              series: ejercicioData.series,
-              repes: ejercicioData.repes,
+              series: parsedFormato?.series,
+              repes: parsedFormato?.repes,
               orden: ejercicioIndex,
             },
           });

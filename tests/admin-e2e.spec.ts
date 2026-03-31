@@ -179,8 +179,8 @@ test.describe('Create New Rutina', () => {
     // Fill in the form
     await page.fill('input[name="nombre"]', 'Test Routine');
     
-    // Select a type
-    await page.selectOption('select[name="tipo"]', 'fuerza');
+    // Select a type using SegmentedControl (role=tab with aria-label)
+    await page.getByRole('tab', { name: 'Fuerza' }).click();
     
     // Fill description
     await page.fill('textarea[name="descripcion"]', 'Test description for routine');
@@ -196,7 +196,7 @@ test.describe('Create New Rutina', () => {
     await page.waitForTimeout(2000);
     
     // Try to submit without filling required fields
-    await page.selectOption('select[name="tipo"]', 'fuerza');
+    await page.getByRole('tab', { name: 'Fuerza' }).click();
     await page.click('button[type="submit"]');
     
     // Should show validation error or not submit

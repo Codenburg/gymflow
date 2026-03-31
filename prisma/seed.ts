@@ -131,11 +131,30 @@ async function main() {
       const numDias = i < 5 ? 2 : 1;
       
       for (let d = 1; d <= numDias; d++) {
-        const ejercicios = [
-          { nombre: 'Ejercicio 1', series: '3x10', orden: 1 },
-          { nombre: 'Ejercicio 2', series: '3x12', orden: 2 },
-          { nombre: 'Ejercicio 3', series: '4x8', orden: 3 },
+        // Parse "3x10" format into separate series and repes
+        const parseFormato = (formato: string) => {
+          const match = formato.match(/^(\d+)x(\d+)$/);
+          if (!match) return { series: null, repes: null };
+          return { series: parseInt(match[1], 10), repes: parseInt(match[2], 10) };
+        };
+
+        const ejerciciosData = [
+          { nombre: 'Press de Banca', formato: '4x10', orden: 1 },
+          { nombre: 'Sentadillas', formato: '4x12', orden: 2 },
+          { nombre: 'Peso Muerto', formato: '3x8', orden: 3 },
+          { nombre: 'Fondos', formato: '3x12', orden: 4 },
+          { nombre: 'Press Militar', formato: '4x10', orden: 5 },
         ];
+
+        const ejercicios = ejerciciosData.map(ej => {
+          const { series, repes } = parseFormato(ej.formato);
+          return {
+            nombre: ej.nombre,
+            series,
+            repes,
+            orden: ej.orden,
+          };
+        });
 
         await prisma.dia.create({
           data: {

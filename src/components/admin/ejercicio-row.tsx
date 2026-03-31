@@ -1,47 +1,103 @@
 "use client";
 
+import { memo } from "react";
 import { Controller } from "react-hook-form";
-import { Trash2 } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import type { Control, FieldErrors } from "react-hook-form";
 
 interface EjercicioRowProps {
   control: Control<any>;
+  id: string;
+  name: string;
+  index: number;
   diaIndex: number;
-  ejercicioIndex: number;
+  diaId: string;
   onRemove: () => void;
   errors?: FieldErrors<any>;
 }
 
-export function EjercicioRow({
+export const EjercicioRow = memo(function EjercicioRow({
   control,
+  id,
+  name,
+  index,
   diaIndex,
-  ejercicioIndex,
+  diaId,
   onRemove,
   errors,
 }: EjercicioRowProps) {
-  const baseName = `dias[${diaIndex}].ejercicios[${ejercicioIndex}]`;
   const ejerciciosArrayErrors = errors as any;
-  const ejercicioErrors = ejerciciosArrayErrors?.[ejercicioIndex];
+  const ejercicioErrors = ejerciciosArrayErrors?.[index];
   const hasError = ejercicioErrors?.nombre;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
+    id,
+    data: {
+      type: "ejercicio",
+      diaIndex,
+      diaId,
+      ejercicioIndex: index,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="flex items-center gap-2 py-1 px-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group">
-      {/* Drag handle indicator */}
-      <div className="w-4 flex-shrink-0 flex items-center justify-center">
-        <div className="w-1 h-4 bg-gray-300 dark:bg-[#2a2a2a] rounded-full opacity-40 group-hover:opacity-80 transition-opacity" />
-      </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-testid={`ejercicio-row-${index}`}
+      className={cn(
+        "flex items-center gap-2 py-1 px-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group",
+        isDragging && "opacity-50 z-50 pointer-events-none shadow-lg",
+        isOver && "border-primary ring-2 ring-primary/20 bg-primary/5"
+      )}
+    >
+      {/* Drag handle button - listeners ONLY on this */}
+      <button
+        type="button"
+        data-testid={`ejercicio-drag-handle-${index}`}
+        className={cn(
+          "cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors",
+          isDragging && "cursor-grabbing"
+        )}
+        {...attributes}
+        {...listeners}
+        aria-label="Arrastrar ejercicio para reordenar"
+        title="Arrastrar para reordenar"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </button>
 
       {/* Nombre */}
       <div className="flex-1 min-w-0">
         <Controller
-          name={`${baseName}.nombre`}
+          name={`${name}.nombre`}
           control={control}
           rules={{ required: "El nombre del ejercicio es requerido" }}
           render={({ field }) => (
             <Input
-              {...field}
+              data-testid={`ejercicio-nombre-${index}`}
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
               type="text"
               placeholder="Ej: Sentadillas con barra"
               className={cn(
@@ -53,43 +109,26 @@ export function EjercicioRow({
         />
         {hasError && (
           <p className="text-[#ef4444] dark:text-[#ef4444] text-xs mt-1">
-            {typeof hasError === 'object' ? hasError.message : hasError}
+            {typeof hasError === "object" ? hasError.message : hasError}
           </p>
         )}
       </div>
 
-      {/* Series × Repes */}
-      <div className="flex items-center gap-0.5">
+      {/* Formato 4x12 */}
+      <div className="w-20 flex-shrink-0">
         <Controller
-          name={`${baseName}.series`}
+          name={`${name}.formato`}
           control={control}
           render={({ field: { onChange, onBlur, value, ref } }) => (
             <Input
               ref={ref}
               onChange={onChange}
               onBlur={onBlur}
-              value={value || ""}
-              type="number"
-              placeholder="3"
-              min={1}
-              className="seamless-input w-12 h-9 text-center placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
-            />
-          )}
-        />
-        <span className="text-[#d1d5db] dark:text-[#5a5a5a] self-center leading-none mx-0.5 select-none">×</span>
-        <Controller
-          name={`${baseName}.repes`}
-          control={control}
-          render={({ field: { onChange, onBlur, value, ref } }) => (
-            <Input
-              ref={ref}
-              onChange={onChange}
-              onBlur={onBlur}
-              value={value || ""}
-              type="number"
-              placeholder="10"
-              min={1}
-              className="seamless-input w-12 h-9 text-center placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+              value={value ?? ""}
+              type="text"
+              inputMode="numeric"
+              placeholder="4x12"
+              className="seamless-input w-full h-9 text-center placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
             />
           )}
         />
@@ -106,4 +145,4 @@ export function EjercicioRow({
       </button>
     </div>
   );
-}
+});

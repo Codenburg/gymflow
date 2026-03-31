@@ -33,8 +33,8 @@ export interface Dia {
 export interface Ejercicio {
   id: string;
   nombre: string;
-  series: string | null;
-  repes: string | null;
+  series: number | null;
+  repes: number | null;
 }
 
 export interface RutinaDetail {
@@ -61,8 +61,8 @@ export interface DiaDetail {
 export interface EjercicioDetail {
   id: string;
   nombre: string;
-  series: string | null;
-  repes: string | null;
+  series: number | null;
+  repes: number | null;
   orden: number;
 }
 
@@ -279,7 +279,7 @@ export async function getCachedRutinaById(id: string): Promise<RutinaDetail | nu
  */
 export async function revalidateRutinasCache(): Promise<void> {
   const { revalidateTag } = await import("next/cache");
-  revalidateTag(RUTINAS_CACHE_TAG, "max");
+  revalidateTag(RUTINAS_CACHE_TAG);
 }
 
 /**

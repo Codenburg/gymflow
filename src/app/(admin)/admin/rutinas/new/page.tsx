@@ -1,8 +1,5 @@
-import { RutinaCompletaForm } from "@/components/admin/rutina-completa-form";
 import { PageHeader } from "@/components/admin/page-header";
-
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
+import RutinaFormClient from "./rutina-form-client";
 
 export default function NewRutinaPage() {
   return (
@@ -12,8 +9,8 @@ export default function NewRutinaPage() {
         backHref="/admin/rutinas"
       />
 
-      {/* Form - ocupa todo el ancho disponible */}
-      <RutinaCompletaForm />
+      {/* Form - Client component isolated for DnD */}
+      <RutinaFormClient />
     </div>
   );
 }

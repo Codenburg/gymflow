@@ -80,8 +80,7 @@ Each day section MUST allow users to add and remove exercises dynamically.
 
 Each exercise MUST contain:
 - **nombre** (required): Text input for exercise name
-- **series** (optional): Text input for number of sets
-- **repes** (optional): Text input for repetitions
+- **formato** (optional): Single text input with format "NxN" (e.g., "4x12")
 
 #### Scenario: Adding an exercise to a day
 
@@ -104,8 +103,19 @@ Each exercise MUST contain:
 
 #### Scenario: Exercise name required
 
-- GIVEN the user attempts to submit without entering an exercise name
+- GIVEN a user attempts to submit without entering an exercise name
 - THEN a validation error MUST display: "Nombre del ejercicio es requerido"
+
+#### Scenario: Formato validation
+
+- GIVEN a user enters invalid formato (e.g., "abc", "4x", "x12")
+- THEN a validation error MUST display: "Formato inválido (usar 4x12)"
+
+#### Scenario: Empty formato is allowed
+
+- GIVEN a user leaves the formato field empty
+- THEN no validation error SHALL occur
+- AND the exercise SHALL be saved with series: null, repes: null
 
 ---
 
@@ -198,10 +208,25 @@ The form MUST include a Cancel button that navigates back to the routines list.
 The form MUST use the following Zod schema for client-side validation:
 
 ```typescript
+const parseFormato = (value: string | undefined) => {
+  if (!value) return { series: undefined, repes: undefined };
+  const match = value.match(/^(\d+)x(\d+)$/);
+  if (!match) return null;
+  return { series: Number(match[1]), repes: Number(match[2]) };
+};
+
 const ejercicioSchema = z.object({
   nombre: z.string().min(1, "Nombre del ejercicio es requerido"),
-  series: z.string().optional(),
-  repes: z.string().optional(),
+  formato: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+x\d+$/.test(val), {
+      message: "Formato inválido (usar 4x12)",
+    })
+    .transform((val) => {
+      if (!val) return { series: undefined, repes: undefined };
+      return parseFormato(val);
+    }),
 });
 
 const diaSchema = z.object({

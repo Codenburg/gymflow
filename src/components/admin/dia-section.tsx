@@ -1,52 +1,121 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
-import { ChevronRight, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight, GripVertical, Trash2 } from "lucide-react";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Input } from "@/components/ui/input";
 import { EjercicioRow } from "./ejercicio-row";
 import { cn } from "@/lib/utils";
 import type { Control, FieldErrors } from "react-hook-form";
 
 interface DiaSectionProps {
+  field: { id: string };
+  baseName: string;
   diaIndex: number;
   control: Control<any>;
   isExpanded: boolean;
   onToggle: () => void;
   onRemove: () => void;
   errors?: FieldErrors<any>;
+  /** Callback to register this day's ejercicios move function with the parent form */
+  onRegisterEjerciciosMove?: (moveFn: (from: number, to: number) => void) => void;
 }
 
-export function DiaSection({
+function DiaSectionComponent({
+  field,
+  baseName,
   diaIndex,
   control,
   isExpanded,
   onToggle,
   onRemove,
   errors,
+  onRegisterEjerciciosMove,
 }: DiaSectionProps) {
-  const baseName = `dias[${diaIndex}]`;
-  // Type assertion for nested errors - RHF types are complex
   const diasErrors = errors?.dias as any;
   const diaErrors = diasErrors?.[diaIndex];
 
+  // useSortable for the entire day
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: field.id,
+    data: {
+      type: "dia",
+      diaId: field.id,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   // Field array for ejercicios within this day
-  const { fields: ejercicioFields, append: appendEjercicio, remove: removeEjercicio } = useFieldArray({
+  const {
+    fields: ejercicioFields,
+    append: appendEjercicio,
+    remove: removeEjercicio,
+    move: moveEjercicio,
+  } = useFieldArray({
     control,
     name: `${baseName}.ejercicios`,
+    shouldUnregister: false,
   });
+
+  // Ref to track move function — updated whenever useFieldArray's move changes
+  const moveEjercicioRef = useRef(moveEjercicio);
+  useEffect(() => {
+    moveEjercicioRef.current = moveEjercicio;
+  }, [moveEjercicio]);
+
+  // Register this day's ejercicios move function with parent form
+  // Cleanup: unregister on unmount or when baseName changes
+  useEffect(() => {
+    if (!onRegisterEjerciciosMove) return;
+
+    onRegisterEjerciciosMove(moveEjercicioRef.current);
+
+    return () => {
+      // Unregister by setting to null (handled by parent)
+    };
+  }, [onRegisterEjerciciosMove, baseName]);
+
+  // Memoized ejercicio IDs for SortableContext
+  const sortableEjercicioIds = useCallback(
+    () => ejercicioFields.map((e) => e.id),
+    [ejercicioFields]
+  );
 
   // Add new exercise to this day
   const addExercise = useCallback(() => {
-    appendEjercicio({ nombre: "", series: "", repes: "" });
+    appendEjercicio({ nombre: "", formato: "" });
   }, [appendEjercicio]);
 
   return (
-    <div className="bg-white dark:bg-[#121212] rounded-2xl shadow-sm dark:shadow-black/30 overflow-hidden border border-[#e5e7eb] dark:border-[#2a2a2a]">
-      {/* Header with collapse toggle and delete button */}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "bg-white dark:bg-[#121212] rounded-2xl shadow-sm dark:shadow-black/30 overflow-hidden border transition-all duration-200",
+        isDragging && "opacity-50 z-50 pointer-events-none bg-muted"
+      )}
+    >
+      {/* Header with collapse toggle, drag handle, and delete button */}
       <div
-        className="flex items-center justify-between gap-4 px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/5 transition-colors rounded-t-2xl"
+        className={cn(
+          "flex items-center justify-between gap-4 px-4 py-3 transition-colors rounded-t-2xl",
+          !isDragging && "hover:bg-gray-100 dark:hover:bg-white/5",
+          isExpanded && "border-b border-[#e5e7eb] dark:border-[#2a2a2a]"
+        )}
         onClick={onToggle}
         role="button"
         tabIndex={0}
@@ -59,13 +128,26 @@ export function DiaSection({
         aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-3">
+          {/* Drag handle for the day - ONLY this gets the listeners */}
+          <button
+            type="button"
+            data-testid={`dia-drag-handle-${diaIndex}`}
+            className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-colors"
+            {...attributes}
+            {...listeners}
+            aria-label="Arrastrar para reordenar día"
+            title="Arrastrar para reordenar día"
+          >
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </button>
+
           <ChevronRight
             className={cn(
               "h-5 w-5 text-[#6b7280] transition-transform duration-200",
               isExpanded && "rotate-90"
             )}
           />
-          <h3 className="text-[#111827] dark:text-white font-semibold text-base">Día {diaIndex + 1}</h3>
+          <h3 className="text-[#111827] dark:text-white font-semibold text-base" data-testid={`dia-title-${diaIndex}`}>Día {diaIndex + 1}</h3>
         </div>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
@@ -90,7 +172,11 @@ export function DiaSection({
             rules={{ required: "El nombre del día es requerido" }}
             render={({ field }) => (
               <Input
-                {...field}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
                 type="text"
                 placeholder="Ej: Pierna, Espalda, Pecho..."
                 className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
@@ -99,7 +185,7 @@ export function DiaSection({
           />
           {diaErrors?.nombre && (
             <p className="text-[#ef4444] dark:text-[#ef4444] text-xs mt-1">
-              {typeof diaErrors.nombre === 'object' ? diaErrors.nombre.message : diaErrors.nombre}
+              {typeof diaErrors.nombre === "object" ? diaErrors.nombre.message : diaErrors.nombre}
             </p>
           )}
         </div>
@@ -112,7 +198,11 @@ export function DiaSection({
             control={control}
             render={({ field }) => (
               <Input
-                {...field}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
                 type="text"
                 placeholder="Ej: Cuádriceps, isquiotibiales, glúteos..."
                 className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
@@ -121,32 +211,40 @@ export function DiaSection({
           />
         </div>
 
-        {/* Ejercicios */}
+        {/* Ejercicios with nested SortableContext */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <label className="text-[#6b7280] dark:text-[#9ca3af] text-sm font-medium">Ejercicios</label>
             <span className="text-[#9ca3af] dark:text-[#6b7280] text-xs">Al menos 1 ejercicio</span>
           </div>
 
-          {/* Exercise rows */}
-          <div className="space-y-1">
-            {ejercicioFields.map((ejercicioField, ejercicioIndex) => (
-              <EjercicioRow
-                key={ejercicioField.id}
-                control={control}
-                diaIndex={diaIndex}
-                ejercicioIndex={ejercicioIndex}
-                onRemove={() => removeEjercicio(ejercicioIndex)}
-                errors={diaErrors?.ejercicios}
-              />
-            ))}
-          </div>
+          {/* SortableContext for ejercicios - enables cross-ejercicio drag within same day */}
+          <SortableContext
+            items={sortableEjercicioIds()}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-1">
+              {ejercicioFields.map((ejercicioField, index) => (
+                <EjercicioRow
+                  key={ejercicioField.id}
+                  id={ejercicioField.id}
+                  control={control}
+                  name={`${baseName}.ejercicios.${index}`}
+                  index={index}
+                  diaIndex={diaIndex}
+                  diaId={field.id}
+                  onRemove={() => removeEjercicio(index)}
+                  errors={diaErrors?.ejercicios}
+                />
+              ))}
+            </div>
+          </SortableContext>
 
           {/* Error for empty ejercicios */}
           {diaErrors?.ejercicios?.root && (
             <p className="text-[#ef4444] dark:text-[#ef4444] text-xs">
-              {typeof diaErrors.ejercicios.root === 'object' 
-                ? diaErrors.ejercicios.root.message 
+              {typeof diaErrors.ejercicios.root === "object"
+                ? diaErrors.ejercicios.root.message
                 : diaErrors.ejercicios.root}
             </p>
           )}
@@ -165,3 +263,5 @@ export function DiaSection({
     </div>
   );
 }
+
+export const DiaSection = DiaSectionComponent;

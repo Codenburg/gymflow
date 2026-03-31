@@ -2,17 +2,55 @@ import { z } from "zod";
 import { getToday } from "@/lib/dates";
 
 // ======================
+// Formato 4x12 helper
+// ======================
+
+export function parseFormato(value: string | undefined): { series: number | undefined; repes: number | undefined } | null {
+  if (!value) return { series: undefined, repes: undefined };
+
+  const match = value.match(/^(\d+)x(\d+)$/);
+
+  if (!match) return null;
+
+  return {
+    series: Number(match[1]),
+    repes: Number(match[2]),
+  };
+};
+
+// ======================
 // Ejercicio Schemas (Flat - for separate creation)
 // ======================
 
 export const ejercicioSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
-  series: z.string().max(20).optional(),
-  repes: z.string().max(20).optional(),
+  formato: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+x\d+$/.test(val), {
+      message: "Formato inválido (usar 4x12)",
+    })
+    .transform((val) => {
+      if (!val) return { series: undefined, repes: undefined };
+      return parseFormato(val);
+    }),
   diaId: z.string().uuid({ error: "ID de día inválido" }),
 });
 
-export const ejercicioUpdateSchema = ejercicioSchema.partial();
+export const ejercicioUpdateSchema = z.object({
+  nombre: z.string().min(1, { error: "El nombre es requerido" }).max(100),
+  formato: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+x\d+$/.test(val), {
+      message: "Formato inválido (usar 4x12)",
+    })
+    .transform((val) => {
+      if (!val) return { series: undefined, repes: undefined };
+      return parseFormato(val);
+    }),
+  diaId: z.string().uuid({ error: "ID de día inválido" }),
+});
 
 export type EjercicioInput = z.infer<typeof ejercicioSchema>;
 export type EjercicioUpdateInput = z.infer<typeof ejercicioUpdateSchema>;
@@ -23,8 +61,7 @@ export type EjercicioUpdateInput = z.infer<typeof ejercicioUpdateSchema>;
 
 const ejercicioNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del ejercicio es requerido" }).max(100),
-  series: z.string().max(20).optional(),
-  repes: z.string().max(20).optional(),
+  formato: z.string().optional().default(""),
 });
 
 export type EjercicioNestedInput = z.infer<typeof ejercicioNestedSchema>;
@@ -32,6 +69,11 @@ export type EjercicioNestedInput = z.infer<typeof ejercicioNestedSchema>;
 // ======================
 // Dia Schemas (Flat - for separate creation)
 // ======================
+
+// Backend-only: nombre is generated automatically
+export const createDiaSchema = z.object({
+  rutinaId: z.string().uuid({ error: "ID de rutina inválido" }),
+});
 
 export const diaSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(50),
@@ -50,7 +92,7 @@ export type DiaUpdateInput = z.infer<typeof diaUpdateSchema>;
 
 const diaNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del día es requerido" }).max(50),
-  musculosEnfocados: z.string().max(200).optional(),
+  musculosEnfocados: z.string().max(200).optional().default(""),
   ejercicios: z
     .array(ejercicioNestedSchema)
     .min(1, { error: "Cada día debe tener al menos un ejercicio" }),

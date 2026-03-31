@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { deleteEjercicio } from "@/app/actions/ejercicios";
 import type { FormState } from "@/lib/schemas";
 import { EjercicioForm } from "./ejercicio-form";
 import { Pencil, Trash2 } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
+import { toast } from "sonner";
 
 interface Ejercicio {
   id: string;
   nombre: string;
-  series?: string | null;
-  repes?: string | null;
+  series?: number | null;
+  repes?: number | null;
   orden: number;
 }
 
@@ -35,8 +37,32 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const { confirm, Dialog } = useConfirm();
+  const router = useRouter();
 
   const [deleteState, deleteActionWrapped, isDeletePending] = useActionState(deleteActionTyped, initialState);
+
+  // Handle delete success/error
+  useEffect(() => {
+    if (deleteState?.success) {
+      toast.success("Ejercicio eliminado");
+    } else if (deleteState?.success === false && deleteState.message) {
+      toast.error(deleteState.message);
+    }
+  }, [deleteState]);
+
+  // Handler for successful create - refresh server data then update local state
+  const handleCreateSuccess = () => {
+    toast.success("¡Ejercicio creado!");
+    router.refresh();
+    setIsAdding(false);
+  };
+
+  // Handler for successful edit - refresh server data then update local state
+  const handleEditSuccess = () => {
+    toast.success("¡Ejercicio actualizado!");
+    router.refresh();
+    setEditingId(null);
+  };
 
   const handleDelete = async (ejercicioId: string) => {
     const confirmed = await confirm({
@@ -68,7 +94,7 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
         <div className="p-4 bg-[#f3f4f6] dark:bg-[#1a1a1a] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a] space-y-4">
           <EjercicioForm
             diaId={diaId}
-            onSuccess={() => setIsAdding(false)}
+            onSuccess={handleCreateSuccess}
             onCancel={() => setIsAdding(false)}
           />
         </div>
@@ -98,11 +124,11 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
                 initialData={{
                   id: ejercicio.id,
                   nombre: ejercicio.nombre,
-                  series: ejercicio.series || undefined,
-                  repes: ejercicio.repes || undefined,
+                  series: ejercicio.series?.toString() || undefined,
+                  repes: ejercicio.repes?.toString() || undefined,
                 }}
                 diaId={diaId}
-                onSuccess={() => setEditingId(null)}
+                onSuccess={handleEditSuccess}
                 onCancel={() => setEditingId(null)}
               />
             ) : (

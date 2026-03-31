@@ -59,23 +59,27 @@ export async function createEjercicio(
 
     const newOrden = (lastEjercicio?.orden ?? -1) + 1;
 
+    // Extract formato (series/repes) from parsed data
+    const { formato, ...rest } = parsed.data;
+    const formatoData = formato ?? { series: undefined, repes: undefined };
+
     const ejercicio = await prisma.ejercicio.create({
       data: {
-        ...parsed.data,
+        ...rest,
+        series: formatoData.series,
+        repes: formatoData.repes,
         orden: newOrden,
       },
     });
 
-    // Get the rutinaId for revalidation
+    // Get the dia for revalidation
     const dia = await prisma.dia.findUnique({
       where: { id: parsed.data.diaId },
       select: { rutinaId: true },
     });
 
-    revalidatePath("/admin/dashboard");
-    if (dia) {
-      revalidatePath(`/admin/rutinas/${dia.rutinaId}`);
-    }
+    // Revalidate exact path to the day page
+    revalidatePath(`/admin/rutinas/${dia?.rutinaId}/dias/${parsed.data.diaId}`);
 
     return {
       success: true,
@@ -125,22 +129,32 @@ export async function updateEjercicio(
     };
   }
 
-  try {
-    // Get the dia first to know the rutinaId for revalidation
+    try {
+    // Get the ejercicio with dia info for revalidation
     const ejercicio = await prisma.ejercicio.findUnique({
       where: { id },
-      select: { dia: { select: { rutinaId: true } } },
+      select: { diaId: true, dia: { select: { rutinaId: true } } },
     });
+
+    if (!ejercicio) {
+      return { success: false, message: "Ejercicio no encontrado" };
+    }
+
+    // Extract formato (series/repes) from parsed data
+    const { formato, ...rest } = parsed.data;
+    const formatoData = formato ?? { series: undefined, repes: undefined };
 
     const updatedEjercicio = await prisma.ejercicio.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...rest,
+        series: formatoData.series,
+        repes: formatoData.repes,
+      },
     });
 
-    revalidatePath("/admin/dashboard");
-    if (ejercicio) {
-      revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}`);
-    }
+    // Revalidate exact path to the day page
+    revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}/dias/${ejercicio.diaId}`);
 
     return {
       success: true,
@@ -178,21 +192,23 @@ export async function deleteEjercicio(
     };
   }
 
-  try {
-    // Get the dia first to know the rutinaId for revalidation
+    try {
+    // Get the ejercicio with dia info for revalidation
     const ejercicio = await prisma.ejercicio.findUnique({
       where: { id },
-      select: { dia: { select: { rutinaId: true } } },
+      select: { diaId: true, dia: { select: { rutinaId: true } } },
     });
+
+    if (!ejercicio) {
+      return { success: false, message: "Ejercicio no encontrado" };
+    }
 
     await prisma.ejercicio.delete({
       where: { id },
     });
 
-    revalidatePath("/admin/dashboard");
-    if (ejercicio) {
-      revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}`);
-    }
+    // Revalidate exact path to the day page
+    revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}/dias/${ejercicio.diaId}`);
 
     return {
       success: true,
