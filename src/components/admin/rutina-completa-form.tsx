@@ -49,6 +49,11 @@ export function RutinaCompletaForm() {
   const router = useRouter();
   const { confirm, Dialog } = useConfirm();
 
+  // Track drag state to pause localStorage persistence during drag operations
+  // This prevents persisting transient intermediate states that occur during
+  // useFieldArray.move() which causes multiple renders with changing indices
+  const [isDragging, setIsDragging] = useState(false);
+
   // Persisted form state with localStorage
   const form = usePersistedForm<RutinaFormData>({
     storageKey: STORAGE_KEY,
@@ -56,6 +61,7 @@ export function RutinaCompletaForm() {
     defaultValues,
     mode: "onBlur",
     reValidateMode: "onChange",
+    skipPersistence: isDragging,
   });
 
   const {
@@ -310,6 +316,22 @@ export function RutinaCompletaForm() {
     onDragEnd: handleDragEnd,
   });
 
+  // Wrap drag handlers to track isDragging state for persistence pause
+  const wrappedHandlers = useMemo(
+    () => ({
+      onDragStart: (...args: Parameters<typeof handlers.onDragStart>) => {
+        setIsDragging(true);
+        handlers.onDragStart(...args);
+      },
+      onDragOver: handlers.onDragOver,
+      onDragEnd: (...args: Parameters<typeof handlers.onDragEnd>) => {
+        handlers.onDragEnd(...args);
+        setIsDragging(false);
+      },
+    }),
+    [handlers]
+  );
+
   // ========== End DnD Integration ==========
 
   // Convert form data to FormData for server action
@@ -415,7 +437,7 @@ export function RutinaCompletaForm() {
       sensors={sensors}
       collisionDetection={collisionDetection}
       autoScroll={autoScroll}
-      {...handlers}
+      {...wrappedHandlers}
     >
       <form
         onSubmit={handleSubmit(onSubmit)}

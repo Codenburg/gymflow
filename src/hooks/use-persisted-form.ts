@@ -9,6 +9,11 @@ interface UsePersistedFormOptions<T> {
   version: number;
   debounceMs?: number;
   onSuccess?: (data: T) => void | Promise<void>;
+  /**
+   * When true, skips persisting to localStorage.
+   * Use this during drag operations to avoid persisting transient intermediate states.
+   */
+  skipPersistence?: boolean;
 }
 
 interface PersistedFormData<T> {
@@ -36,6 +41,7 @@ export function usePersistedForm<T extends Record<string, unknown>>(
     storageKey,
     version,
     debounceMs = DEFAULT_DEBOUNCE_MS,
+    skipPersistence = false,
     onSuccess,
     ...formProps
   } = options;
@@ -85,6 +91,7 @@ export function usePersistedForm<T extends Record<string, unknown>>(
   // Persist form changes with debounce
   useEffect(() => {
     if (!isRestoredRef.current) return; // Don't persist before first restore
+    if (skipPersistence) return; // Skip during drag operations to avoid persisting transient states
 
     // Clear existing timer
     if (debounceTimerRef.current) {
@@ -110,7 +117,7 @@ export function usePersistedForm<T extends Record<string, unknown>>(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [allValues, storageKey, version, debounceMs, getValues]);
+  }, [allValues, storageKey, version, debounceMs, getValues, skipPersistence]);
 
   // Clear persisted data
   const clear = useCallback(() => {
@@ -138,6 +145,7 @@ export function usePersistedFormSimple<T extends Record<string, unknown>>(
     storageKey,
     version,
     debounceMs = DEFAULT_DEBOUNCE_MS,
+    skipPersistence = false,
     ...formProps
   } = options;
 
@@ -181,6 +189,7 @@ export function usePersistedFormSimple<T extends Record<string, unknown>>(
   // Persist form changes with debounce
   useEffect(() => {
     if (!isRestoredRef.current) return;
+    if (skipPersistence) return; // Skip during drag operations to avoid persisting transient states
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -205,7 +214,7 @@ export function usePersistedFormSimple<T extends Record<string, unknown>>(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [allValues, storageKey, version, debounceMs, getValues]);
+  }, [allValues, storageKey, version, debounceMs, getValues, skipPersistence]);
 
   // Clear persisted data
   const clear = useCallback(() => {
