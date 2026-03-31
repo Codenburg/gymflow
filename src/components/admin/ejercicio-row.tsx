@@ -11,8 +11,9 @@ import type { Control, FieldErrors } from "react-hook-form";
 
 interface EjercicioRowProps {
   control: Control<any>;
-  diaIndex: number;
-  ejercicioIndex: number;
+  id: string;
+  name: string;
+  index: number;
   diaId: string;
   onRemove: () => void;
   errors?: FieldErrors<any>;
@@ -20,15 +21,15 @@ interface EjercicioRowProps {
 
 export const EjercicioRow = memo(function EjercicioRow({
   control,
-  diaIndex,
-  ejercicioIndex,
+  id,
+  name,
+  index,
   diaId,
   onRemove,
   errors,
 }: EjercicioRowProps) {
-  const baseName = `dias[${diaIndex}].ejercicios[${ejercicioIndex}]`;
   const ejerciciosArrayErrors = errors as any;
-  const ejercicioErrors = ejerciciosArrayErrors?.[ejercicioIndex];
+  const ejercicioErrors = ejerciciosArrayErrors?.[index];
   const hasError = ejercicioErrors?.nombre;
 
   const {
@@ -40,12 +41,10 @@ export const EjercicioRow = memo(function EjercicioRow({
     isDragging,
     isOver,
   } = useSortable({
-    id: baseName,
+    id,
     data: {
       type: "ejercicio",
       diaId,
-      diaIndex,
-      ejercicioIndex,
     },
   });
 
@@ -58,7 +57,7 @@ export const EjercicioRow = memo(function EjercicioRow({
     <div
       ref={setNodeRef}
       style={style}
-      data-testid={`ejercicio-row-${diaIndex}-${ejercicioIndex}`}
+      data-testid={`ejercicio-row-${index}`}
       className={cn(
         "flex items-center gap-2 py-1 px-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group",
         isDragging && "opacity-50 z-50 pointer-events-none shadow-lg",
@@ -68,7 +67,7 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* Drag handle button - listeners ONLY on this */}
       <button
         type="button"
-        data-testid={`ejercicio-drag-handle-${diaIndex}-${ejercicioIndex}`}
+        data-testid={`ejercicio-drag-handle-${index}`}
         className={cn(
           "cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors",
           isDragging && "cursor-grabbing"
@@ -84,13 +83,17 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* Nombre */}
       <div className="flex-1 min-w-0">
         <Controller
-          name={`${baseName}.nombre`}
+          name={`${name}.nombre`}
           control={control}
           rules={{ required: "El nombre del ejercicio es requerido" }}
           render={({ field }) => (
             <Input
-              data-testid={`ejercicio-nombre-${diaIndex}-${ejercicioIndex}`}
-              {...field}
+              data-testid={`ejercicio-nombre-${index}`}
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
               type="text"
               placeholder="Ej: Sentadillas con barra"
               className={cn(
@@ -110,14 +113,14 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* Formato 4x12 */}
       <div className="w-20 flex-shrink-0">
         <Controller
-          name={`${baseName}.formato`}
+          name={`${name}.formato`}
           control={control}
           render={({ field: { onChange, onBlur, value, ref } }) => (
             <Input
               ref={ref}
               onChange={onChange}
               onBlur={onBlur}
-              value={value || ""}
+              value={value ?? ""}
               type="text"
               inputMode="numeric"
               placeholder="4x12"

@@ -67,6 +67,7 @@ function DiaSectionComponent({
   } = useFieldArray({
     control,
     name: `${baseName}.ejercicios`,
+    shouldUnregister: false,
   });
 
   // Ref to track move function — updated whenever useFieldArray's move changes
@@ -170,7 +171,11 @@ function DiaSectionComponent({
             rules={{ required: "El nombre del día es requerido" }}
             render={({ field }) => (
               <Input
-                {...field}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
                 type="text"
                 placeholder="Ej: Pierna, Espalda, Pecho..."
                 className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
@@ -192,7 +197,11 @@ function DiaSectionComponent({
             control={control}
             render={({ field }) => (
               <Input
-                {...field}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
                 type="text"
                 placeholder="Ej: Cuádriceps, isquiotibiales, glúteos..."
                 className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
@@ -214,14 +223,15 @@ function DiaSectionComponent({
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-1">
-              {ejercicioFields.map((ejercicioField, ejercicioIndex) => (
+              {ejercicioFields.map((ejercicioField, index) => (
                 <EjercicioRow
                   key={ejercicioField.id}
+                  id={ejercicioField.id}
                   control={control}
-                  diaIndex={diaIndex}
-                  ejercicioIndex={ejercicioIndex}
+                  name={`${baseName}.ejercicios.${index}`}
+                  index={index}
                   diaId={field.id}
-                  onRemove={() => removeEjercicio(ejercicioIndex)}
+                  onRemove={() => removeEjercicio(index)}
                   errors={diaErrors?.ejercicios}
                 />
               ))}

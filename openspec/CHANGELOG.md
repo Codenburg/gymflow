@@ -4,6 +4,21 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.1] - 2026-03-30
+
+### Fixed
+- RutinaCompletaForm: error "uncontrolled to controlled" en inputs (forwardRef + value ?? "")
+- RutinaCompletaForm: form reset al drag de ejercicios (name del map() en vez de indices reconstruidos)
+- RutinaCompletaForm: form reset al drag de dias (shouldUnregister: false en useFieldArray)
+- RutinaCompletaForm: hydration mismatch por IDs de dnd-kit (ssr: false en wrapper client)
+- Input/Textarea: falta de forwardRef para integracion correcta con RHF Controller
+- Schemas: .default("") en campos opcionales (formato, musculosEnfocados)
+
+### Changed
+- Arquitectura: page.tsx ahora es Server Component, form aislado en wrapper client
+- rutinax-form-client.tsx: nuevo archivo para encapsular DnD con dynamic ssr:false
+- uso de Controller en vez de register para nombre, descripcion, tipo de rutina
+
 ## [0.2.0] - 2026-03-28
 
 ### Fixed

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { usePersistedForm } from "@/hooks/use-persisted-form";
 import { createRutinaCompleta } from "@/app/actions/rutinas";
 import { Button } from "@/components/ui/button";
@@ -60,9 +60,7 @@ export function RutinaCompletaForm() {
 
   const {
     control,
-    register,
     handleSubmit,
-    watch,
     getValues,
     formState: { errors, isSubmitting, submitCount },
   } = form;
@@ -76,6 +74,7 @@ export function RutinaCompletaForm() {
   } = useFieldArray({
     control,
     name: "dias",
+    shouldUnregister: false,
   });
 
   // UI state for expanded days (not persisted, just local UI)
@@ -103,8 +102,7 @@ export function RutinaCompletaForm() {
     []
   );
 
-  // Watch tipo for segmented control
-  const tipo = watch("tipo");
+
 
   // Effect to auto-expand newly added day after append
   useEffect(() => {
@@ -439,27 +437,44 @@ export function RutinaCompletaForm() {
               label="Nombre de la rutina"
               error={errors.nombre?.message}
             >
-              <Input
-                id="nombre"
-                type="text"
-                placeholder="Ej: Rutina Full Body"
-                className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
-                {...register("nombre", { required: "El nombre es requerido" })}
+              <Controller
+                name="nombre"
+                control={control}
+                rules={{ required: "El nombre es requerido" }}
+                render={({ field }) => (
+                  <Input
+                    id="nombre"
+                    type="text"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    placeholder="Ej: Rutina Full Body"
+                    className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+                  />
+                )}
               />
             </AdminFormField>
 
             {/* Tipo */}
             <AdminFormField variant="default" label="Tipo" error={errors.tipo?.message}>
-              <SegmentedControl
+              <Controller
                 name="tipo"
-                value={tipo}
-                onChange={(value) => form.setValue("tipo", value as any)}
-                options={[
-                  { value: "fuerza", label: "Fuerza" },
-                  { value: "cardio", label: "Cardio" },
-                  { value: "flexibilidad", label: "Flexibilidad" },
-                  { value: "hipertrofia", label: "Hipertrofia" },
-                ]}
+                control={control}
+                render={({ field }) => (
+                  <SegmentedControl
+                    name="tipo"
+                    value={field.value ?? "fuerza"}
+                    onChange={field.onChange}
+                    options={[
+                      { value: "fuerza", label: "Fuerza" },
+                      { value: "cardio", label: "Cardio" },
+                      { value: "flexibilidad", label: "Flexibilidad" },
+                      { value: "hipertrofia", label: "Hipertrofia" },
+                    ]}
+                  />
+                )}
               />
             </AdminFormField>
           </div>
@@ -470,12 +485,22 @@ export function RutinaCompletaForm() {
             label="Descripción"
             error={errors.descripcion?.message}
           >
-            <Textarea
-              id="descripcion"
-              placeholder="Describe los objetivos de esta rutina..."
-              rows={3}
-              className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
-              {...register("descripcion")}
+            <Controller
+              name="descripcion"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="descripcion"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                  placeholder="Describe los objetivos de esta rutina..."
+                  rows={3}
+                  className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+                />
+              )}
             />
           </AdminFormField>
         </div>

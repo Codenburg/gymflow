@@ -61,7 +61,7 @@ export type EjercicioUpdateInput = z.infer<typeof ejercicioUpdateSchema>;
 
 const ejercicioNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del ejercicio es requerido" }).max(100),
-  formato: z.string().optional(),
+  formato: z.string().optional().default(""),
 });
 
 export type EjercicioNestedInput = z.infer<typeof ejercicioNestedSchema>;
@@ -92,7 +92,7 @@ export type DiaUpdateInput = z.infer<typeof diaUpdateSchema>;
 
 const diaNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del día es requerido" }).max(50),
-  musculosEnfocados: z.string().max(200).optional(),
+  musculosEnfocados: z.string().max(200).optional().default(""),
   ejercicios: z
     .array(ejercicioNestedSchema)
     .min(1, { error: "Cada día debe tener al menos un ejercicio" }),
