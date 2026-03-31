@@ -135,6 +135,61 @@ The system MUST persist the `orden` field explicitly for each item, recalculated
 - AND all other days have orden values updated accordingly
 - AND the UI never uses array index as the source of truth
 
+### Requirement: Form Persistence Paused During Drag
+
+The system MUST pause localStorage persistence during drag operations to prevent persisting transient intermediate states that occur during `useFieldArray.move()`.
+
+#### Scenario: Persistence paused during drag
+
+- GIVEN a form with localStorage draft persistence enabled
+- WHEN the user initiates a drag operation
+- THEN the persistence system MUST pause writing to localStorage
+- AND the drag proceeds with RHF as sole source of truth
+- WHEN the drag completes (drop or cancel)
+- THEN persistence resumes normally
+
+#### Rationale
+
+During `useFieldArray.move()`, RHF triggers multiple intermediate renders with changing indices before settling to final state. Persisting during these renders captures invalid snapshots that corrupt the draft.
+
+### Requirement: Stable baseName Calculation in Parent Map
+
+The system MUST compute `baseName` in the parent's `map()` callback where array index is guaranteed correct, not in child components where props may be stale after reorder.
+
+#### Scenario: baseName computed in parent map
+
+- GIVEN a diasFields array with [field0, field1, field2]
+- WHEN the parent renders `diasFields.map((field, index) => ...)`
+- THEN `baseName = \`dias[${index}]\`` is computed at this point
+- AND passed to DiaSection as a prop
+- AND DiaSection uses the prop directly without recomputing
+
+#### Scenario: Component re-creation after reorder
+
+- GIVEN a DiaSection component receives a new position after diasMove()
+- WHEN the component re-renders with new index
+- THEN React MUST destroy and recreate the component due to key change
+- AND the new baseName prop is used correctly
+- AND form field values are preserved
+
+### Requirement: Ejercicio Drag Uses Stable Index Data
+
+The system MUST pass `diaIndex` and `ejercicioIndex` in the sortable `data` prop so `handleDragEnd` can correctly resolve current indices for `move()` calls.
+
+#### Scenario: Ejercicio drag with correct indices
+
+- GIVEN an ejercicio at index 1 within a day at index 2
+- WHEN the user drags that ejercicio
+- THEN the sortable data MUST contain `{ type: "ejercicio", diaIndex: 2, diaId: "...", ejercicioIndex: 1 }`
+- AND handleDragEnd reads these values to call move(1, targetIndex)
+
+#### Scenario: Ejercicio drag fails without index data
+
+- GIVEN an ejercicio with sortable data missing `diaIndex` or `ejercicioIndex`
+- WHEN handleDragEnd attempts to process the drag
+- THEN the operation MUST return early without calling move()
+- AND no reorder occurs
+
 ## Acceptance Criteria
 
 | Criterion | Measurement |
