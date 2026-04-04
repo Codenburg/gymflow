@@ -4,6 +4,11 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.3] - 2026-04-04
+
+### Fixed
+- RutinaEditForm: form no se actualizaba al navegar entre rutinas (useEffect con initialData?.id para sincronizar estado con rutina actual)
+
 ## [0.2.2] - 2026-03-31
 
 ### Fixed

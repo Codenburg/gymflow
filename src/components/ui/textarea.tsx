@@ -3,13 +3,17 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea"> & { error?: boolean }>(
-  ({ className, error, value, defaultValue, onChange, ...rest }, ref) => {
+  ({ className, error, value, onChange, ...rest }, ref) => {
+    // Only set value/onChange when value is explicitly provided (controlled)
+    // When value is undefined, let defaultValue flow through rest (uncontrolled)
+    const isControlled = value !== undefined;
+
     return (
       <textarea
         {...rest}
         ref={ref}
-        value={value ?? ""}
-        onChange={onChange}
+        value={isControlled ? value : undefined}
+        onChange={isControlled ? onChange : undefined}
         data-slot="textarea"
         aria-invalid={error ? true : undefined}
         className={cn(

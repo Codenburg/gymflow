@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { usePersistedForm } from "@/hooks/use-persisted-form";
-import { createRutinaCompleta } from "@/app/actions/rutinas";
+import { updateRutinaCompleta } from "@/app/actions/rutinas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useRutinaDnd } from "@/hooks/use-rutina-dnd";
 import { type DragItem, type DragEndResult } from "@/lib/dnd-utils";
 
-const STORAGE_KEY = "rutina-draft";
+const STORAGE_KEY = "rutina-edit-draft";
 const STORAGE_VERSION = 1;
 const MAX_DAYS = 7;
 
@@ -45,7 +45,27 @@ const defaultValues: Omit<RutinaCompletaInput, "creador"> & { dias: typeof defau
 
 type RutinaFormData = typeof defaultValues;
 
-export function RutinaCompletaForm() {
+// Interface for edit form props
+interface RutinaEditFormProps {
+  initialData: {
+    id: string;
+    nombre: string;
+    tipo: "fuerza" | "cardio" | "flexibilidad" | "hipertrofia";
+    descripcion?: string;
+    dias: Array<{
+      id?: string;
+      nombre: string;
+      musculosEnfocados: string;
+      ejercicios: Array<{ id?: string; nombre: string; formato: string }>;
+    }>;
+  };
+  onSuccess?: () => void;
+}
+
+// Alias for backward compatibility
+export { RutinaEditFormV2 as RutinaEditForm };
+
+export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps) {
   const router = useRouter();
   const { confirm, Dialog } = useConfirm();
 
@@ -54,20 +74,51 @@ export function RutinaCompletaForm() {
   // useFieldArray.move() which causes multiple renders with changing indices
   const [isDragging, setIsDragging] = useState(false);
 
+  // Build default values from initialData
+  const formDefaultValues = useMemo(() => {
+    return {
+      nombre: initialData.nombre || "",
+      tipo: initialData.tipo || "fuerza",
+      descripcion: initialData.descripcion || "",
+      dias: initialData.dias.length > 0
+        ? initialData.dias.map((d) => ({
+            nombre: d.nombre || "",
+            musculosEnfocados: d.musculosEnfocados || "",
+            ejercicios: d.ejercicios.length > 0
+              ? d.ejercicios.map((e) => ({
+                  nombre: e.nombre || "",
+                  formato: e.formato || "",
+                }))
+              : [{ nombre: "", formato: "" }],
+          }))
+        : [{ ...defaultDia }],
+    };
+  }, [initialData]);
+
   // Persisted form state with localStorage
   const form = usePersistedForm<RutinaFormData>({
     storageKey: STORAGE_KEY,
     version: STORAGE_VERSION,
-    defaultValues,
+    defaultValues: formDefaultValues,
     mode: "onBlur",
     reValidateMode: "onChange",
     skipPersistence: isDragging,
   });
 
+  // Reset form when navigating between routines (initialData.id changes)
+  // This fixes the bug where form wasn't updating because usePersistedForm
+  // only restores once with isRestoredRef
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData?.id]);
+
   const {
     control,
     handleSubmit,
     getValues,
+    reset,
     formState: { errors, isSubmitting, submitCount },
   } = form;
 
@@ -338,6 +389,9 @@ export function RutinaCompletaForm() {
   const convertToFormData = useCallback((data: RutinaFormData): FormData => {
     const formData = new FormData();
 
+    // Add routine ID
+    formData.append("id", initialData.id);
+
     // Add simple fields
     formData.append("nombre", data.nombre || "");
     formData.append("tipo", data.tipo || "");
@@ -360,34 +414,34 @@ export function RutinaCompletaForm() {
     });
 
     return formData;
-  }, []);
+  }, [initialData.id]);
 
   // Handle form submission
   const onSubmit = useCallback(
     async (data: RutinaFormData) => {
       const confirmed = await confirm({
-        title: "¿Crear rutina?",
-        description: "Se creará una nueva rutina con los datos ingresados.",
+        title: "¿Actualizar rutina?",
+        description: "Se actualizarán los datos de la rutina.",
         variant: "default",
-        confirmText: "Crear",
+        confirmText: "Actualizar",
       });
 
       if (!confirmed) return;
 
       const formData = convertToFormData(data);
-      const result: FormState<{ id: string }> = await createRutinaCompleta(
+      const result: FormState<{ id: string }> = await updateRutinaCompleta(
         { success: false },
         formData
       );
 
       if (result.success && result.data?.id) {
         form.clear(); // Clear persisted draft
-        router.push("/admin");
+        router.back();
         setTimeout(() => {
-          toast.success("¡Rutina creada exitosamente!");
+          toast.success("¡Rutina actualizada exitosamente!");
         }, 100);
       } else {
-        toast.error(result.message || "Error al crear la rutina");
+        toast.error(result.message || "Error al actualizar la rutina");
       }
     },
     [confirm, convertToFormData, router, form]
@@ -593,7 +647,7 @@ export function RutinaCompletaForm() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/admin")}
+            onClick={() => router.back()}
             className="border-[#e5e7eb] text-[#6b7280] hover:border-[#ef4444] hover:text-[#ef4444] hover:bg-[#fef2f2] cursor-pointer dark:border-[#2a2a2a] dark:text-[#9ca3af] dark:hover:border-[#E11D48] dark:hover:text-[#E11D48] dark:hover:bg-[#fef2f2]"
           >
             Cancelar
@@ -603,7 +657,7 @@ export function RutinaCompletaForm() {
             disabled={isSubmitting}
             className="rounded-xl bg-[#48b8c9] text-white hover:bg-[#3da4b3] hover:border-2 hover:border-black cursor-pointer font-semibold dark:bg-[#E11D48] dark:text-white dark:hover:bg-[#c01030] dark:hover:border-2 dark:hover:border-white"
           >
-            {isSubmitting ? "Creando..." : "Crear Rutina"}
+            {isSubmitting ? "Actualizando..." : "Actualizar Rutina"}
           </Button>
         </div>
         {Dialog}
