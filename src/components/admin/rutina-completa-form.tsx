@@ -552,6 +552,7 @@ export function RutinaCompletaForm() {
                     field={field}
                     baseName={baseName}
                     diaIndex={index}
+                    dayNumber={index + 1}
                     control={control}
                     isExpanded={expandedDayIds.has(field.id)}
                     onToggle={() => toggleDay(field.id)}

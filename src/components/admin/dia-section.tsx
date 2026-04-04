@@ -15,6 +15,7 @@ interface DiaSectionProps {
   field: { id: string };
   baseName: string;
   diaIndex: number;
+  dayNumber: number;
   control: Control<any>;
   isExpanded: boolean;
   onToggle: () => void;
@@ -28,6 +29,7 @@ function DiaSectionComponent({
   field,
   baseName,
   diaIndex,
+  dayNumber,
   control,
   isExpanded,
   onToggle,
@@ -147,8 +149,9 @@ function DiaSectionComponent({
                 isExpanded && "rotate-90"
               )}
             />
-            {/* No "Día N" - visual order is sufficient per spec */}
-            {/* Day name is shown in collapsible content below */}
+            <span className="text-xs font-medium text-muted-foreground/70">
+              Día {dayNumber}
+            </span>
           </button>
         </div>
 

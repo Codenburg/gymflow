@@ -1,39 +1,51 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { usePersistedForm } from "@/hooks/use-persisted-form";
 import { updateRutinaCompleta } from "@/app/actions/rutinas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminFormField } from "@/components/admin/admin-form-field";
 import { SegmentedControl } from "./segmented-control";
 import { DiaSection } from "./dia-section";
 import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ClientOnly } from "@/components/client-only";
 import { toast } from "sonner";
 import type { FormState } from "@/lib/schemas";
 import type { RutinaCompletaInput } from "@/lib/schemas";
 
 // DnD imports
-import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useSensors, useSensor, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useRutinaDnd } from "@/hooks/use-rutina-dnd";
 import { type DragItem, type DragEndResult } from "@/lib/dnd-utils";
 
-// ============================================
-// TYPES
-// ============================================
+const STORAGE_KEY = "rutina-edit-draft";
+const STORAGE_VERSION = 1;
+const MAX_DAYS = 7;
 
-interface DefaultDia {
-  nombre: string;
-  musculosEnfocados: string;
-  ejercicios: Array<{ nombre: string; formato: string }>;
-}
+// Default values for a new day
+const defaultDia = {
+  nombre: "",
+  musculosEnfocados: "",
+  ejercicios: [{ nombre: "", formato: "" }],
+};
 
-type RutinaFormData = Omit<RutinaCompletaInput, "creador"> & { dias: DefaultDia[] };
+// Default values for the entire form
+const defaultValues: Omit<RutinaCompletaInput, "creador"> & { dias: typeof defaultDia[] } = {
+  nombre: "",
+  tipo: "fuerza",
+  descripcion: "",
+  dias: [{ ...defaultDia }],
+};
 
+type RutinaFormData = typeof defaultValues;
+
+// Interface for edit form props
 interface RutinaEditFormProps {
   initialData: {
     id: string;
@@ -50,116 +62,56 @@ interface RutinaEditFormProps {
   onSuccess?: () => void;
 }
 
-// ============================================
-// CONSTANTS
-// ============================================
+// Alias for backward compatibility
+export { RutinaEditFormV2 as RutinaEditForm };
 
-const tipos = [
-  { value: "fuerza", label: "Fuerza" },
-  { value: "cardio", label: "Cardio" },
-  { value: "flexibilidad", label: "Flexibilidad" },
-  { value: "hipertrofia", label: "Hipertrofia" },
-];
-
-const MAX_DAYS = 7;
-
-const defaultDia: DefaultDia = {
-  nombre: "",
-  musculosEnfocados: "",
-  ejercicios: [{ nombre: "", formato: "" }],
-};
-
-// ============================================
-// DRAG OVERLAY COMPONENTS
-// ============================================
-
-function GripVerticalIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="9" cy="12" r="1" />
-      <circle cx="9" cy="5" r="1" />
-      <circle cx="9" cy="19" r="1" />
-      <circle cx="15" cy="12" r="1" />
-      <circle cx="15" cy="5" r="1" />
-      <circle cx="15" cy="19" r="1" />
-    </svg>
-  );
-}
-
-function DiaDragOverlay({ diaIndex }: { diaIndex: number }) {
-  return (
-    <div className="day-card-overlay px-4 py-3 min-w-[200px]">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-          <GripVerticalIcon className="h-3 w-3 text-accent" />
-        </div>
-        <span className="font-medium text-foreground">
-          {diaIndex >= 0 ? `Día ${diaIndex + 1}` : "Día"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function EjercicioDragOverlay({ nombre }: { nombre?: string }) {
-  return (
-    <div className="ejercicio-row-overlay px-3 py-2 min-w-[180px]">
-      <div className="flex items-center gap-2">
-        <GripVerticalIcon className="h-4 w-4 text-accent shrink-0" />
-        <span className="text-sm text-foreground truncate max-w-[150px]">
-          {nombre || "Ejercicio"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// MAIN FORM COMPONENT
-// ============================================
-
-export function RutinaEditForm({ initialData, onSuccess }: RutinaEditFormProps) {
+export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps) {
   const router = useRouter();
   const { confirm, Dialog } = useConfirm();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [activeItem, setActiveItem] = useState<DragItem | null>(null);
 
-  // Form
+  // Track drag state to pause localStorage persistence during drag operations
+  // This prevents persisting transient intermediate states that occur during
+  // useFieldArray.move() which causes multiple renders with changing indices
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Build default values from initialData
+  const formDefaultValues = useMemo(() => {
+    return {
+      nombre: initialData.nombre || "",
+      tipo: initialData.tipo || "fuerza",
+      descripcion: initialData.descripcion || "",
+      dias: initialData.dias.length > 0
+        ? initialData.dias.map((d) => ({
+            nombre: d.nombre || "",
+            musculosEnfocados: d.musculosEnfocados || "",
+            ejercicios: d.ejercicios.length > 0
+              ? d.ejercicios.map((e) => ({
+                  nombre: e.nombre || "",
+                  formato: e.formato || "",
+                }))
+              : [{ nombre: "", formato: "" }],
+          }))
+        : [{ ...defaultDia }],
+    };
+  }, [initialData]);
+
+  // Persisted form state with localStorage
+  const form = usePersistedForm<RutinaFormData>({
+    storageKey: STORAGE_KEY,
+    version: STORAGE_VERSION,
+    defaultValues: formDefaultValues,
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    skipPersistence: isDragging,
+  });
+
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm<RutinaFormData>({
-    defaultValues: {
-      nombre: initialData.nombre,
-      tipo: initialData.tipo,
-      descripcion: initialData.descripcion || "",
-      dias: initialData.dias.map((d) => ({
-        nombre: d.nombre,
-        musculosEnfocados: d.musculosEnfocados,
-        ejercicios: d.ejercicios.length > 0
-          ? d.ejercicios.map((e) => ({
-              nombre: e.nombre,
-              formato: e.formato,
-            }))
-          : [{ nombre: "", formato: "" }],
-      })),
-    },
-    mode: "onBlur",
-    reValidateMode: "onChange",
-  });
+    getValues,
+    reset,
+    formState: { errors, isSubmitting, submitCount },
+  } = form;
 
   // Field array for dias
   const {
@@ -173,60 +125,79 @@ export function RutinaEditForm({ initialData, onSuccess }: RutinaEditFormProps) 
     shouldUnregister: false,
   });
 
-  // Refs
+  // UI state for expanded days (not persisted, just local UI)
+  const [expandedDayIds, setExpandedDayIds] = useState<Set<string>>(
+    () => new Set(diasFields.length > 0 ? [diasFields[0].id] : [])
+  );
+
+  // Ref to track the index of the newly added day that needs auto-expansion
+  const newlyAddedDayIndexRef = useRef<number | null>(null);
+
+  // Ref to keep updated snapshot of diasFields for use in effects
   const fieldsRef = useRef(diasFields);
   useEffect(() => {
     fieldsRef.current = diasFields;
   }, [diasFields]);
 
-  // UI State for expanded days
-  const [expandedDayIds, setExpandedDayIds] = useState<Set<string>>(
-    () => new Set(initialData.dias.length > 0 ? [initialData.dias[0].id || "initial"] : [])
+  // Ref to store each day's ejercicios move function: Map<diaIndex, moveFn>
+  const ejerciciosMoveRef = useRef<Map<number, (from: number, to: number) => void>>(new Map());
+
+  // Callback to register a day's ejercicios move function
+  const handleRegisterEjerciciosMove = useCallback(
+    (diaIndex: number, moveFn: (from: number, to: number) => void) => {
+      ejerciciosMoveRef.current.set(diaIndex, moveFn);
+    },
+    []
   );
 
-  // DnD Sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 15 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
-  // ---- DnD Handlers ----
-  const handleDragStart = useCallback((event: any) => {
-    setIsDragging(true);
-    const baseData = event.active.data.current as DragItem;
-    setActiveItem({
-      ...baseData,
-      id: event.active.id as string,
-    });
-  }, []);
 
-  const handleDragOver = useCallback((_event: any) => {
-    // Could be used for visual feedback
-  }, []);
+  // Effect to auto-expand newly added day after append
+  useEffect(() => {
+    if (newlyAddedDayIndexRef.current === null) return;
 
-  const handleDragEnd = useCallback((event: any) => {
-    setIsDragging(false);
-    setActiveItem(null);
+    const fields = fieldsRef.current;
+    const index = newlyAddedDayIndexRef.current;
+    const field = fields[index];
 
-    if (!event.over || event.active.id === event.over.id) return;
-
-    const activeData = event.active.data.current as DragItem;
-
-    if (activeData.type === "dia") {
-      // Reorder days
-      const oldIndex = diasFields.findIndex((f) => f.id === event.active.id);
-      const newIndex = diasFields.findIndex((f) => f.id === event.over.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        diasMove(oldIndex, newIndex);
-      }
+    if (!field) {
+      newlyAddedDayIndexRef.current = null;
+      return;
     }
-  }, [diasFields, diasMove]);
 
-  // ---- UI Callbacks ----
+    setExpandedDayIds(new Set([field.id]));
+    newlyAddedDayIndexRef.current = null;
+  }, [diasFields]);
+
+  // Effect to auto-expand days with validation errors after failed submit
+  useEffect(() => {
+    if (submitCount === 0) return;
+
+    const diasErrors = errors.dias as Record<string, any> | undefined;
+    const fields = fieldsRef.current;
+
+    if (!diasErrors) return;
+
+    setExpandedDayIds((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+
+      Object.keys(diasErrors).forEach((key) => {
+        if (isNaN(Number(key))) return; // Skip non-numeric keys like 'root'
+        const index = Number(key);
+        const field = fields[index];
+        if (!field) return;
+        if (!next.has(field.id)) {
+          next.add(field.id);
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [submitCount, errors.dias]);
+
+  // Toggle day expansion
   const toggleDay = useCallback((diaId: string) => {
     setExpandedDayIds((prev) => {
       const next = new Set(prev);
@@ -239,223 +210,452 @@ export function RutinaEditForm({ initialData, onSuccess }: RutinaEditFormProps) 
     });
   }, []);
 
-  const handleAddDay = useCallback(() => {
-    if (diasFields.length < MAX_DAYS) {
-      appendDia({ ...defaultDia });
-    }
-  }, [appendDia, diasFields.length]);
+  // Add new day and auto-expand it (collapse others)
+  const addDay = useCallback(() => {
+    if (diasFields.length >= MAX_DAYS) return;
+    // Track the index of the day that will be added (current length = new index)
+    newlyAddedDayIndexRef.current = diasFields.length;
+    appendDia({ ...defaultDia });
+  }, [appendDia, diasFields]);
 
-  const handleRemoveDay = useCallback(
-    async (diaId: string, index: number) => {
-      const confirmed = await confirm({
-        title: "Eliminar día",
-        description: "¿Estás seguro de que querés eliminar este día?",
-        variant: "destructive",
-        confirmText: "Eliminar",
-      });
-
-      if (confirmed) {
-        removeDia(index);
+  // Remove day
+  const removeDay = useCallback(
+    (diaId: string, index: number) => {
+      removeDia(index);
+      // If we removed an expanded day, expand the next available day or first day
+      if (expandedDayIds.has(diaId)) {
+        setExpandedDayIds((prev) => {
+          const newExpanded = new Set<string>();
+          const remainingIds = diasFields.filter((_, i) => i !== index).map((f) => f.id);
+          if (remainingIds.length > 0) {
+            newExpanded.add(remainingIds[0]);
+          }
+          return newExpanded;
+        });
       }
     },
-    [confirm, removeDia]
+    [removeDia, expandedDayIds, diasFields]
   );
 
-  // ---- Form Submission ----
-  const onSubmit = async (data: RutinaFormData) => {
-    setIsSubmitting(true);
-    try {
-      // Build FormData
-      const formData = new FormData();
-      formData.append("id", initialData.id);
-      formData.append("nombre", data.nombre);
-      formData.append("tipo", data.tipo);
-      if (data.descripcion) {
-        formData.append("descripcion", data.descripcion);
-      }
+  // ========== DnD Integration ==========
 
-      // Append dias as nested data
-      data.dias.forEach((dia, diaIndex) => {
-        formData.append(`dias[${diaIndex}][nombre]`, dia.nombre);
-        formData.append(`dias[${diaIndex}][musculosEnfocados]`, dia.musculosEnfocados);
-        dia.ejercicios.forEach((ejercicio, ejercicioIndex) => {
-          formData.append(`dias[${diaIndex}][ejercicios][${ejercicioIndex}][nombre]`, ejercicio.nombre);
-          formData.append(`dias[${diaIndex}][ejercicios][${ejercicioIndex}][formato]`, ejercicio.formato);
-        });
-      });
-
-      const result = await updateRutinaCompleta({} as FormState, formData);
-
-      if (result.success) {
-        toast.success("¡Rutina actualizada exitosamente!");
-        onSuccess?.();
-        router.refresh();
-      } else {
-        toast.error(result.message || "Error al actualizar la rutina");
-      }
-    } catch (error) {
-      toast.error("Error inesperado al actualizar la rutina");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ---- Memoized ----
-  const sortableDayIds = useMemo(
+  // Memoized sortable days for root SortableContext
+  const sortableDays = useMemo(
     () => diasFields.map((f) => f.id),
     [diasFields]
   );
 
-  const canAddDay = diasFields.length < MAX_DAYS;
+  /**
+   * Hierarchical resolution of the drop target.
+   * When dragging a DAY and dropping on an EJERCICIO, we need to resolve
+   * the ejercicio → its parent DAY container.
+   *
+   * RHF field IDs are like "dias[0]" for days and "dias[0].ejercicios[0]" for ejercicios.
+   * We extract the parent day ID from the ejercicio's field path.
+   */
+  const resolveTargetDiaId = useCallback((overItem: DragEndResult["over"]): string | null => {
+    if (!overItem) return null;
+
+    // overItem IS the DragItem directly (already extracted by use-rutina-dnd hook)
+    // Access properties directly - no .data wrapper
+    const overData = overItem as { type: string; diaId?: string } | undefined;
+
+    // If dropping on a DAY directly, use its ID
+    if (overData?.type === "dia") {
+      return overItem.id as string;
+    }
+
+    // If dropping on an EJERCICIO, resolve to parent day
+    // The ejercicio's baseName is like "dias[0].ejercicios[0]"
+    // We need to extract "dias[0]" (the parent day ID)
+    if (overData?.type === "ejercicio") {
+      const overId = overItem.id as string;
+      // Extract parent day ID from ejercicio's field path
+      // "dias[0].ejercicios[0]" → "dias[0]"
+      const parentMatch = overId.match(/^(dias\[\d+\])/);
+      if (parentMatch) {
+        return parentMatch[1];
+      }
+      // Fallback to diaId if regex fails
+      if (overData.diaId) {
+        return overData.diaId;
+      }
+    }
+
+    return null;
+  }, []);
+
+  // Drag end handler - wires DnD to RHF move
+  const handleDragEnd = useCallback(
+    (result: DragEndResult) => {
+      const { active, over } = result;
+
+      // If no valid drop target
+      if (!over) {
+        return;
+      }
+
+      // Extract drag item data - active IS the DragItem directly (already extracted)
+      const activeData = active as { type: string; diaId?: string; id: string } | undefined;
+
+      if (!activeData) {
+        return;
+      }
+
+      // ========== DAY DRAG ==========
+      if (activeData.type === "dia") {
+        // Find old index of the day being dragged
+        const oldIndex = diasFields.findIndex((f) => f.id === active.id);
+
+        // HIERARCHICAL RESOLUTION: Resolve over to parent day if it's an ejercicio
+        const targetDiaId = resolveTargetDiaId(over);
+
+        if (!targetDiaId) {
+          return;
+        }
+
+        const newIndex = diasFields.findIndex((f) => f.id === targetDiaId);
+
+        // Call diasMove if indices are valid
+        if (oldIndex !== -1 && newIndex !== -1) {
+          diasMove(oldIndex, newIndex);
+        }
+        return;
+      }
+
+      // ========== EJERCICIO DRAG ==========
+      if (activeData.type === "ejercicio") {
+        // Extract indices directly from sortable data (set in useSortable data prop)
+        const fromEjercicioIndex = (active as any).ejercicioIndex;
+        const toEjercicioIndex = (over as any).ejercicioIndex;
+        const activeDiaIndex = (active as any).diaIndex;
+
+        if (
+          typeof fromEjercicioIndex !== "number" ||
+          typeof toEjercicioIndex !== "number" ||
+          typeof activeDiaIndex !== "number"
+        ) {
+          return;
+        }
+
+        // Same day - call the registered move function
+        // RHF useFieldArray.move(from, to) moves item AT from TO to
+        // move(0, 2) on [A,B,C] → [B,C,A] — item at 0 goes to position 2
+        if (fromEjercicioIndex !== toEjercicioIndex) {
+          const moveFn = ejerciciosMoveRef.current.get(activeDiaIndex);
+          if (moveFn) {
+            moveFn(fromEjercicioIndex, toEjercicioIndex);
+          }
+        }
+        return;
+      }
+    },
+    [diasFields, diasMove, resolveTargetDiaId]
+  );
+
+  // useRutinaDnd hook
+  const { activeItem, sensors, collisionDetection, autoScroll, handlers } = useRutinaDnd({
+    onDragEnd: handleDragEnd,
+  });
+
+  // Wrap drag handlers to track isDragging state for persistence pause
+  const wrappedHandlers = useMemo(
+    () => ({
+      onDragStart: (...args: Parameters<typeof handlers.onDragStart>) => {
+        setIsDragging(true);
+        handlers.onDragStart(...args);
+      },
+      onDragOver: handlers.onDragOver,
+      onDragEnd: (...args: Parameters<typeof handlers.onDragEnd>) => {
+        handlers.onDragEnd(...args);
+        setIsDragging(false);
+      },
+    }),
+    [handlers]
+  );
+
+  // ========== End DnD Integration ==========
+
+  // Convert form data to FormData for server action
+  const convertToFormData = useCallback((data: RutinaFormData): FormData => {
+    const formData = new FormData();
+
+    // Add routine ID
+    formData.append("id", initialData.id);
+
+    // Add simple fields
+    formData.append("nombre", data.nombre || "");
+    formData.append("tipo", data.tipo || "");
+    if (data.descripcion) {
+      formData.append("descripcion", data.descripcion);
+    }
+
+    // Add nested dias and ejercicios
+    data.dias.forEach((dia, diaIndex) => {
+      formData.append(`dias[${diaIndex}].nombre`, dia.nombre || "");
+      if (dia.musculosEnfocados) {
+        formData.append(`dias[${diaIndex}].musculosEnfocados`, dia.musculosEnfocados);
+      }
+      dia.ejercicios.forEach((ejercicio, ejIndex) => {
+        formData.append(`dias[${diaIndex}].ejercicios[${ejIndex}].nombre`, ejercicio.nombre || "");
+        if (ejercicio.formato) {
+          formData.append(`dias[${diaIndex}].ejercicios[${ejIndex}].formato`, ejercicio.formato);
+        }
+      });
+    });
+
+    return formData;
+  }, [initialData.id]);
+
+  // Handle form submission
+  const onSubmit = useCallback(
+    async (data: RutinaFormData) => {
+      const confirmed = await confirm({
+        title: "¿Actualizar rutina?",
+        description: "Se actualizarán los datos de la rutina.",
+        variant: "default",
+        confirmText: "Actualizar",
+      });
+
+      if (!confirmed) return;
+
+      const formData = convertToFormData(data);
+      const result: FormState<{ id: string }> = await updateRutinaCompleta(
+        { success: false },
+        formData
+      );
+
+      if (result.success && result.data?.id) {
+        form.clear(); // Clear persisted draft
+        router.back();
+        setTimeout(() => {
+          toast.success("¡Rutina actualizada exitosamente!");
+        }, 100);
+      } else {
+        toast.error(result.message || "Error al actualizar la rutina");
+      }
+    },
+    [confirm, convertToFormData, router, form]
+  );
+
+  // Get current dias values for passing to DiaSection
+  const diasValues = getValues("dias");
+
+  // Render drag overlay preview
+  const renderDragOverlay = () => {
+    if (!activeItem) return null;
+
+    if (activeItem.type === "dia") {
+      const index = diasFields.findIndex((f) => f.id === activeItem.id);
+      return (
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border-2 border-[#48b8c9] dark:border-[#E11D48] px-4 py-3 min-w-[200px] opacity-90">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-[#48b8c9]/20 dark:bg-[#E11D48]/20 flex items-center justify-center">
+              <span className="text-xs font-bold text-[#48b8c9] dark:text-[#E11D48]">
+                {index + 1}
+              </span>
+            </div>
+            <span className="font-semibold text-[#111827] dark:text-white">
+              Día {index + 1}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border-2 border-[#48b8c9] dark:border-[#E11D48] px-4 py-3 min-w-[180px] opacity-90">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-[#48b8c9]/20 dark:bg-[#E11D48]/20 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-[#48b8c9] dark:text-[#E11D48]">E</span>
+          </div>
+          <span className="text-sm text-[#111827] dark:text-white truncate max-w-[150px]">
+            Ejercicio
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <ClientOnly>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        autoScroll={{ acceleration: 0.5, threshold: { x: 50, y: 50 } }}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={collisionDetection}
+      autoScroll={autoScroll}
+      {...wrappedHandlers}
+    >
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white dark:bg-[#121212] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a]"
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Routine Details */}
-          <div className="space-y-3 p-4 bg-card rounded-xl border border-border theme-transition">
-            <h2 className="text-sm font-medium text-muted-foreground">Detalles de la Rutina</h2>
+        {/* Error Message */}
+        {errors.root && (
+          <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-destructive text-sm">{errors.root.message}</p>
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Nombre */}
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-medium">Nombre *</label>
-                <Controller
-                  name="nombre"
-                  control={control}
-                  rules={{ required: "El nombre es requerido" }}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="text"
-                      placeholder="Ej: Rutina Full Body"
-                      disabled={isSubmitting}
-                      className="focus-input h-9"
-                    />
-                  )}
-                />
-                {errors?.nombre && (
-                  <p className="text-destructive text-xs">{errors.nombre.message}</p>
-                )}
-              </div>
-
-              {/* Tipo */}
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-medium">Tipo *</label>
-                <Controller
-                  name="tipo"
-                  control={control}
-                  render={({ field }) => (
-                    <SegmentedControl
-                      name="tipo"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={tipos}
-                      disabled={isSubmitting}
-                    />
-                  )}
-                />
-                {errors?.tipo && (
-                  <p className="text-destructive text-xs">{errors.tipo.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Descripcion */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-medium">Descripción</label>
+        {/* Routine Basic Info */}
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nombre */}
+            <AdminFormField
+              variant="default"
+              label="Nombre de la rutina"
+              error={errors.nombre?.message}
+            >
               <Controller
-                name="descripcion"
+                name="nombre"
                 control={control}
+                rules={{ required: "El nombre es requerido" }}
                 render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    placeholder="Describe los objetivos de esta rutina..."
-                    rows={2}
-                    disabled={isSubmitting}
-                    className="focus-input resize-none"
+                  <Input
+                    id="nombre"
+                    type="text"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    placeholder="Ej: Rutina Full Body"
+                    className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
                   />
                 )}
               />
-            </div>
+            </AdminFormField>
+
+            {/* Tipo */}
+            <AdminFormField variant="default" label="Tipo" error={errors.tipo?.message}>
+              <Controller
+                name="tipo"
+                control={control}
+                render={({ field }) => (
+                  <SegmentedControl
+                    name="tipo"
+                    value={field.value ?? "fuerza"}
+                    onChange={field.onChange}
+                    options={[
+                      { value: "fuerza", label: "Fuerza" },
+                      { value: "cardio", label: "Cardio" },
+                      { value: "flexibilidad", label: "Flexibilidad" },
+                      { value: "hipertrofia", label: "Hipertrofia" },
+                    ]}
+                  />
+                )}
+              />
+            </AdminFormField>
           </div>
 
-          {/* Days Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Días de Entrenamiento
-              </h2>
-              <span className="text-xs text-muted-foreground/70">
-                {diasFields.length}/{MAX_DAYS}
-              </span>
-            </div>
+          {/* Descripcion */}
+          <AdminFormField
+            variant="default"
+            label="Descripción"
+            error={errors.descripcion?.message}
+          >
+            <Controller
+              name="descripcion"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="descripcion"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                  placeholder="Describe los objetivos de esta rutina..."
+                  rows={3}
+                  className="seamless-input w-full placeholder:text-[#d1d5db] dark:placeholder:text-[#6b7280]"
+                />
+              )}
+            />
+          </AdminFormField>
+        </div>
 
-            <SortableContext
-              items={sortableDayIds}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {diasFields.map((field, index) => (
+        {/* Separator */}
+        <div className="border-t border-border my-6" />
+
+        {/* Dias Section with SortableContext */}
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-foreground text-lg font-medium">Días de entrenamiento</h2>
+            <span className="text-muted-foreground text-xs">Al menos 1 día</span>
+          </div>
+
+          {errors.dias?.root && (
+            <p className="text-destructive text-sm">{errors.dias.root.message}</p>
+          )}
+
+          <SortableContext items={sortableDays} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {diasFields.map((field, index) => {
+                const diaValues = diasValues?.[index];
+                const baseName = `dias[${index}]`;
+                return (
                   <DiaSection
-                    key={field.id}
+                    key={`${field.id}-${index}`}
                     field={field}
-                    baseName={`dias.${index}`}
+                    baseName={baseName}
                     diaIndex={index}
+                    dayNumber={index + 1}
                     control={control}
                     isExpanded={expandedDayIds.has(field.id)}
                     onToggle={() => toggleDay(field.id)}
-                    onRemove={() => handleRemoveDay(field.id, index)}
-                    errors={errors?.dias as any}
-                    onRegisterEjerciciosMove={() => {}}
+                    onRemove={() => removeDay(field.id, index)}
+                    errors={errors}
+                    onRegisterEjerciciosMove={(moveFn) =>
+                      handleRegisterEjerciciosMove(index, moveFn)
+                    }
                   />
-                ))}
-              </div>
-            </SortableContext>
+                );
+              })}
+            </div>
+          </SortableContext>
 
-            {/* Add Day Button */}
-            {canAddDay && (
-              <button
-                type="button"
-                onClick={handleAddDay}
-                className="w-full py-2.5 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-accent hover:border-accent transition-colors theme-transition text-sm"
-              >
-                + Agregar Día
-              </button>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          {/* Add day button */}
+          {diasFields.length < MAX_DAYS && (
+            <button
+              type="button"
+              onClick={addDay}
+              className="w-full py-3 px-4 bg-[#f3f4f6] hover:bg-gray-200 text-[#6b7280] hover:text-[#4b5563] transition-colors rounded-2xl flex items-center justify-center gap-2 text-sm font-medium border border-[#e5e7eb] dark:bg-[#1a1a1a] dark:hover:bg-[#222222] dark:text-[#6b7280] dark:hover:text-[#9ca3af] dark:border-[#2a2a2a]"
             >
-              {isSubmitting ? "Actualizando..." : "Actualizar Rutina"}
-            </Button>
-          </div>
-        </form>
-
-        {/* Drag Overlay */}
-        <DragOverlay>
-          {activeItem && activeItem.type === "dia" && (
-            <DiaDragOverlay diaIndex={diasFields.findIndex((f) => f.id === activeItem.id)} />
+              <span className="h-4 w-4">+</span>
+              <span>Agregar Día</span>
+            </button>
           )}
-          {activeItem && activeItem.type === "ejercicio" && (
-            <EjercicioDragOverlay />
+          {diasFields.length >= MAX_DAYS && (
+            <p className="text-center text-[#6b7280] dark:text-[#6b7280] text-sm py-2">
+              Máximo {MAX_DAYS} días por rutina
+            </p>
           )}
-        </DragOverlay>
+        </div>
 
+        {/* Separator */}
+        <div className="border-t border-border my-6" />
+
+        {/* Submit */}
+        <div className="flex justify-end gap-3 p-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            className="border-[#e5e7eb] text-[#6b7280] hover:border-[#ef4444] hover:text-[#ef4444] hover:bg-[#fef2f2] cursor-pointer dark:border-[#2a2a2a] dark:text-[#9ca3af] dark:hover:border-[#E11D48] dark:hover:text-[#E11D48] dark:hover:bg-[#fef2f2]"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-xl bg-[#48b8c9] text-white hover:bg-[#3da4b3] hover:border-2 hover:border-black cursor-pointer font-semibold dark:bg-[#E11D48] dark:text-white dark:hover:bg-[#c01030] dark:hover:border-2 dark:hover:border-white"
+          >
+            {isSubmitting ? "Actualizando..." : "Actualizar Rutina"}
+          </Button>
+        </div>
         {Dialog}
-      </DndContext>
-    </ClientOnly>
+      </form>
+
+      {/* DragOverlay - rendered outside form via portal */}
+      <DragOverlay>{renderDragOverlay()}</DragOverlay>
+    </DndContext>
   );
 }
