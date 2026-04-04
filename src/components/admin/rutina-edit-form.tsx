@@ -105,6 +105,15 @@ export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps
     skipPersistence: isDragging,
   });
 
+  // Reset form when navigating between routines (initialData.id changes)
+  // This fixes the bug where form wasn't updating because usePersistedForm
+  // only restores once with isRestoredRef
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData?.id]);
+
   const {
     control,
     handleSubmit,
