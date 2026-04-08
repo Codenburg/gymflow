@@ -116,7 +116,7 @@ async function main() {
         data: {
           userId: user.id,
           accountId: admin.dni,
-          providerId: 'username',
+           providerId: 'credential', // Must be 'credential' for better-auth username plugin
           providerType: 'credential',
           password: hashedPwd,
         },
