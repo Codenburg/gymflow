@@ -4,6 +4,18 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.5] - 2026-04-08
+
+### Fixed
+- seed-refactor: removed hardcoded passwords from prisma/seed.ts (moved to SEED_ADMIN_PASSWORD_1/2/3 env vars)
+- seed-refactor: replaced fragile regex URL parsing with `new URL()` constructor
+- seed-refactor: changed `process.exit(1)` to `process.exitCode = 1` for proper finally block execution
+- seed-refactor: replaced default `pg` import with named `import { Pool } from 'pg'`
+- seed-refactor: added explicit `return await prisma.$disconnect()` in main()
+
+### Changed
+- .env.example: added SEED_ADMIN_PASSWORD_1/2/3 entries for seed script documentation
+
 ## [0.2.4] - 2026-04-07
 
 ### Fixed
