@@ -16,6 +16,12 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 ### Changed
 - .env.example: added SEED_ADMIN_PASSWORD_1/2/3 entries for seed script documentation
 
+### Reverted
+- seed-refactor: reverted incorrect change to `providerId: 'username'` (must remain `providerId: 'credential'` for better-auth username plugin)
+
+### Known Issues
+- seed-refactor introduced regression that broke admin login (providerId mismatch) — manually corrected post-commit
+
 ## [0.2.4] - 2026-04-07
 
 ### Fixed
