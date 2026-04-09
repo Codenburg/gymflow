@@ -4,6 +4,22 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.6] - 2026-04-09
+
+### Added
+- TagInput component: reusable tag input for admin forms with Enter/Space creates tag, x removes, Backspace on empty removes last tag
+
+### Changed
+- musculosEnfocados: migrated from `String` (comma-separated) to `String[]` in Prisma schema
+- Admin forms (dia-section, rutina-completa-form, rutina-edit-form, routine-day-card, dia-manager): now use TagInput for musculosEnfocados
+- Display components (day-card, dia-card, routine-day-card): render musculosEnfocados as badges instead of single string
+- Server actions (dias.ts, rutinas.ts): use FormData.getAll() for array handling
+- API routes: return string[] directly for musculosEnfocados
+
+### Breaking
+- musculosEnfocados is now stored as PostgreSQL text[] array, not comma-separated string
+- Client components expecting string must now handle string[]
+
 ## [0.2.5] - 2026-04-08
 
 ### Fixed
