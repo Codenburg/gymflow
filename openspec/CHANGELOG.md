@@ -4,6 +4,19 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.3.0] - 2026-04-09
+
+### Added
+- Stats summary en `/rutinas/[id]`: 3 badges read-only (días, ejercicios, series) con íconos Lucide (Calendar, Dumbbell, Zap)
+- Accordion nativo `<details>/<summary>` por día — reemplaza Card grid clickeable
+
+### Fixed
+- series×reps: ahora muestra `{series}×{reps}` con null check en vez de solo `{series}` en vista pública
+
+### Changed
+- Descripción de rutina movida debajo del badge tipo/creador, alineada a la izquierda
+- Lista completa de ejercicios por día (removido truncamiento "+X más")
+
 ## [0.2.6] - 2026-04-09
 
 ### Added
