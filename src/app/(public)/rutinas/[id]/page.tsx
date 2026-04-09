@@ -108,7 +108,7 @@ export default async function RoutineDetailPage({
         {/* Days */}
         <div className="flex flex-col gap-6">
           <h2 className="text-xl font-semibold text-foreground tracking-tight">
-            Días de entrenamiento ({rutina.dias.length})
+            Días de entrenamiento
           </h2>
 
           {rutina.dias.length === 0 ? (
@@ -123,7 +123,7 @@ export default async function RoutineDetailPage({
                 <details key={dia.id} open className="group rounded-lg border bg-card text-card-foreground shadow-sm">
                   <summary className="flex items-center justify-between cursor-pointer list-none p-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-foreground">Día {index + 1}</span>
+                      <span className="text-sm text-muted-foreground">Día {index + 1}</span>
                       {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {dia.musculosEnfocados.map((musculo) => (
@@ -132,13 +132,6 @@ export default async function RoutineDetailPage({
                             </Badge>
                           ))}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {dia.ejercicios.length > 0 && (
-                        <span className="text-sm text-primary">
-                          {dia.ejercicios.length} ejercicio{dia.ejercicios.length !== 1 ? 's' : ''}
-                        </span>
                       )}
                     </div>
                   </summary>
@@ -155,9 +148,6 @@ export default async function RoutineDetailPage({
                             className="flex items-center justify-between text-foreground"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-muted-foreground text-sm w-6">
-                                {ejIndex + 1}.
-                              </span>
                               {ejercicio.nombre}
                             </div>
                             {ejercicio.series && ejercicio.repes ? (
