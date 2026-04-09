@@ -1,6 +1,6 @@
 # Champion Gym - Gestor de Rutinas de Gimnasio
 
-v0.3.0 | Last updated: 2026-04-09
+v0.4.0 | Last updated: 2026-04-09
 
 Sistema web para gestionar y visualizar rutinas de entrenamiento de gimnasio. Administradores crean rutinas estructuradas (Rutina → Día → Ejercicio). Usuarios públicos exploran, visualizan y descargan rutinas en PDF.
 
@@ -93,9 +93,8 @@ Rutina
 ├── dias[]
 │   └── Dia
 │       ├── id (UUID)
-│       ├── nombre (auto-generado: "Día 1", "Día 2", etc.)
+│       ├── orden (display: "Día {orden}")
 │       ├── musculosEnfocados (String[])
-│       ├── orden
 │       └── ejercicios[]
 │           └── Ejercicio
 │               ├── id (UUID)

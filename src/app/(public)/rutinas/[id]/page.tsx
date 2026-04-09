@@ -126,7 +126,6 @@ export default async function RoutineDetailPage({
                       <span className="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm font-bold">
                         {index + 1}
                       </span>
-                      <span className="font-medium text-foreground">{dia.nombre}</span>
                       {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {dia.musculosEnfocados.map((musculo) => (

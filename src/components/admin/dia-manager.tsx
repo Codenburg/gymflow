@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 interface Dia {
   id: string;
-  nombre: string;
   musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: {
@@ -110,25 +109,13 @@ export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <AdminFormField variant="default" label="Nombre *" error={createState?.errors?.nombre?.[0]}>
-                <Input
-                  name="nombre"
-                  required
-                  placeholder="Ej: Día 1 - Pecho"
-                  error={!!createState?.errors?.nombre}
-                  autoFocus
-                  className="seamless-input w-full placeholder:text-muted-foreground"
-                />
-              </AdminFormField>
-              <AdminFormField variant="default" label="Músculos Enfocados">
+            <AdminFormField variant="default" label="Músculos Enfocados">
                 <TagInput
                   value={musculosEnfocadosTags}
                   onChange={setMusculosEnfocadosTags}
                   placeholder="Agregar músculo..."
                 />
               </AdminFormField>
-            </div>
 
             <div className="flex gap-3 justify-end">
               <Button

@@ -4,6 +4,22 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.4.0] - 2026-04-09
+
+### Removed
+- Campo `nombre` del modelo `Dia` en Prisma — nombre ahora se deriva del `orden`
+
+### Changed
+- Display de días: reemplazado `{dia.nombre}` por `Día {orden}` en todos los componentes
+- Admin forms: eliminado input "Nombre del día"
+- Server actions: `createDia`, `updateDia` ya no usan `nombre`
+- API responses: eliminado `nombre` de respuestas JSON de días
+
+### Fixed
+- `createRutinaCompleta` y `updateRutinaCompleta`: removido referencia a `diaData.nombre`
+
+---
+
 ## [0.3.0] - 2026-04-09
 
 ### Added

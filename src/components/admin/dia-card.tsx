@@ -15,7 +15,6 @@ interface Ejercicio {
 
 interface Dia {
   id: string;
-  nombre: string;
   musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: Ejercicio[];
@@ -48,7 +47,7 @@ export function DiaCard({ dia, rutinaId, index, className }: DiaCardProps) {
         </span>
         {/* título */}
         <h3 className="text-sm font-medium truncate">
-          {dia.nombre}
+          Día {index + 1}
         </h3>
       </div>
 

@@ -44,8 +44,7 @@ export default async function EditRutinaPage({ params }: EditRutinaPageProps) {
           descripcion: rutina.descripcion || undefined,
           dias: rutina.dias.map((dia) => ({
             id: dia.id,
-            nombre: dia.nombre,
-            musculosEnfocados: dia.musculosEnfocados || "",
+            musculosEnfocados: dia.musculosEnfocados || [],
             ejercicios: dia.ejercicios.map((ej) => ({
               id: ej.id,
               nombre: ej.nombre,

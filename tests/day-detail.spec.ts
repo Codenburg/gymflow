@@ -22,7 +22,7 @@ async function getRoutineIds(page: Page) {
   }
   
   let dia1Id = '';
-  let dia1Nombre = '';
+  let dia1Orden = 0;
   let musculosEnfocados = '';
   let ejercicioCount = 0;
   
@@ -31,7 +31,7 @@ async function getRoutineIds(page: Page) {
   if (rutina.dias && rutina.dias.length > 0) {
     const dia = rutina.dias[0];
     dia1Id = dia.id;
-    dia1Nombre = dia.nombre;
+    dia1Orden = dia.orden;
     musculosEnfocados = dia.musculosEnfocados || '';
     ejercicioCount = dia.ejercicios?.length || 0;
   }
@@ -44,7 +44,7 @@ async function getRoutineIds(page: Page) {
     rutinaFullBodyId: fullBody.id,
     rutinaResistenciaId: resistencia.id,
     dia1Id,
-    dia1Nombre,
+    dia1Orden,
     musculosEnfocados,
     ejercicioCount,
   };
@@ -64,7 +64,6 @@ test.describe('API - GET /api/rutinas/[id]/dias/[diaId]', () => {
     const data = await response.json();
     
     expect(data).toHaveProperty('id');
-    expect(data).toHaveProperty('nombre');
     expect(data).toHaveProperty('musculosEnfocados');
     expect(data).toHaveProperty('orden');
     expect(data).toHaveProperty('ejercicios');
@@ -119,7 +118,7 @@ test.describe('Day Detail Page UI', () => {
   test('6.5 - displays day name', async ({ page }) => {
     const ids = await getRoutineIds(page);
     await page.goto(`/rutinas/${ids.rutinaFullBodyId}/dias/${ids.dia1Id}`);
-    await expect(page.getByText(ids.dia1Nombre)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(`Día ${ids.dia1Orden}`)).toBeVisible({ timeout: 10000 });
   });
 
   test('6.6 - displays muscle groups', async ({ page }) => {
@@ -172,10 +171,10 @@ test.describe('Navigation - Routine to Day', () => {
     await page.goto(`/rutinas/${ids.rutinaFullBodyId}`);
     await expect(page.getByText('Full Body')).toBeVisible({ timeout: 10000 });
     
-    await page.getByText(ids.dia1Nombre).click();
+    await page.getByText(`Día ${ids.dia1Orden}`).click();
     
     await expect(page).toHaveURL(/\/rutinas\/.+\/dias\/.+/);
-    await expect(page.getByText(ids.dia1Nombre)).toBeVisible();
+    await expect(page.getByText(`Día ${ids.dia1Orden}`)).toBeVisible();
   });
 
   test('6.12 - day cards show exercise count', async ({ page }) => {

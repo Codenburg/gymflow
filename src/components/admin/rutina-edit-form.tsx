@@ -30,7 +30,6 @@ const MAX_DAYS = 7;
 
 // Default values for a new day
 const defaultDia = {
-  nombre: "",
   musculosEnfocados: [] as string[],
   ejercicios: [{ nombre: "", formato: "" }],
 };
@@ -54,8 +53,7 @@ interface RutinaEditFormProps {
     descripcion?: string;
     dias: Array<{
       id?: string;
-      nombre: string;
-      musculosEnfocados: string;
+      musculosEnfocados: string[];
       ejercicios: Array<{ id?: string; nombre: string; formato: string }>;
     }>;
   };
@@ -82,7 +80,6 @@ export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps
       descripcion: initialData.descripcion || "",
       dias: initialData.dias.length > 0
         ? initialData.dias.map((d) => ({
-            nombre: d.nombre || "",
             musculosEnfocados: d.musculosEnfocados || [],
             ejercicios: d.ejercicios.length > 0
               ? d.ejercicios.map((e) => ({
@@ -401,7 +398,6 @@ export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps
 
     // Add nested dias and ejercicios
     data.dias.forEach((dia, diaIndex) => {
-      formData.append(`dias[${diaIndex}].nombre`, dia.nombre || "");
       // Send multiple entries (one per tag) so parseNestedFormData collects them into an array
       dia.musculosEnfocados.forEach((tag) => {
         formData.append(`dias[${diaIndex}].musculosEnfocados`, tag);

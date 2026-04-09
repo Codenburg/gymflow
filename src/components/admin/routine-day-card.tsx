@@ -28,7 +28,6 @@ interface Ejercicio {
 
 interface Dia {
   id: string;
-  nombre: string;
   musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: Ejercicio[];
@@ -97,7 +96,7 @@ export function RoutineDayCard({
   const handleDelete = async () => {
     const confirmed = await confirm({
       title: "¿Eliminar día?",
-      description: `Esta acción eliminará "${dia.nombre}" y todos sus ejercicios. Esta acción no se puede deshacer.`,
+      description: `Esta acción eliminará el día y todos sus ejercicios. Esta acción no se puede deshacer.`,
       variant: "destructive",
       confirmText: "Eliminar",
     });
@@ -150,16 +149,6 @@ export function RoutineDayCard({
         {isEditing ? (
           // Edit Mode
           <form action={handleSave} className="p-4 space-y-3">
-            <AdminFormField variant="default" label="Nombre del día">
-              <Input
-                name="nombre"
-                defaultValue={dia.nombre}
-                required
-                placeholder="Ej: Día 1 - Pecho"
-                disabled={isUpdatePending}
-              />
-            </AdminFormField>
-
             <AdminFormField variant="default" label="Músculos Enfocados">
               <TagInput
                 value={musculosEnfocadosTags}
@@ -219,7 +208,7 @@ export function RoutineDayCard({
                       #{index + 1}
                     </span>
                     <h3 className="text-[--daycard-title] font-semibold text-base">
-                      {dia.nombre}
+                      Día {index + 1}
                     </h3>
                   </div>
                   {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 && (

@@ -71,7 +71,6 @@ export async function GET(
       updatedAt: rutina.updatedAt.toISOString(),
       dias: rutina.dias.map((dia) => ({
         id: dia.id,
-        nombre: dia.nombre,
         musculosEnfocados: dia.musculosEnfocados,
         orden: dia.orden,
         ejercicios: dia.ejercicios.map((ejercicio) => ({

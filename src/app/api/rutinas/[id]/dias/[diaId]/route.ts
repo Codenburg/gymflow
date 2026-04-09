@@ -60,7 +60,6 @@ export async function GET(
     // Transform the response
     const response = {
       id: dia.id,
-      nombre: dia.nombre,
       musculosEnfocados: dia.musculosEnfocados,
       orden: dia.orden,
       ejercicios: dia.ejercicios.map((ejercicio) => ({

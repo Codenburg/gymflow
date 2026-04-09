@@ -245,7 +245,6 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
       updatedAt: rutina.updatedAt,
       dias: rutina.dias.map((dia) => ({
         id: dia.id,
-        nombre: dia.nombre,
         musculosEnfocados: dia.musculosEnfocados,
         orden: dia.orden,
         ejercicios: dia.ejercicios.map((ej) => ({
