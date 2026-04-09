@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/tag-input";
 import { AdminFormField } from "@/components/admin/admin-form-field";
 import { updateDia, deleteDia } from "@/app/actions/dias";
 import type { FormState } from "@/lib/schemas";
@@ -28,7 +29,7 @@ interface Ejercicio {
 interface Dia {
   id: string;
   nombre: string;
-  musculosEnfocados?: string | null;
+  musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: Ejercicio[];
 }
@@ -66,6 +67,12 @@ export function RoutineDayCard({
   onDayDeleted,
 }: RoutineDayCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [musculosEnfocadosTags, setMusculosEnfocadosTags] = useState<string[]>(() => {
+    if (dia.musculosEnfocados) {
+      return dia.musculosEnfocados;
+    }
+    return [];
+  });
   const { confirm, Dialog } = useConfirm();
 
   const [updateState, updateActionWrapped, isUpdatePending] = useActionState(
@@ -79,6 +86,13 @@ export function RoutineDayCard({
   );
 
   const exerciseCount = dia.ejercicios?.length || 0;
+
+  // Sync tags when entering edit mode or when dia.musculosEnfocados changes externally
+  useEffect(() => {
+    if (isEditing && dia.musculosEnfocados) {
+      setMusculosEnfocadosTags(dia.musculosEnfocados);
+    }
+  }, [isEditing, dia.musculosEnfocados]);
 
   const handleDelete = async () => {
     const confirmed = await confirm({
@@ -101,6 +115,12 @@ export function RoutineDayCard({
   const handleSave = async (formData: FormData) => {
     formData.set("id", dia.id);
     formData.set("rutinaId", rutinaId);
+    // Send multiple entries (one per tag) so parseNestedFormData collects them into an array
+    // Remove any existing musculosEnfocados entries first (from hidden inputs)
+    formData.delete("musculosEnfocados");
+    musculosEnfocadosTags.forEach((tag) => {
+      formData.append("musculosEnfocados", tag);
+    });
     const result = await updateActionTyped(null, formData);
     if (result.success) {
       setIsEditing(false);
@@ -141,10 +161,10 @@ export function RoutineDayCard({
             </AdminFormField>
 
             <AdminFormField variant="default" label="Músculos Enfocados">
-              <Input
-                name="musculosEnfocados"
-                defaultValue={dia.musculosEnfocados || ""}
-                placeholder="Ej: Pecho, tríceps"
+              <TagInput
+                value={musculosEnfocadosTags}
+                onChange={setMusculosEnfocadosTags}
+                placeholder="Agregar músculo..."
                 disabled={isUpdatePending}
               />
             </AdminFormField>
@@ -202,10 +222,17 @@ export function RoutineDayCard({
                       {dia.nombre}
                     </h3>
                   </div>
-                  {dia.musculosEnfocados && (
-                    <p className="text-[--daycard-subtitle] text-sm mt-0.5">
-                      {dia.musculosEnfocados}
-                    </p>
+                  {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {dia.musculosEnfocados.map((musculo, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#E11D48]/10 text-[#E11D48] border border-[#E11D48]/20"
+                        >
+                          {musculo}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

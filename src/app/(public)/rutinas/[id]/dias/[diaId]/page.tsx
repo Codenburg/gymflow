@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCachedRutinaById } from "@/lib/rutinas";
 
@@ -68,9 +69,17 @@ export default async function DayDetailPage({
               <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">
                 {dia.nombre}
               </h1>
-              {dia.musculosEnfocados && (
-                <span className="inline-block rounded-full bg-blue-500/20 px-3 py-1 text-sm font-medium text-blue-500">
-                  {dia.musculosEnfocados}
+              {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
+                <div className="flex gap-2 flex-wrap">
+                  {dia.musculosEnfocados.map((musculo) => (
+                    <Badge key={musculo} variant="secondary">
+                      {musculo}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground italic">
+                  Sin músculos enfocados
                 </span>
               )}
             </div>

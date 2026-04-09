@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCachedRutinaById } from "@/lib/rutinas";
 
@@ -108,9 +109,17 @@ export default async function RoutineDetailPage({
                           {dia.nombre}
                         </CardTitle>
                         <div className="flex items-center gap-4">
-                          {dia.musculosEnfocados && (
-                            <span className="text-sm text-muted-foreground">
-                              {dia.musculosEnfocados}
+                          {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
+                            <div className="flex gap-1 flex-wrap">
+                              {dia.musculosEnfocados.map((musculo) => (
+                                <Badge key={musculo} variant="secondary" className="text-xs">
+                                  {musculo}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">
+                              Sin músculos enfocados
                             </span>
                           )}
                           {dia.ejercicios.length > 0 && (

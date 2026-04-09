@@ -112,8 +112,17 @@ export async function updateDia(
     };
   }
 
+  // Extract musculosEnfocados as array using getAll (filter empty strings)
+  const musculosEnfocados = formData.getAll("musculosEnfocados").filter(v => v !== "") as string[];
+
+  // Build raw data, replacing musculosEnfocados with the array
+  const rawEntries = Array.from(formData.entries()).filter(([key]) => key !== "musculosEnfocados");
+  const rawData = Object.fromEntries(rawEntries);
+  if (musculosEnfocados.length > 0) {
+    rawData.musculosEnfocados = musculosEnfocados;
+  }
+
   // Validate form data
-  const rawData = Object.fromEntries(formData.entries());
   const parsed = diaUpdateSchema.safeParse(rawData);
 
   if (!parsed.success) {

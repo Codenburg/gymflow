@@ -77,7 +77,7 @@ export const createDiaSchema = z.object({
 
 export const diaSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre es requerido" }).max(50),
-  musculosEnfocados: z.string().max(200).optional(),
+  musculosEnfocados: z.array(z.string().max(50)).max(10).optional(),
   rutinaId: z.string().uuid({ error: "ID de rutina inválido" }),
 });
 
@@ -92,7 +92,7 @@ export type DiaUpdateInput = z.infer<typeof diaUpdateSchema>;
 
 const diaNestedSchema = z.object({
   nombre: z.string().min(1, { error: "El nombre del día es requerido" }).max(50),
-  musculosEnfocados: z.string().max(200).optional().default(""),
+  musculosEnfocados: z.array(z.string().max(50)).max(10).optional().default([]),
   ejercicios: z
     .array(ejercicioNestedSchema)
     .min(1, { error: "Cada día debe tener al menos un ejercicio" }),

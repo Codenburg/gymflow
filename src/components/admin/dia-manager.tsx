@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { createDia } from "@/app/actions/dias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/tag-input";
 import { AdminFormField } from "@/components/admin/admin-form-field";
 import { DiaCard } from "@/components/admin/dia-card";
 import type { FormState } from "@/lib/schemas";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 interface Dia {
   id: string;
   nombre: string;
-  musculosEnfocados?: string | null;
+  musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: {
     id: string;
@@ -43,6 +44,7 @@ const MAX_DAYS = 7;
 export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [localDias, setLocalDias] = useState(dias);
+  const [musculosEnfocadosTags, setMusculosEnfocadosTags] = useState<string[]>([]);
 
   const [createState, createActionWrapped, isCreatePending] = useActionState(createActionTyped, initialState);
 
@@ -63,6 +65,7 @@ export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
 
   const handleSuccess = () => {
     setIsAdding(false);
+    setMusculosEnfocadosTags([]);
   };
 
   return (
@@ -88,6 +91,12 @@ export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
           <form
             action={async (formData: FormData) => {
               formData.set("rutinaId", rutinaId);
+              // Send multiple entries (one per tag) so parseNestedFormData collects them into an array
+              // Remove any existing musculosEnfocados entries first
+              formData.delete("musculosEnfocados");
+              musculosEnfocadosTags.forEach((tag) => {
+                formData.append("musculosEnfocados", tag);
+              });
               const result = await createActionTyped(null, formData);
               if (result.success) handleSuccess();
             }}
@@ -113,10 +122,10 @@ export function DiaManager({ rutinaId, dias }: DiaManagerProps) {
                 />
               </AdminFormField>
               <AdminFormField variant="default" label="Músculos Enfocados">
-                <Input
-                  name="musculosEnfocados"
-                  placeholder="Ej: Pecho, tríceps"
-                  className="seamless-input w-full placeholder:text-muted-foreground"
+                <TagInput
+                  value={musculosEnfocadosTags}
+                  onChange={setMusculosEnfocadosTags}
+                  placeholder="Agregar músculo..."
                 />
               </AdminFormField>
             </div>

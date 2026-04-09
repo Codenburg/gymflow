@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Ejercicio {
   id: string;
@@ -11,7 +12,7 @@ interface Ejercicio {
 interface Dia {
   id: string;
   nombre: string;
-  musculosEnfocados: string | null;
+  musculosEnfocados: string[] | null;
   ejercicios: Ejercicio[];
 }
 
@@ -29,9 +30,17 @@ export function DayCard({ dia, rutinaId }: DayCardProps) {
             <CardTitle className="text-base group-hover:text-red-400 transition-colors text-[var(--foreground)]">
               {dia.nombre}
             </CardTitle>
-            {dia.musculosEnfocados && (
-              <span className="shrink-0 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                {dia.musculosEnfocados}
+            {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
+              <div className="flex shrink-0 gap-1 flex-wrap justify-end max-w-[60%]">
+                {dia.musculosEnfocados.map((musculo) => (
+                  <Badge key={musculo} variant="secondary" className="text-xs">
+                    {musculo}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <span className="shrink-0 text-xs text-muted-foreground italic">
+                Sin músculos enfocados
               </span>
             )}
           </div>

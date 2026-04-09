@@ -37,7 +37,7 @@ model Dia {
   id                String     @id @default(uuid())
   rutinaId          String
   nombre            String
-  musculosEnfocados String?
+  musculosEnfocados String[]
   orden             Int        @default(0)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt

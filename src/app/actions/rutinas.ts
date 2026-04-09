@@ -379,11 +379,33 @@ export async function deleteRutinas(
 
 /**
  * Parse indexed FormData (dias[0].nombre, dias[0].ejercicios[0].nombre) into nested object
+ * Handles musculosEnfocados as arrays via getAll()
  */
 function parseNestedFormData(formData: FormData): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
+  // Collect all musculosEnfocados arrays first (they appear as dias[0].musculosEnfocados, dias[1].musculosEnfocados, etc.)
+  const musculosMap: Record<string, string[]> = {};
   for (const [key, value] of formData.entries()) {
+    // Match dias[0].musculosEnfocados pattern
+    const match = key.match(/^dias\[(\d+)\]\.musculosEnfocados$/);
+    if (match) {
+      const index = match[1];
+      if (!musculosMap[index]) {
+        musculosMap[index] = [];
+      }
+      if (value !== "") {
+        musculosMap[index].push(value as string);
+      }
+    }
+  }
+
+  for (const [key, value] of formData.entries()) {
+    // Skip musculosEnfocados entries - handled separately above
+    if (key.includes("musculosEnfocados")) {
+      continue;
+    }
+
     // Match patterns like: dias[0].nombre, dias[0].ejercicios[1].series
     const match = key.match(/^([a-zA-Z_]+)\[(\d+)\](.*)$/);
 
@@ -440,6 +462,15 @@ function parseNestedFormData(formData: FormData): Record<string, unknown> {
     } else {
       // Direct value at array index: dias[0]
       array[index] = value;
+    }
+  }
+
+  // Inject musculosEnfocados arrays into the parsed result
+  for (const [index, musculos] of Object.entries(musculosMap)) {
+    const idx = parseInt(index, 10);
+    const array = result["dias"] as unknown[];
+    if (array && array[idx] && typeof array[idx] === "object") {
+      (array[idx] as Record<string, unknown>)["musculosEnfocados"] = musculos;
     }
   }
 
