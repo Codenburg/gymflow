@@ -1,185 +1,199 @@
 import { PrismaClient } from '../generated/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
+import { Pool } from 'pg';
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
 
-const { Pool } = pg;
-
 const databaseUrl = process.env.DATABASE_URL || '';
-// Format: postgresql://user:password@host:port/database?schema=public
-const urlMatch = databaseUrl.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
 
-if (!urlMatch) {
+let user = '', password = '', host = '', port = 5432, dbName = '';
+
+try {
+  const url = new URL(databaseUrl);
+  user = url.username;
+  password = url.password;
+  host = url.hostname;
+  port = parseInt(url.port, 10) || 5432;
+  dbName = url.pathname.slice(1).split('?')[0];
+} catch {
   console.error('Invalid DATABASE_URL format:', databaseUrl);
-  process.exit(1);
+  throw new Error('Invalid DATABASE_URL');
 }
-
-const [, user, password, host, port, database] = urlMatch;
-const dbName = database.split('?')[0];
 
 const pool = new Pool({
   user,
   password,
   host,
-  port: parseInt(port, 10),
+  port,
   database: dbName,
 });
 
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+/**
+ * Parse "3x10" format into series and repetitions
+ */
+function parseFormato(formato: string) {
+  const match = formato.match(/^(\d+)x(\d+)$/);
+  if (!match) return { series: null, repes: null };
+  return { series: parseInt(match[1], 10), repes: parseInt(match[2], 10) };
+}
+
 async function main() {
   console.log('Seeding database...');
 
-  // Clear existing data
-  await prisma.ejercicio.deleteMany();
-  await prisma.dia.deleteMany();
-  await prisma.ownershipTransfer.deleteMany();
-  await prisma.rutina.deleteMany();
-  await prisma.feriado.deleteMany();
-  await prisma.gym.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.$transaction(async (tx) => {
+    // Clear existing data
+    await tx.ejercicio.deleteMany();
+    await tx.dia.deleteMany();
+    await tx.ownershipTransfer.deleteMany();
+    await tx.rutina.deleteMany();
+    await tx.feriado.deleteMany();
+    await tx.gym.deleteMany();
+    await tx.session.deleteMany();
+    await tx.account.deleteMany();
+    await tx.user.deleteMany();
 
-  // Create/update singleton Gym config
-  await prisma.gym.upsert({
-    where: { id: 'gym' },
-    update: {},
-    create: {
-      id: 'gym',
-      price: 45000,
-    },
-  });
-
-  console.log('Gym config created with price: $45.000');
-
-  // Routine templates
-  const routineTemplates = [
-    { nombre: 'Full Body', tipo: 'Fuerza', descripcion: 'Rutina completa para todo el cuerpo' },
-    { nombre: 'Pecho y Tríceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de empujes' },
-    { nombre: 'Espalda y Bíceps', tipo: 'Fuerza', descripcion: 'Entrenamiento de tirones' },
-    { nombre: 'Piernas', tipo: 'Fuerza', descripcion: 'Cuádriceps, isquiotibiales, gemelos' },
-    { nombre: 'Hombros', tipo: 'Fuerza', descripcion: 'Deltoides y manguito rotador' },
-    { nombre: 'Cardio HIIT', tipo: 'Cardio', descripcion: 'High intensity interval training' },
-    { nombre: 'Core y Abdominales', tipo: 'Funcional', descripcion: 'Fuerza central' },
-    { nombre: 'Full Body Ligero', tipo: 'Funcional', descripcion: 'Rutina accesible para todos' },
-    { nombre: 'Potencia', tipo: 'Fuerza', descripcion: 'Ejercicios pliométricos' },
-    { nombre: 'Resistencia', tipo: 'Cardio', descripcion: 'Endurance y stamina' },
-  ];
-
-  // Create admin users
-  const admins = [
-    { name: 'Nando', dni: '11111111', password: 'nando123' },
-    { name: 'Leo', dni: '22222222', password: 'leo123' },
-    { name: 'Santi', dni: '33333333', password: 'santi123' },
-  ];
-
-  for (const admin of admins) {
-    const hashedPwd = await bcrypt.hash(admin.password, 12);
-    
-    const user = await prisma.user.create({
-      data: {
-        name: admin.name,
-        username: admin.dni,
-        email: null,
-        dni: admin.dni,
-        emailVerified: false,
-        admin: true,
-        role: 'admin',
-        banned: false,
+    // Create/update singleton Gym config
+    await tx.gym.upsert({
+      where: { id: 'gym' },
+      update: {},
+      create: {
+        id: 'gym',
+        price: 45000,
       },
     });
 
-    await prisma.account.create({
-      data: {
-        userId: user.id,
-        accountId: admin.dni, // Use DNI as accountId
-        providerId: 'credential', // Must be 'credential' for better-auth username plugin
-        providerType: 'credential',
-        password: hashedPwd,
-      },
-    });
+    console.log('Gym config ensured with price: $45.000');
 
-    console.log(`Admin ${admin.name} created with DNI: ${admin.dni}`);
+    // Routine templates
+    const routineTemplates = [
+      { nombre: 'Full Body', tipo: 'fuerza', descripcion: 'Rutina completa para todo el cuerpo' },
+      { nombre: 'Pecho y Tríceps', tipo: 'fuerza', descripcion: 'Entrenamiento de empujes' },
+      { nombre: 'Espalda y Bíceps', tipo: 'fuerza', descripcion: 'Entrenamiento de tirones' },
+      { nombre: 'Piernas', tipo: 'fuerza', descripcion: 'Cuádriceps, isquiotibiales, gemelos' },
+      { nombre: 'Hombros', tipo: 'fuerza', descripcion: 'Deltoides y manguito rotador' },
+      { nombre: 'Cardio HIIT', tipo: 'cardio', descripcion: 'High intensity interval training' },
+      { nombre: 'Core y Abdominales', tipo: 'fuerza', descripcion: 'Fuerza central' },
+      { nombre: 'Full Body Ligero', tipo: 'flexibilidad', descripcion: 'Rutina accesible para todos' },
+      { nombre: 'Potencia', tipo: 'fuerza', descripcion: 'Ejercicios pliométricos' },
+      { nombre: 'Resistencia', tipo: 'cardio', descripcion: 'Endurance y stamina' },
+    ];
 
-    // Create 10 routines for this admin using user.id as FK
-    for (let i = 0; i < routineTemplates.length; i++) {
-      const template = routineTemplates[i];
-      
-      // Create routine with the admin as creator
-      const rutina = await prisma.rutina.create({
+    // Create admin users
+    const admins = [
+      { name: 'Nando', dni: '11111111', password: process.env.SEED_ADMIN_PASSWORD_1 },
+      { name: 'Leo', dni: '22222222', password: process.env.SEED_ADMIN_PASSWORD_2 },
+      { name: 'Santi', dni: '33333333', password: process.env.SEED_ADMIN_PASSWORD_3 },
+    ];
+
+    for (const admin of admins) {
+      if (!admin.password) {
+        console.error(`SEED_ADMIN_PASSWORD for ${admin.name} is not set`);
+        throw new Error(`Missing SEED_ADMIN_PASSWORD for ${admin.name}`);
+      }
+      if (admin.password.length > 72) {
+        console.error(`Password for ${admin.name} exceeds 72 bytes (bcrypt limit)`);
+        throw new Error(`Password too long for ${admin.name}`);
+      }
+      const hashedPwd = await bcrypt.hash(admin.password, 12);
+
+      const user = await tx.user.create({
         data: {
-          nombre: `${template.nombre} - ${admin.name}`,
-          tipo: template.tipo,
-          descripcion: template.descripcion,
-          creadorId: user.id,
+          name: admin.name,
+          username: admin.dni,
+          email: null,
+          dni: admin.dni,
+          emailVerified: false,
+          admin: true,
+          role: 'admin',
+          banned: false,
         },
       });
 
-      // Create initial ownership record (creation, not transfer)
-      await prisma.ownershipTransfer.create({
+      await tx.account.create({
         data: {
-          rutinaId: rutina.id,
-          fromUserId: null, // Creation, not a transfer
-          toUserId: user.id,
+          userId: user.id,
+          accountId: admin.dni,
+           providerId: 'credential', // Must be 'credential' for better-auth username plugin
+          providerType: 'credential',
+          password: hashedPwd,
         },
       });
 
-      // Create 1-2 days per routine
-      const numDias = i < 5 ? 2 : 1;
-      
-      for (let d = 1; d <= numDias; d++) {
-        // Parse "3x10" format into separate series and repes
-        const parseFormato = (formato: string) => {
-          const match = formato.match(/^(\d+)x(\d+)$/);
-          if (!match) return { series: null, repes: null };
-          return { series: parseInt(match[1], 10), repes: parseInt(match[2], 10) };
-        };
+      console.log(`Admin ${admin.name} created with DNI: ${admin.dni}`);
 
-        const ejerciciosData = [
-          { nombre: 'Press de Banca', formato: '4x10', orden: 1 },
-          { nombre: 'Sentadillas', formato: '4x12', orden: 2 },
-          { nombre: 'Peso Muerto', formato: '3x8', orden: 3 },
-          { nombre: 'Fondos', formato: '3x12', orden: 4 },
-          { nombre: 'Press Militar', formato: '4x10', orden: 5 },
-        ];
+      // Create 10 routines for this admin using user.id as FK
+      for (let i = 0; i < routineTemplates.length; i++) {
+        const template = routineTemplates[i];
 
-        const ejercicios = ejerciciosData.map(ej => {
-          const { series, repes } = parseFormato(ej.formato);
-          return {
-            nombre: ej.nombre,
-            series,
-            repes,
-            orden: ej.orden,
-          };
-        });
-
-        await prisma.dia.create({
+        // Create routine with the admin as creator
+        const rutina = await tx.rutina.create({
           data: {
-            nombre: `Día ${d}`,
-            musculosEnfocados: template.tipo,
-            orden: d,
-            rutinaId: rutina.id,
-            ejercicios: {
-              create: ejercicios,
-            },
+            nombre: `${template.nombre} - ${admin.name}`,
+            tipo: template.tipo,
+            descripcion: template.descripcion,
+            creadorId: user.id,
           },
         });
+
+        // Create initial ownership record (creation, not transfer)
+        await tx.ownershipTransfer.create({
+          data: {
+            rutinaId: rutina.id,
+            fromUserId: null,
+            toUserId: user.id,
+          },
+        });
+
+        // Create 1-2 days per routine
+        const numDias = i < 5 ? 2 : 1;
+
+        for (let d = 1; d <= numDias; d++) {
+          const ejerciciosData = [
+            { nombre: 'Press de Banca', formato: '4x10', orden: 1 },
+            { nombre: 'Sentadillas', formato: '4x12', orden: 2 },
+            { nombre: 'Peso Muerto', formato: '3x8', orden: 3 },
+            { nombre: 'Fondos', formato: '3x12', orden: 4 },
+            { nombre: 'Press Militar', formato: '4x10', orden: 5 },
+          ];
+
+          const ejercicios = ejerciciosData.map(ej => {
+            const { series, repes } = parseFormato(ej.formato);
+            return {
+              nombre: ej.nombre,
+              series,
+              repes,
+              orden: ej.orden,
+            };
+          });
+
+          await tx.dia.create({
+            data: {
+              nombre: `Día ${d}`,
+              musculosEnfocados: template.tipo,
+              orden: d,
+              rutinaId: rutina.id,
+              ejercicios: {
+                create: ejercicios,
+              },
+            },
+          });
+        }
       }
+
+      console.log(`Created 10 routines for ${admin.name}`);
     }
 
-    console.log(`Created 10 routines for ${admin.name}`);
-  }
-
-  console.log('Seeding complete!');
+    console.log('Seeding complete!');
+  });
 }
 
 main()
   .catch((e) => {
     console.error(e);
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

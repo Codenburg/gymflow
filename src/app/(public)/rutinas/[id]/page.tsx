@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCachedRutinaById } from "@/lib/rutinas";
 
@@ -22,13 +23,13 @@ export default async function RoutineDetailPage({
         <main className="container mx-auto px-6 py-8 max-w-4xl">
           <Link
             href="/"
-            className="inline-flex items-center text-blue-500 hover:text-blue-400 mb-6 transition-colors font-medium"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-colors font-medium"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="size-5 mr-2" />
             Volver a mis rutinas
           </Link>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+            <AlertCircle className="size-16 text-destructive mb-4" />
             <p className="text-foreground text-lg font-medium">No se pudo cargar la rutina</p>
             <p className="text-muted-foreground text-sm mt-1">Por favor, intenta de nuevo más tarde.</p>
           </div>
@@ -47,9 +48,9 @@ export default async function RoutineDetailPage({
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center text-blue-500 hover:text-blue-400 mb-6 transition-colors font-medium"
+          className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-colors font-medium"
         >
-          <ArrowLeft className="w-5 h-5 mr-2" />
+          <ArrowLeft className="size-5 mr-2" />
           Volver a mis rutinas
         </Link>
 
@@ -61,7 +62,7 @@ export default async function RoutineDetailPage({
                 {rutina.nombre}
               </h1>
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="inline-block rounded-full bg-blue-500/20 px-3 py-1 text-sm font-medium text-blue-500">
+                <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary capitalize">
                   {rutina.tipo}
                 </span>
                 <span className="text-sm text-muted-foreground">
@@ -79,13 +80,13 @@ export default async function RoutineDetailPage({
         </div>
 
         {/* Days */}
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           <h2 className="text-xl font-semibold text-foreground tracking-tight">
             Días de entrenamiento ({rutina.dias.length})
           </h2>
 
           {rutina.dias.length === 0 ? (
-            <Card className="bg-gradient-to-br from-card to-slate-50 dark:to-slate-800/50">
+            <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 No hay días configurados en esta rutina
               </CardContent>
@@ -98,23 +99,31 @@ export default async function RoutineDetailPage({
                   href={`/rutinas/${rutina.id}/dias/${dia.id}`}
                   className="block"
                 >
-                  <Card className="hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer bg-gradient-to-br from-card to-slate-50 dark:to-slate-800/50">
+                  <Card className="hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg text-foreground flex items-center gap-3 font-semibold tracking-tight">
-                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 text-sm font-bold">
+                        <CardTitle className="text-foreground flex items-center gap-3">
+                          <span className="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm font-bold">
                             {index + 1}
                           </span>
                           {dia.nombre}
                         </CardTitle>
                         <div className="flex items-center gap-4">
-                          {dia.musculosEnfocados && (
-                            <span className="text-sm text-muted-foreground">
-                              {dia.musculosEnfocados}
+                          {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
+                            <div className="flex gap-1 flex-wrap">
+                              {dia.musculosEnfocados.map((musculo) => (
+                                <Badge key={musculo} variant="secondary" className="text-xs">
+                                  {musculo}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">
+                              Sin músculos enfocados
                             </span>
                           )}
                           {dia.ejercicios.length > 0 && (
-                            <span className="text-sm text-blue-500">
+                            <span className="text-sm text-primary">
                               {dia.ejercicios.length} ejercicio{dia.ejercicios.length !== 1 ? 's' : ''}
                             </span>
                           )}
@@ -127,7 +136,7 @@ export default async function RoutineDetailPage({
                             No hay ejercicios configurados
                           </p>
                         ) : (
-                          <ul className="space-y-2">
+                          <ul className="flex flex-col gap-2">
                             {dia.ejercicios.slice(0, 3).map((ejercicio, ejIndex) => (
                               <li
                                 key={ejercicio.id}
@@ -140,14 +149,14 @@ export default async function RoutineDetailPage({
                                   {ejercicio.nombre}
                                 </div>
                                 {ejercicio.series && (
-                                  <span className="text-sm text-green-500 font-medium">
+                                  <span className="text-sm text-primary font-medium">
                                     {ejercicio.series}
                                   </span>
                                 )}
                               </li>
                             ))}
                             {dia.ejercicios.length > 3 && (
-                              <li className="text-sm text-blue-500">
+                              <li className="text-sm text-primary">
                                 +{dia.ejercicios.length - 3} más...
                               </li>
                             )}

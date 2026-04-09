@@ -1,21 +1,7 @@
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface CreadorUser {
-  id: string;
-  name: string;
-}
-
-interface Rutina {
-  id: string;
-  nombre: string;
-  tipo: string;
-  descripcion: string | null;
-  creadorId: string;
-  creadorUser: CreadorUser;
-  diasCount: number;
-}
+import type { Rutina } from "@/lib/rutinas";
 
 interface RoutineCardProps {
   rutina: Rutina;
@@ -26,13 +12,13 @@ export function RoutineCard({ rutina }: RoutineCardProps) {
 
   return (
     <Link href={`/rutinas/${rutina.id}`}>
-      <Card className="group cursor-pointer transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 h-full flex flex-col bg-gradient-to-br from-card to-slate-50 dark:to-slate-800/50">
+      <Card className="group cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 h-full flex flex-col">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg group-hover:text-blue-500 transition-colors text-foreground font-semibold tracking-tight">
+            <CardTitle className="text-lg group-hover:text-primary transition-colors text-foreground font-semibold tracking-tight">
               {rutina.nombre}
             </CardTitle>
-            <span className="shrink-0 rounded-full bg-blue-500/20 px-2.5 py-0.5 text-xs font-medium text-blue-500">
+            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
               {rutina.tipo}
             </span>
           </div>
@@ -50,7 +36,7 @@ export function RoutineCard({ rutina }: RoutineCardProps) {
         </CardContent>
         <CardFooter className="mt-auto">
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Dumbbell className="w-3.5 h-3.5" />
+            <Dumbbell className="shrink-0" />
             {diasLabel}
           </span>
         </CardFooter>

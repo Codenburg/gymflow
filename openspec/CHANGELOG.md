@@ -4,6 +4,48 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.2.6] - 2026-04-09
+
+### Added
+- TagInput component: reusable tag input for admin forms with Enter/Space creates tag, x removes, Backspace on empty removes last tag
+
+### Changed
+- musculosEnfocados: migrated from `String` (comma-separated) to `String[]` in Prisma schema
+- Admin forms (dia-section, rutina-completa-form, rutina-edit-form, routine-day-card, dia-manager): now use TagInput for musculosEnfocados
+- Display components (day-card, dia-card, routine-day-card): render musculosEnfocados as badges instead of single string
+- Server actions (dias.ts, rutinas.ts): use FormData.getAll() for array handling
+- API routes: return string[] directly for musculosEnfocados
+
+### Breaking
+- musculosEnfocados is now stored as PostgreSQL text[] array, not comma-separated string
+- Client components expecting string must now handle string[]
+
+## [0.2.5] - 2026-04-08
+
+### Fixed
+- seed-refactor: removed hardcoded passwords from prisma/seed.ts (moved to SEED_ADMIN_PASSWORD_1/2/3 env vars)
+- seed-refactor: replaced fragile regex URL parsing with `new URL()` constructor
+- seed-refactor: changed `process.exit(1)` to `process.exitCode = 1` for proper finally block execution
+- seed-refactor: replaced default `pg` import with named `import { Pool } from 'pg'`
+- seed-refactor: added explicit `return await prisma.$disconnect()` in main()
+
+### Changed
+- .env.example: added SEED_ADMIN_PASSWORD_1/2/3 entries for seed script documentation
+
+### Reverted
+- seed-refactor: reverted incorrect change to `providerId: 'username'` (must remain `providerId: 'credential'` for better-auth username plugin)
+
+### Known Issues
+- seed-refactor introduced regression that broke admin login (providerId mismatch) — manually corrected post-commit
+
+## [0.2.4] - 2026-04-07
+
+### Fixed
+- tipo-rutina: normalización de case en seed y display (valores en lowercase: `fuerza`, `cardio`, `flexibilidad`, `hipertrofia`)
+- tipo-rutina: seed corregido (`Funcional` → `fuerza`/`flexibilidad` según descripción de rutina)
+- UI: reemplazados `blue-500` hardcodeados por semantic tokens (`primary`)
+- UI: removidos gradient overrides que rompían dark mode en Cards
+
 ## [0.2.3] - 2026-04-04
 
 ### Fixed

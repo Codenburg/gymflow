@@ -16,7 +16,7 @@ interface Ejercicio {
 interface Dia {
   id: string;
   nombre: string;
-  musculosEnfocados?: string | null;
+  musculosEnfocados?: string[] | null;
   orden: number;
   ejercicios: Ejercicio[];
 }
@@ -30,7 +30,8 @@ interface DiaCardProps {
 
 export function DiaCard({ dia, rutinaId, index, className }: DiaCardProps) {
   const exerciseCount = dia.ejercicios?.length || 0;
-  const hasMuscles = !!dia.musculosEnfocados?.trim();
+  const musculosArray = dia.musculosEnfocados;
+  const hasMuscles = Array.isArray(musculosArray) && musculosArray.length > 0;
 
   return (
     <div
@@ -53,9 +54,22 @@ export function DiaCard({ dia, rutinaId, index, className }: DiaCardProps) {
 
       {/* Description */}
       <div className="flex-1">
-        <p className="text-sm text-muted-foreground line-clamp-1 min-h-[20px]">
-          {hasMuscles ? dia.musculosEnfocados : "Sin músculos enfocados"}
-        </p>
+        {hasMuscles ? (
+          <div className="flex flex-wrap gap-1">
+            {musculosArray.map((musculo, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border"
+              >
+                {musculo}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground line-clamp-1 min-h-[20px]">
+            Sin músculos enfocados
+          </p>
+        )}
       </div>
 
       {/* Footer */}

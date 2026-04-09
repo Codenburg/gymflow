@@ -7,6 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/tag-input";
 import { EjercicioRow } from "./ejercicio-row";
 import { cn } from "@/lib/utils";
 import type { Control, FieldErrors } from "react-hook-form";
@@ -203,15 +204,10 @@ function DiaSectionComponent({
             name={`${baseName}.musculosEnfocados`}
             control={control}
             render={({ field }) => (
-              <Input
-                value={field.value ?? ""}
+              <TagInput
+                value={field.value ?? []}
                 onChange={field.onChange}
-                onBlur={field.onBlur}
-                name={field.name}
-                ref={field.ref}
-                type="text"
-                placeholder="Ej: Cuádriceps, isquiotibiales, glúteos..."
-                className="focus-input w-full"
+                placeholder="Agregar músculo..."
               />
             )}
           />

@@ -11,7 +11,7 @@ interface Ejercicio {
 interface Dia {
   id: string;
   nombre: string;
-  musculosEnfocados: string | null;
+  musculosEnfocados: string[] | null;
   ejercicios: Ejercicio[];
 }
 

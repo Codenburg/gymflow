@@ -16,7 +16,7 @@ interface RutinaQueryResult {
   dias: {
     id: string;
     nombre: string;
-    musculosEnfocados: string | null;
+    musculosEnfocados: string[] | null;
     orden: number;
     ejercicios: {
       id: string;
