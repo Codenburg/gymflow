@@ -1,4 +1,11 @@
-## Skills
+## ⚠️ CRITICAL RULES — IGNORING THESE IS UNACCEPTABLE
+
+### GIT RULES
+- **NEVER run `git reset` (hard, soft, mixed) without explicit user permission.**
+- **NEVER run interactive `git rebase` without explicit user permission.**
+- Before any destructive git operation, STOP and ASK.
+
+### Skills
 When working with React, read `~/.agents/skills/react-19/SKILL.md` first.
 When working with Next.js, read `~/.agents/skills/nextjs-best-practices/SKILL.md` first.
 When working with TypeScript, read `~/.agents/skills/typescript/SKILL.md` first.

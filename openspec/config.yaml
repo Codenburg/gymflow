@@ -188,6 +188,9 @@ ai_constraints:
     - Deleting large modules without explicit justification in the proposal
     - Modifying configuration files without explaining the reason and impact
     - Changing or adding environment variables without documenting their purpose
+    - NEVER run git reset (hard, soft, mixed) without explicit user permission
+    - NEVER run interactive git rebase without explicit user permission
+    - Before any destructive git operation (reset, rebase, force push), STOP and ASK
 
   on_violation: ask_for_confirmation
 
