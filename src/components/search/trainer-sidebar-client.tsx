@@ -36,6 +36,7 @@ export function TrainerSidebarClient({ trainers }: TrainerSidebarClientProps) {
 
   return (
     <div data-testid="trainer-sidebar">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Entrenadores</h3>
       <TrainerPills
         trainers={trainers}
         selectedTrainers={trainerFilters}

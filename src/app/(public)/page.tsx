@@ -32,9 +32,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
         <div className="mb-12">
           {/* Header with title and theme toggle */}
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
-              Rutinas Champion Gym
-            </h1>
+            <div className="flex-1 text-center">
+              <h1 className="text-4xl sm:text-5xl font-black text-foreground">
+                Champion Gym
+              </h1>
+            </div>
             <ThemeToggle />
           </div>
 
