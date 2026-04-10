@@ -4,6 +4,28 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.5.0] - 2026-04-10
+
+### Added
+- Mobile-first redesign de homepage: layout responsive con bottom bar para navegación móvil
+- TrainerFilterDrawer: bottom sheet con filtros de entrenador para móvil (Sheet de shadcn)
+- BottomBar: barra fija de navegación móvil con links a Información y Feriados
+- TrainerPills: pills de entrenador para desktop (reemplaza sidebar)
+- Componentes shadcn/ui instalados: Sheet, ScrollArea
+
+### Changed
+- Header: eliminado subtítulo genérico
+- RoutineCard: removida línea "Creado por X" y simplificado layout
+- SearchSection: desktop icon links para Info/Feriados, mobile filter trigger
+- page.tsx: layout mobile-first (header → search → filter → cards → bottom bar)
+- Theme audit: todos los componentes afectados usan CSS var tokens
+
+### Fixed
+- SheetTrigger: corregido nested button HTML error usando className directo en lugar de render prop
+- TrainerFilterDrawer: reemplazado Button por div con role=button para evitar nesting
+
+---
+
 ## [0.4.0] - 2026-04-09
 
 ### Removed
