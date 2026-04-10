@@ -33,16 +33,21 @@ export function TrainerFilterDrawer({ trainers }: TrainerFilterDrawerProps) {
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Filter className="size-4" />
-          <span>Filtrar</span>
-          {trainerFilters.length > 0 && (
-            <Badge variant="secondary" className="ml-1 size-5 rounded-full p-0 text-xs">
-              {trainerFilters.length}
-            </Badge>
-          )}
-        </Button>
+      <SheetTrigger
+        className={cn(
+          "inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+        )}
+      >
+        <Filter className="size-4" />
+        <span>Filtrar</span>
+        {trainerFilters.length > 0 && (
+          <Badge
+            variant="secondary"
+            className="ml-1 size-5 rounded-full p-0 text-xs"
+          >
+            {trainerFilters.length}
+          </Badge>
+        )}
       </SheetTrigger>
       <SheetContent side="bottom" className="min-h-[40vh]">
         <SheetHeader>
@@ -50,12 +55,12 @@ export function TrainerFilterDrawer({ trainers }: TrainerFilterDrawerProps) {
         </SheetHeader>
 
         <ScrollArea className="h-full mt-4">
-          <div className="flex flex-wrap gap-2 p-1">
+          <div className="flex flex-col gap-2 p-1 w-full md:flex-row md:flex-wrap">
             {/* Todos option */}
             <Button
               variant={trainerFilters.length === 0 ? "default" : "secondary"}
               onClick={clearTrainerFilters}
-              className="gap-2 rounded-full text-base"
+              className="gap-2 rounded-full text-base w-full md:w-auto"
             >
               <span className="font-medium">Todos</span>
               <span className="text-xs opacity-70">
@@ -71,7 +76,7 @@ export function TrainerFilterDrawer({ trainers }: TrainerFilterDrawerProps) {
                   key={trainer.nombre}
                   variant={isSelected ? "default" : "secondary"}
                   onClick={() => toggleTrainerFilter(trainer.nombre)}
-                  className="gap-2 rounded-full text-base"
+                  className="gap-2 rounded-full text-base w-full md:w-auto"
                 >
                   <span className="truncate">{trainer.nombre}</span>
                   <span className="text-xs opacity-70">{trainer.count}</span>
