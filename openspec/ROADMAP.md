@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-04-08_ | _Version: 0.2.4_
+_Last updated: 2026-04-10_ | _Version: 0.5.1_
 
 ---
 

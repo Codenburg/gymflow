@@ -4,6 +4,16 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.5.1] - 2026-04-10
+
+### Changed
+- Home page: título display "Champion Gym" text-4xl sm:text-5xl font-black centrado
+- TrainerFilterDrawer: pills con text-base (16px), drawer min-h-[40vh], botón Filtrar variant="outline"
+- TrainerPills: layout vertical (flex-col) con w-full
+- TrainerSidebar: label "Entrenadores" text-xs uppercase tracking-wide
+
+---
+
 ## [0.5.0] - 2026-04-10
 
 ### Added
