@@ -239,7 +239,6 @@ export async function duplicateRutina(
         const newDia = await tx.dia.create({
           data: {
             rutinaId: newRutina.id,
-            nombre: dia.nombre,
             musculosEnfocados: dia.musculosEnfocados,
             orden: dia.orden,
           },
@@ -554,7 +553,6 @@ export async function createRutinaCompleta(
         const createdDia = await tx.dia.create({
           data: {
             rutinaId: createdRutina.id,
-            nombre: diaData.nombre,
             musculosEnfocados: diaData.musculosEnfocados,
             orden: diaIndex,
           },
@@ -678,7 +676,6 @@ export async function updateRutinaCompleta(
         const createdDia = await tx.dia.create({
           data: {
             rutinaId: idParsed.data,
-            nombre: diaData.nombre,
             musculosEnfocados: diaData.musculosEnfocados,
             orden: diaIndex,
           },

@@ -64,7 +64,6 @@ export async function createDia(
     const dia = await prisma.dia.create({
       data: {
         rutinaId: parsed.data.rutinaId,
-        nombre: `Día ${newOrden}`,
         orden: newOrden,
       },
     });

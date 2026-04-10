@@ -136,7 +136,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       diasCount: rutina._count.dias,
       dias: rutina.dias.map((dia) => ({
         id: dia.id,
-        nombre: dia.nombre,
         musculosEnfocados: dia.musculosEnfocados,
         orden: dia.orden,
         ejercicios: dia.ejercicios.map((ej) => ({

@@ -11,7 +11,7 @@ interface Ejercicio {
 
 interface Dia {
   id: string;
-  nombre: string;
+  orden: number;
   musculosEnfocados: string[] | null;
   ejercicios: Ejercicio[];
 }
@@ -28,7 +28,7 @@ export function DayCard({ dia, rutinaId }: DayCardProps) {
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-base group-hover:text-red-400 transition-colors text-[var(--foreground)]">
-              {dia.nombre}
+              Día {dia.orden + 1}
             </CardTitle>
             {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
               <div className="flex shrink-0 gap-1 flex-wrap justify-end max-w-[60%]">

@@ -41,7 +41,7 @@ export default async function EjerciciosPage({ params }: EjerciciosPageProps) {
     <div className="space-y-6">
       {/* Breadcrumb via PageHeader */}
       <PageHeader
-        title={dia.nombre}
+        title={`Día ${dia.orden}`}
         description={dia.musculosEnfocados || undefined}
         backHref={`/admin/rutinas/${id}`}
       />
@@ -49,7 +49,7 @@ export default async function EjerciciosPage({ params }: EjerciciosPageProps) {
       {/* Ejercicios List */}
       <EjercicioList
         diaId={dia.id}
-        diaNombre={dia.nombre}
+        diaNombre={`Día ${dia.orden}`}
         rutinaId={rutina.id}
         ejercicios={dia.ejercicios}
       />

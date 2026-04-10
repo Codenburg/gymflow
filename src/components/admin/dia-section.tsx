@@ -170,33 +170,6 @@ function DiaSectionComponent({
 
       {/* Collapsible content - hidden instead of unmounting to preserve input values */}
       <div className={cn("px-4 pt-4 pb-4 space-y-4 theme-transition", !isExpanded && "hidden")}>
-        {/* Nombre del día - full width */}
-        <div className="space-y-2">
-          <label className="text-muted-foreground text-sm font-medium block">Nombre del día</label>
-          <Controller
-            name={`${baseName}.nombre`}
-            control={control}
-            rules={{ required: "El nombre del día es requerido" }}
-            render={({ field }) => (
-              <Input
-                value={field.value ?? ""}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                name={field.name}
-                ref={field.ref}
-                type="text"
-                placeholder="Ej: Pierna, Espalda, Pecho..."
-                className="focus-input w-full"
-              />
-            )}
-          />
-          {diaErrors?.nombre && (
-            <p className="text-destructive text-xs mt-1">
-              {typeof diaErrors.nombre === "object" ? diaErrors.nombre.message : diaErrors.nombre}
-            </p>
-          )}
-        </div>
-
         {/* Músculos enfocados - full width */}
         <div className="space-y-2">
           <label className="text-muted-foreground text-sm font-medium block">Músculos enfocados</label>

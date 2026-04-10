@@ -171,8 +171,7 @@ async function main() {
 
           await tx.dia.create({
             data: {
-              nombre: `Día ${d}`,
-              musculosEnfocados: template.tipo,
+              musculosEnfocados: [template.tipo],
               orden: d,
               rutinaId: rutina.id,
               ejercicios: {

@@ -67,7 +67,7 @@ export default async function DayDetailPage({
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">
-                {dia.nombre}
+                Día {dia.orden}
               </h1>
               {dia.musculosEnfocados && dia.musculosEnfocados.length > 0 ? (
                 <div className="flex gap-2 flex-wrap">

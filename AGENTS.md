@@ -1,4 +1,11 @@
-## Skills
+## ⚠️ CRITICAL RULES — IGNORING THESE IS UNACCEPTABLE
+
+### GIT RULES
+- **NEVER run `git reset` (hard, soft, mixed) without explicit user permission.**
+- **NEVER run interactive `git rebase` without explicit user permission.**
+- Before any destructive git operation, STOP and ASK.
+
+### Skills
 When working with React, read `~/.agents/skills/react-19/SKILL.md` first.
 When working with Next.js, read `~/.agents/skills/nextjs-best-practices/SKILL.md` first.
 When working with TypeScript, read `~/.agents/skills/typescript/SKILL.md` first.
@@ -18,3 +25,19 @@ When implementing URL-based search with debounce and dual-state pattern, read `.
 When maintaining README as single source of truth with versioning after commits, read `.agents/skills/readme-guardian/SKILL.md` first.
 For config and rules related to project management,rules, logics and more, read `~/openspec/config.yaml` first.
 For testing and debugging, read `~/.agents/skills/testing-debugging/SKILL.md` first.
+
+# Code Review Rules
+
+## References
+
+- project rules: `~/openspec/config.yaml`
+- 
+---
+
+## Critical Rules (ALL files)
+
+REJECT if:
+
+- Hardcoded secrets/credentials
+- `console.log` in production code
+- Missing error handling
