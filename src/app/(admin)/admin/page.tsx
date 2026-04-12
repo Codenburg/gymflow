@@ -6,7 +6,7 @@ import { AdminCard } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { DataResult, ok, err } from "@/lib/data-result";
-import { FileText, Calendar, TrendingUp, Plus, AlertCircle } from "lucide-react";
+import { FileText, Calendar, TrendingUp, Plus, AlertCircle, Percent, Clock } from "lucide-react";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -107,6 +107,18 @@ export default async function AdminDashboardPage() {
             <Button variant="secondary" className="cursor-pointer">
               <Calendar className="w-5 h-5 mr-2" />
               Ver Feriados
+            </Button>
+          </Link>
+          <Link href="/admin/promociones">
+            <Button variant="secondary" className="cursor-pointer">
+              <Percent className="w-5 h-5 mr-2" />
+              Gestionar Promociones
+            </Button>
+          </Link>
+          <Link href="/admin/descuentos-duracion">
+            <Button variant="secondary" className="cursor-pointer">
+              <Clock className="w-5 h-5 mr-2" />
+              Descuentos por Duración
             </Button>
           </Link>
         </div>

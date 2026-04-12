@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Sun, Moon, House } from "lucide-react";
+import { LogOut, User, Sun, Moon, House, Percent, Clock } from "lucide-react";
 import { useThemeStore } from "@/store/theme-store";
 
 interface AdminLayoutProps {
@@ -44,12 +44,30 @@ export function AdminLayout({ children, username }: AdminLayoutProps) {
           </Link>
         </div>
 
-        <Link
-          href="/admin"
-          className="text-foreground font-bold text-lg tracking-tight hover:opacity-80 transition-opacity cursor-pointer"
-        >
-          Champion Gym
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/admin"
+            className="text-foreground font-bold text-lg tracking-tight hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            Champion Gym
+          </Link>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/admin/promociones"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Percent className="w-4 h-4" />
+              Promociones
+            </Link>
+            <Link
+              href="/admin/descuentos-duracion"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Clock className="w-4 h-4" />
+              Descuentos
+            </Link>
+          </nav>
+        </div>
 
         <div className="flex items-center gap-2">
           <DropdownMenu>
