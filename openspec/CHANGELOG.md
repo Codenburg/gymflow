@@ -4,6 +4,19 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.9.0] - 2026-04-13
+
+### Added
+- Rediseño completo de `/informacion` con 7 componentes modulares (PriceSection, PlansSection, DurationDiscountsSection, HoursSection, AddressSection, SocialLinksSection, CollapsibleSection)
+- Sección Promociones y Descuentos como collapsibles con animación suave
+- Mapa embebido de Google Maps para ubicación del gimnasio
+- Links directos a Instagram y WhatsApp del gimnasio
+
+### Changed
+- Page.tsx refactorizado de 438 a 153 líneas usando componentes modulares
+
+---
+
 ## [0.8.1] - 2026-04-13
 
 ### Fixed
