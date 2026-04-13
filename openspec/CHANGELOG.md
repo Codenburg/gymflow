@@ -4,6 +4,23 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.8.0] - 2026-04-13
+
+### Added
+- User dropdown en sidebar footer con theme toggle y logout
+
+### Changed
+- Admin layout: header removido, sidebar ocupa h-screen completo
+- Mobile: hamburger flotante top-left para abrir drawer
+
+### Fixed
+- Pluralización correcta "1 día" vs "N días" en rutinas recientes
+- Stats cards con íconos monocromáticos (bg-secondary, text-muted-foreground)
+- Sidebar con indicador visual de ruta activa (border-l-2 border-primary)
+- Tipo de rutina mostrado como badge en rutinas recientes
+
+---
+
 ## [0.7.0] - 2026-04-12
 
 ### Added
