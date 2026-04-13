@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "@/lib/auth-client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/store/theme-store";
 import {
   FileText,
   Calendar,
@@ -14,6 +17,9 @@ import {
   Plus,
   Menu,
   House,
+  Sun,
+  Moon,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -39,8 +45,24 @@ const navItems = [
   },
 ];
 
-function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
+function SidebarContent({
+  onItemClick,
+  username,
+}: {
+  onItemClick?: () => void;
+  username?: string;
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { theme, toggleTheme } = useThemeStore();
+
+  const handleSignOut = async () => {
+    await Promise.all([
+      signOut(),
+      router.push("/admin/login"),
+      router.refresh(),
+    ]);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -84,11 +106,42 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
           );
         })}
       </nav>
+
+      {/* Footer */}
+      <div className="mt-auto border-t border-border p-4">
+        {username && (
+          <div className="mb-3 text-sm font-medium text-foreground">
+            {username}
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="cursor-pointer"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            className="cursor-pointer"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ username }: { username?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -96,7 +149,7 @@ export function AdminSidebar() {
       {/* Mobile Drawer - Sheet wraps content */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent onItemClick={() => setMobileOpen(false)} />
+          <SidebarContent onItemClick={() => setMobileOpen(false)} username={username} />
         </SheetContent>
       </Sheet>
 
@@ -115,7 +168,7 @@ export function AdminSidebar() {
         className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 bg-secondary border-r border-border z-30"
         style={{ top: "0px" }}
       >
-        <SidebarContent />
+        <SidebarContent username={username} />
       </aside>
     </>
   );
