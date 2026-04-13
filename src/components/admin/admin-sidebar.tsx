@@ -20,7 +20,14 @@ import {
   Sun,
   Moon,
   LogOut,
+  User,
+  ChevronDown,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverPopup,
+} from "@base-ui/react";
 
 const navItems = [
   {
@@ -108,34 +115,42 @@ function SidebarContent({
       </nav>
 
       {/* Footer */}
-      <div className="mt-auto border-t border-border p-4">
-        {username && (
-          <div className="mb-3 text-sm font-medium text-foreground">
-            {username}
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="cursor-pointer"
-          >
-            {theme === "dark" ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="cursor-pointer"
-          >
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
+      <div className="mt-auto border-t border-border">
+        <Popover>
+          <PopoverTrigger
+            render={
+              <button
+                className="w-full p-4 flex items-center gap-3 rounded-none hover:bg-accent transition-colors cursor-pointer"
+              >
+                <User className="w-5 h-5 text-foreground" />
+                <span className="flex-1 text-sm font-medium text-foreground text-left">
+                  {username}
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </button>
+            }
+          />
+          <PopoverPopup className="min-w-[200px] rounded-lg border border-border bg-background shadow-lg p-1">
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-accent rounded-md transition-colors cursor-pointer"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+              {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-accent rounded-md transition-colors cursor-pointer"
+            >
+              <LogOut className="w-5 h-5" />
+              Cerrar sesión
+            </button>
+          </PopoverPopup>
+        </Popover>
       </div>
     </div>
   );
