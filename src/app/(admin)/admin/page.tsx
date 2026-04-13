@@ -45,8 +45,8 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <AdminCard variant="standard">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-red-500" />
+            <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Total Rutinas</p>
@@ -59,8 +59,8 @@ export default async function AdminDashboardPage() {
 
         <AdminCard variant="standard">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-blue-500" />
+            <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Total Días</p>
@@ -73,8 +73,8 @@ export default async function AdminDashboardPage() {
 
         <AdminCard variant="standard">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-500" />
+            <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Total Ejercicios</p>
