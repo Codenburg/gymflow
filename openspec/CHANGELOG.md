@@ -4,6 +4,24 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.7.0] - 2026-04-12
+
+### Added
+- Admin sidebar de navegación con items: Rutinas, Feriados, Promociones, Descuentos
+- Botón "Nueva Rutina" en sidebar → /admin/rutinas/new
+- Drawer lateral en mobile (Sheet) con hamburger en header
+
+### Fixed
+- Tipos TypeScript alineados con Prisma schema (series, nombre en Dia/DiaDetail, musculosEnfocados)
+- Build pasa sin errores en src/ (0 errores TS)
+
+### Changed
+- Admin layout: sidebar fijo desktop (256px), contenido con ml-64
+- Header admin simplificado: solo logo/título + nombre de usuario
+- Dashboard admin: eliminada sección "Acciones Rápidas" (navegación vía sidebar)
+
+---
+
 ## [0.6.0] - 2026-04-12
 
 ### Added

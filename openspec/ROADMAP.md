@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-04-12_ | _Version: 0.6.0_
+_Last updated: 2026-04-12_ | _Version: 0.7.0_
 
 ---
 
@@ -23,6 +23,7 @@ _Last updated: 2026-04-12_ | _Version: 0.6.0_
 - [x] Búsqueda unificada con debounce y URL como source of truth
 - [x] Promociones y descuentos por duración (v0.6.0)
 - [x] Admin CRUD para promociones y descuentos (v0.6.0)
+- [x] Sidebar admin con navegación y drawer mobile (v0.7.0)
 
 ### Técnico
 - [x] Next.js 16.1.6 + React 19.2.3
