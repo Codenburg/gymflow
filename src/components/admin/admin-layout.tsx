@@ -82,16 +82,7 @@ export function AdminLayout({ children, username }: AdminLayoutProps) {
         <AdminSidebar />
         <div className="ml-64 flex-1">
           {/* Desktop simplified header */}
-          <header className="w-full h-14 border-b border-border flex items-center justify-between px-6 bg-background sticky top-0 z-40">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <House className="w-5 h-5" />
-              </Link>
-            </div>
-
+          <header className="w-full h-14 border-b border-border flex items-center justify-end px-6 bg-background sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-secondary text-foreground">
