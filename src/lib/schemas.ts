@@ -244,14 +244,51 @@ export const idSchema = z.string().uuid({ error: "ID inválido" });
 export const createPromocionSchema = z.object({
   titulo: z.string().min(1, "El título es requerido"),
   descripcion: z.string().min(1, "La descripción es requerida"),
-  precio: z.string().min(1, "El precio es requerido"),
+  precio: z.coerce.number().int().positive({ message: "El precio debe ser un entero positivo" }),
   activo: z.boolean().default(true),
 });
 
 export const updatePromocionSchema = createPromocionSchema.partial();
 
+// Per-action schemas for atomic updates (single responsibility)
+export const updatePromocionContentSchema = z.object({
+  id: z.string().min(1, { message: "ID requerido" }),
+  titulo: z.string().min(1, { message: "El título es requerido" }),
+  descripcion: z.string().optional(),
+});
+
+export const updatePromocionPrecioSchema = z.object({
+  id: z.string().min(1, { message: "ID requerido" }),
+  precio: z.coerce.number().int().positive({ message: "El precio debe ser un entero positivo" }),
+});
+
+export const togglePromocionActivoSchema = z.object({
+  id: z.string().min(1, { message: "ID requerido" }),
+  activo: z.boolean(),
+});
+
 export type CreatePromocionInput = z.infer<typeof createPromocionSchema>;
 export type UpdatePromocionInput = z.infer<typeof updatePromocionSchema>;
+export type UpdatePromocionContentInput = z.infer<typeof updatePromocionContentSchema>;
+export type UpdatePromocionPrecioInput = z.infer<typeof updatePromocionPrecioSchema>;
+export type TogglePromocionActivoInput = z.infer<typeof togglePromocionActivoSchema>;
+
+// Promocion type (matches Prisma model)
+export interface Promocion {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  precio: number;
+  activo: boolean;
+  gymId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ActionResult pattern for server actions
+export type ActionResult<T> =
+  | { data: T; error: null }
+  | { data: null; error: { code: string; message: string } };
 
 // FormState for Promocion - use any to allow Prisma entity returns with id, createdAt, etc.
 export type PromocionFormState = FormState<any>;
