@@ -4,6 +4,13 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.10.3] - 2026-04-14
+
+### Changed
+- Mejora visual en tarjetas de promociones: borde izquierdo verde (border-l-4 border-l-primary), título con font-semibold, precio renderizado como Badge con bg-primary/10 text-primary
+
+---
+
 ## [0.10.2] - 2026-04-14
 
 ### Fixed
