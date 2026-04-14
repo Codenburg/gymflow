@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Promocion } from "@/app/(public)/informacion/page"
 
-const formatPriceARS = (n: number) => `$ ${n.toLocaleString("es-AR")}`
+const formatPriceARS = (n: string | number) => `$ ${Number(n).toLocaleString("es-AR")}`
 
 interface PlansSectionProps {
   promociones: Promocion[]
@@ -31,7 +31,8 @@ export function PlansSection({ promociones, error }: PlansSectionProps) {
         {promociones.map((promocion) => (
           <Card
             key={promocion.id}
-            className="bg-[var(--background)] border-l-4 border-l-primary border"
+            className="bg-card shadow-none"
+            style={{ borderLeft: "4px solid var(--primary)" }}
           >
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold text-[var(--foreground)]">
@@ -39,10 +40,10 @@ export function PlansSection({ promociones, error }: PlansSectionProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-[var(--muted-foreground)] mb-2">
+              <p className="text-sm text-muted-foreground mb-2">
                 {promocion.descripcion}
               </p>
-              <Badge className="bg-primary/10 text-primary">
+              <Badge variant="outline" className="border-primary/30" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>
                 {formatPriceARS(promocion.precio)}
               </Badge>
             </CardContent>
