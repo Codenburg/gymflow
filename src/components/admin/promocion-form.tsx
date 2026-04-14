@@ -50,15 +50,27 @@ export function PromocionForm({
     defaultValues: {
       titulo: "",
       descripcion: "",
-      precio: 0,
+      precio: undefined,
     },
   })
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting }, watch } = form
 
+  // Helper type for field errors from react-hook-form
+  type FieldError = { message: string }
+  const errorsMap = errors as Record<string, FieldError>
+
   // Reset form when editingPromocion changes — only depends on id to avoid stale closures
   useEffect(() => {
-    if (!editingPromocion) return
+    if (!editingPromocion) {
+      // Cancelar: resetear a valores por defecto (formulario vacío)
+      reset({
+        titulo: "",
+        descripcion: "",
+        precio: undefined,
+      })
+      return
+    }
     reset({
       titulo: editingPromocion.titulo,
       descripcion: editingPromocion.descripcion || "",
@@ -104,7 +116,7 @@ export function PromocionForm({
       const result = await onSubmitCreate({
         titulo: data.titulo,
         descripcion: data.descripcion || "",
-        precio: data.precio || 0,
+        precio: data.precio ?? 0,
       })
 
       if (!result.success) {
@@ -167,12 +179,11 @@ export function PromocionForm({
             placeholder="5000"
             className="pl-7"
             {...register("precio", { valueAsNumber: true })}
-            aria-invalid={!!(errors as Record<string, { message: string }>).precio}
+            aria-invalid={!!errorsMap.precio}
           />
         </div>
-        {/* precio may not exist in schema errors when editing content */}
-        {(errors as Record<string, { message: string }>).precio && (
-          <p className="text-xs text-destructive">{(errors as Record<string, { message: string }>).precio?.message}</p>
+        {errorsMap.precio && (
+          <p className="text-xs text-destructive">{errorsMap.precio.message}</p>
         )}
       </div>
 

@@ -13,7 +13,7 @@ import { AdminCard } from "@/components/admin/admin-card"
 import { PromocionForm } from "@/components/admin/promocion-form"
 import { PromocionList } from "@/components/admin/promocion-list"
 import { useConfirm } from "@/hooks/use-confirm"
-import type { Promocion } from "@/lib/schemas"
+import type { Promocion, PromocionFormState } from "@/lib/schemas"
 
 interface PromocionManagerProps {
   initialPromociones: Promocion[]
@@ -28,10 +28,6 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
   const editingPromocion = editingPromocionId
     ? promociones.find((p) => p.id === editingPromocionId) || null
     : null
-
-  const handleCreateNew = () => {
-    setEditingPromocionId(null)
-  }
 
   const handleEdit = (promocion: Promocion) => {
     setEditingPromocionId(promocion.id)
@@ -80,8 +76,7 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
     formData.append("precio", data.precio.toString())
     formData.append("activo", "true")
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: any = await createPromocion({ success: false }, formData)
+    const result = await createPromocion({ success: false } as PromocionFormState, formData) as PromocionFormState
 
     if (result.success && result.data) {
       setPromociones((prev) => [result.data!, ...prev])
@@ -113,9 +108,8 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
       } else {
         toast.error(result.errors?._form?.[0] || "Error al eliminar la promoción")
       }
-    } catch (err) {
+    } catch {
       toast.error("Error al eliminar la promoción")
-      console.error(err)
     }
   }
 
@@ -132,8 +126,8 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
           prev.map((p) => (p.id === result.data!.id ? { ...p, ...result.data! } : p))
         )
       }
-    } catch (err) {
-      console.error(err)
+    } catch {
+      // Error already handled by toast in togglePromocionActivo
     }
   }
 
@@ -172,7 +166,6 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggle={handleToggle}
-              onCreateNew={handleCreateNew}
             />
           </div>
         </AdminCard>

@@ -1,7 +1,6 @@
 "use client"
 
-import { Tag, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Tag } from "lucide-react"
 import { PromocionCard } from "./promocion-card"
 import type { Promocion } from "@/lib/schemas"
 
@@ -11,7 +10,6 @@ interface PromocionListProps {
   onEdit: (p: Promocion) => void
   onDelete: (id: string) => void
   onToggle: (id: string, activo: boolean) => void
-  onCreateNew: () => void
 }
 
 export function PromocionList({
@@ -20,7 +18,6 @@ export function PromocionList({
   onEdit,
   onDelete,
   onToggle,
-  onCreateNew,
 }: PromocionListProps) {
   if (promociones.length === 0) {
     return (
@@ -28,12 +25,8 @@ export function PromocionList({
         <Tag className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
         <p className="text-muted-foreground text-lg">No hay promociones aún</p>
         <p className="text-muted-foreground text-sm mt-2 opacity-60">
-          Crea tu primera promoción para comenzar
+          Completá el formulario de la izquierda para crear tu primera promoción
         </p>
-        <Button onClick={onCreateNew} className="mt-4">
-          <Plus className="w-4 h-4 mr-2" />
-          Crear primera promoción
-        </Button>
       </div>
     )
   }
