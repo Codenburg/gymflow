@@ -4,6 +4,32 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.10.0] - 2026-04-14
+
+### Added
+- Componentes modulares para admin promociones: PromocionCard, PromocionForm, PromocionList, PromocionStatusBadge
+- Switch component reutilizable con soporte labels y colores verde/gris
+- Tests E2E para flujo de promociones (Playwright)
+- Tests unitarios para schemas de promociones (Vitest)
+
+### Changed
+- Schema Promocion: campo `precio` de String a Int (CRITICAL)
+- Server Actions de promociones refactorizadas en acciones atómicas: updatePromocionContent, updatePromocionPrecio, togglePromocionActivo
+- Admin panel de promociones con layout 2 columnas (desktop) y stacked (mobile)
+- Input y Textarea con mejor contraste (bg-background en lugar de bg-transparent)
+- Switch con group-data-[checked] para animaciones suaves
+
+### Fixed
+- Form inputs con React Hook Form (controlled/uncontrolled mismatch)
+- Precio en edit mode ahora muestra valor correcto de la DB
+- Labels de switch usan props.checked en lugar de data-* selectors inválidos
+
+### Removed
+- Legacy updatePromocion action (reemplazado por acciones atómicas)
+- Toast notifications en toggle de promociones
+
+---
+
 ## [0.9.0] - 2026-04-13
 
 ### Added
