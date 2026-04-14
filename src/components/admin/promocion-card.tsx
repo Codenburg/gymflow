@@ -4,6 +4,7 @@ import { Edit2, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import type { Promocion } from "@/lib/schemas"
 
 interface PromocionCardProps {
@@ -33,7 +34,7 @@ export function PromocionCard({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-between rounded-xl border bg-card p-4 shadow-sm transition-all",
+        "relative flex items-center justify-between rounded-xl border-l-4 border-l-primary border bg-card p-4 shadow-sm transition-all",
         isEditing
           ? "ring-2 ring-primary border-primary/50"
           : "border-border hover:border-ring/50",
@@ -53,11 +54,11 @@ export function PromocionCard({
           <span className="text-primary font-medium">$</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-foreground font-medium truncate">{promocion.titulo}</p>
+          <p className="text-foreground font-semibold truncate">{promocion.titulo}</p>
           <p className="text-muted-foreground text-sm truncate">{promocion.descripcion}</p>
-          <p className="text-primary font-medium text-sm mt-1">
+          <Badge className="bg-primary/10 text-primary mt-1">
             {formatPriceARS(promocion.precio)}
-          </p>
+          </Badge>
         </div>
       </div>
 
