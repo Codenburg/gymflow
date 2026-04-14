@@ -4,6 +4,15 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.10.1] - 2026-04-14
+
+### Fixed
+- Form submit no disparaba por lifecycle violations en RHF (dynamic resolver, key remount)
+- RHF ahora usa single resolver estable para ambos modos (create/edit)
+- Removido `<label>` wrapper del Switch que interfería con form
+
+---
+
 ## [0.10.0] - 2026-04-14
 
 ### Added
