@@ -4,6 +4,14 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.10.6] - 2026-04-14
+
+### Fixed
+- DescuentoDuracionManager: agregar estilos hover visibles en botones de editar/eliminar
+- FeriadoManager: validar que hora inicio sea menor que hora fin
+
+---
+
 ## [0.10.5] - 2026-04-14
 
 ### Fixed

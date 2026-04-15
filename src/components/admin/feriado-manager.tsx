@@ -45,6 +45,18 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
       return;
     }
 
+    // Validate time range when not full day
+    if (!isFullDay) {
+      if (!horaInicio || !horaFin) {
+        setError("Por favor completa ambas horas");
+        return;
+      }
+      if (horaInicio >= horaFin) {
+        toast.error("La hora de inicio debe ser menor que la hora de fin");
+        return;
+      }
+    }
+
     setError(null);
     setIsAdding(true);
 
