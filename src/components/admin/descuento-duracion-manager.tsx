@@ -345,18 +345,20 @@ export function DescuentoDuracionManager({
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     onClick={() => startEditing(descuento)}
                     title="Editar"
+                    className="text-muted-foreground hover:text-foreground hover:border-primary/50"
                   >
                     <Edit2 className="w-5 h-5" />
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     onClick={() => handleDelete(descuento.id)}
                     title="Eliminar"
+                    className="text-muted-foreground hover:text-destructive hover:border-destructive/50"
                   >
                     <Trash2 className="w-5 h-5" />
                   </Button>
