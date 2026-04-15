@@ -70,33 +70,6 @@ export interface Trainer {
 }
 
 /**
- * Extract trainers with their routine counts from ALL rutinas (unfiltered).
- * Uses creadorUser.name for reliable creator identification.
- */
-function extractTrainers(rutinas: { creadorUser: CreadorUser | null }[]): Trainer[] {
-  const trainerMap = new Map<string, number>();
-
-  for (const rutina of rutinas) {
-    if (rutina.creadorUser?.name) {
-      const current = trainerMap.get(rutina.creadorUser.name) || 0;
-      trainerMap.set(rutina.creadorUser.name, current + 1);
-    }
-  }
-
-  return Array.from(trainerMap.entries())
-    .map(([nombre, count]) => ({ nombre, count }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
-}
-
-/**
- * Result structure that separates filtered rutinas from stable trainer list.
- */
-interface RutinasYTrainersResult {
-  rutinas: Rutina[];
-  trainers: Trainer[];
-}
-
-/**
  * Fetch simple list of rutinas for admin dashboard.
  * Does NOT include filtering logic - simple query for list view.
  */
@@ -159,53 +132,6 @@ export async function getRutinas() {
 
 // Cache tag for manual revalidation
 const RUTINAS_CACHE_TAG = "rutinas";
-
-/**
- * Get filtered rutinas and trainers for homepage.
- * Derives exclusively from getRutinas() — no direct Prisma access.
- * Trainers are extracted from ALL rutinas so filter chips never disappear.
- */
-export async function getFilteredRutinas(search?: string, trainers?: string) {
-  const allRutinas = await getRutinas();
-
-  // Extract trainers from ALL rutinas (unfiltered) — chips must always show all options
-  const trainersData = extractTrainers(allRutinas);
-
-  // Parse trainer filter
-  let trainersList: string[] = [];
-  if (trainers && trainers.trim().length > 0) {
-    trainersList = trainers
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-  }
-
-  // Apply filters in memory
-  const filteredRutinas = allRutinas.filter((rutina) => {
-    // Search filter
-    if (search && search.trim().length > 0) {
-      const searchLower = search.trim().toLowerCase();
-      if (!rutina.nombre.toLowerCase().includes(searchLower)) {
-        return false;
-      }
-    }
-
-    // Trainer filter
-    if (trainersList.length > 0) {
-      const rutinaTrainer = rutina.creadorUser?.name || "";
-      if (!trainersList.some((t) => rutinaTrainer.toLowerCase().includes(t.toLowerCase()))) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  return {
-    rutinas: filteredRutinas,
-    trainers: trainersData,
-  };
-}
 
 async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
   try {
@@ -271,7 +197,6 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
       })),
     };
   } catch (error) {
-    console.error("[fetchRutinaById] DB query failed:", error);
     throw error;
   }
 }
