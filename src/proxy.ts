@@ -3,9 +3,9 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 
 /**
- * Middleware de autenticación - Validación SERVER-SIDE
- * 
- * Este middleware valida la sesión REAL del usuario ANTES de cualquier renderizado.
+ * Proxy de autenticación - Validación SERVER-SIDE
+ *
+ * Este proxy valida la sesión REAL del usuario ANTES de cualquier renderizado.
  * No confía solo en la existencia de la cookie - verifica con la base de datos.
  * 
  * Flujo:
@@ -15,7 +15,7 @@ import { auth } from "@/lib/auth";
  * 4. Si el usuario no es admin → redirect a /
  */
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Rutas públicas que NO requieren autenticación
@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     } catch (error) {
       // Error de conexión o sesión inválida → redirigir a login
-      console.error("[Auth Middleware] Session validation error:", error);
+      console.error("[Auth Proxy] Session validation error:", error);
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
