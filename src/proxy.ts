@@ -51,8 +51,7 @@ export async function proxy(request: NextRequest) {
       }
 
       // Verificar si el usuario es admin
-      const user = session.user as { admin?: boolean } | undefined;
-      if (!user?.admin) {
+      if (!session.user || session.user.role !== "ADMIN") {
         // Si no es admin, redirigir al home (no a /admin/login para no revelar que existe admin)
         return NextResponse.redirect(new URL("/", request.url));
       }

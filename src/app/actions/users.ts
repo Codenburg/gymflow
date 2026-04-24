@@ -20,8 +20,7 @@ export async function transferRutinasOwnership(
   if (!session) {
     return { success: false, message: "Debes iniciar sesión" };
   }
-  const currentUser = session.user as { admin?: boolean } | undefined;
-  if (!currentUser?.admin) {
+  if (session.user.role !== "ADMIN") {
     return { success: false, message: "No tienes permisos de administrador" };
   }
 
@@ -96,13 +95,12 @@ export async function deleteUser(
   if (!session) {
     return { success: false, message: "Debes iniciar sesión" };
   }
-  const currentUser = session.user as { admin?: boolean; id?: string } | undefined;
-  if (!currentUser?.admin) {
+  if (!session || session.user.role !== "ADMIN") {
     return { success: false, message: "No tienes permisos de administrador" };
   }
 
   // Cannot delete yourself
-  if (currentUser.id === userIdToDelete) {
+  if (session.user.id === userIdToDelete) {
     return { success: false, message: "No puedes eliminarte a ti mismo" };
   }
 
@@ -176,8 +174,7 @@ export async function getUserDetails(userId: string) {
   if (!session) {
     return null;
   }
-  const currentUser = session.user as { admin?: boolean } | undefined;
-  if (!currentUser?.admin) {
+  if (!session || session.user.role !== "ADMIN") {
     return null;
   }
 
@@ -191,7 +188,6 @@ export async function getUserDetails(userId: string) {
       name: true,
       dni: true,
       email: true,
-      admin: true,
       role: true,
       banned: true,
       createdAt: true,
@@ -216,8 +212,7 @@ export async function listUsers() {
   if (!session) {
     return [];
   }
-  const currentUser = session.user as { admin?: boolean } | undefined;
-  if (!currentUser?.admin) {
+  if (!session || session.user.role !== "ADMIN") {
     return [];
   }
 
@@ -230,7 +225,6 @@ export async function listUsers() {
       name: true,
       dni: true,
       email: true,
-      admin: true,
       role: true,
       banned: true,
       createdAt: true,
@@ -253,8 +247,7 @@ export async function getRutinaOwnershipHistory(rutinaId: string) {
   if (!session) {
     return [];
   }
-  const currentUser = session.user as { admin?: boolean } | undefined;
-  if (!currentUser?.admin) {
+  if (!session || session.user.role !== "ADMIN") {
     return [];
   }
 
