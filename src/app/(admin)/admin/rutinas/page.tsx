@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { getRutinas } from "@/lib/rutinas";
 import { RutinasListClient } from "@/components/admin/rutinas-list-client";
 import { PageHeader } from "@/components/admin/page-header";
@@ -9,7 +11,12 @@ import { Plus } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminRutinasPage() {
-  const rutinas = await getRutinas();
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+
+  // ADMIN: get all rutinas. TRAINER: get only their own rutinas.
+  const ownerId = session?.user.role === "TRAINER" ? session.user.id : undefined;
+  const rutinas = await getRutinas(ownerId);
 
   return (
     <div className="space-y-6">

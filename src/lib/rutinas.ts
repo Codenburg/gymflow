@@ -70,11 +70,14 @@ export interface Trainer {
 }
 
 /**
- * Fetch simple list of rutinas for admin dashboard.
+ * Fetch simple list of rutinas for admin/trainer dashboard.
+ * Optionally filters by ownerId (creadorId) for trainer-specific views.
  * Does NOT include filtering logic - simple query for list view.
  */
-async function fetchRutinasListFromDb(): Promise<Rutina[]> {
+async function fetchRutinasListFromDb(ownerId?: string): Promise<Rutina[]> {
+  const where = ownerId ? { creadorId: ownerId } : {};
   const rutinas = await prisma.rutina.findMany({
+    where,
     select: {
       id: true,
       nombre: true,
@@ -116,13 +119,17 @@ async function fetchRutinasListFromDb(): Promise<Rutina[]> {
 }
 
 /**
- * Get cached rutinas for admin dashboard.
- * This is the SINGLE source of truth for reading rutinas (admin view).
+ * Get cached rutinas for admin/trainer dashboard.
+ * This is the SINGLE source of truth for reading rutinas.
+ * 
+ * @param ownerId - Optional filter by creadorId (for trainer view).
+ *                   ADMIN: omit ownerId to get all rutinas.
+ *                   TRAINER: provide session.user.id to get only their rutinas.
  */
-export async function getRutinas() {
+export async function getRutinas(ownerId?: string) {
   return unstable_cache(
-    () => fetchRutinasListFromDb(),
-    ["rutinas"],
+    () => fetchRutinasListFromDb(ownerId),
+    ["rutinas", ownerId ?? "all"],
     {
       revalidate: 60,
       tags: [RUTINAS_CACHE_TAG],

@@ -16,6 +16,25 @@ import {
 import type { RutinaCompletaInput } from "@/lib/schemas";
 
 /**
+ * Helper function to verify admin or trainer access
+ */
+async function verifyAdminOrTrainer(headers: Headers): Promise<{ authorized: boolean; message?: string; session?: Awaited<ReturnType<typeof auth.api.getSession>> }> {
+  try {
+    const session = await auth.api.getSession({ headers });
+    if (!session) {
+      return { authorized: false, message: "Debes iniciar sesión" };
+    }
+    const user = session.user;
+    if (user.role !== "ADMIN" && user.role !== "TRAINER") {
+      return { authorized: false, message: "No tienes permisos de administrador o entrenador" };
+    }
+    return { authorized: true, session };
+  } catch {
+    return { authorized: false, message: "Error de autenticación" };
+  }
+}
+
+/**
  * Helper function to verify admin access
  */
 async function verifyAdmin(headers: Headers): Promise<{ authorized: boolean; message?: string }> {
@@ -24,8 +43,8 @@ async function verifyAdmin(headers: Headers): Promise<{ authorized: boolean; mes
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    const user = session.user as { admin?: boolean } | undefined;
-    if (!user?.admin) {
+    const user = session.user;
+    if (user.role !== "ADMIN") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
@@ -41,18 +60,16 @@ export async function createRutina(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ id: string }>> {
-  // Verify admin access
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return { success: false, message: "Debes iniciar sesión" };
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
+  if (!authCheck.authorized) {
+    return { success: false, message: authCheck.message };
   }
-  const user = session.user as { admin?: boolean; name?: string; id?: string } | undefined;
-  if (!user?.admin) {
-    return { success: false, message: "No tienes permisos de administrador" };
-  }
-  if (!user.id) {
+  const session = authCheck.session!;
+  if (!session.user.id) {
     return { success: false, message: "Error: ID de usuario no encontrado" };
   }
+  const creadorId = session.user.id;
 
   // Validate form data
   const rawData = Object.fromEntries(formData.entries());
@@ -67,8 +84,6 @@ export async function createRutina(
   }
 
   try {
-    const creadorId = user.id;
-
     // Create routine and log ownership transfer in a transaction
     const rutina = await prisma.$transaction(async (tx) => {
       const newRutina = await tx.rutina.create({
@@ -114,16 +129,19 @@ export async function createRutina(
  * NOTE: creadorId CANNOT be changed via this function.
  * To change ownership, use transferRutinasOwnership() instead.
  * This prevents accidental or malicious transfers of routine ownership.
+ * 
+ * TRAINER can only update their own rutinas (creadorId === user.id).
  */
 export async function updateRutina(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ id: string }>> {
-  // Verify admin access
-  const authCheck = await verifyAdmin(await headers());
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
   }
+  const session = authCheck.session!;
 
   const id = formData.get("id") as string;
 
@@ -134,6 +152,17 @@ export async function updateRutina(
       success: false,
       message: "ID de rutina inválido",
     };
+  }
+
+  // TRAINER ownership check: can only update own rutinas
+  if (session.user.role === "TRAINER") {
+    const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
+    if (!existing) {
+      return { success: false, message: "Rutina no encontrada" };
+    }
+    if (existing.creadorId !== session.user.id) {
+      return { success: false, message: "No tienes permiso para modificar esta rutina" };
+    }
   }
 
   // Validate form data
@@ -178,16 +207,19 @@ export async function updateRutina(
 
 /**
  * Duplicate a Rutina with all its Dias and Ejercicios
+ * 
+ * TRAINER can only duplicate their own rutinas.
  */
 export async function duplicateRutina(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ id: string }>> {
-  // Verify admin access
-  const authCheck = await verifyAdmin(await headers());
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
   }
+  const session = authCheck.session!;
 
   const id = formData.get("id") as string;
 
@@ -221,15 +253,21 @@ export async function duplicateRutina(
       };
     }
 
+    // TRAINER ownership check: can only duplicate own rutinas
+    if (session.user.role === "TRAINER" && original.creadorId !== session.user.id) {
+      return { success: false, message: "No tienes permiso para duplicar esta rutina" };
+    }
+
     // Duplicate within a transaction
     const duplicated = await prisma.$transaction(async (tx) => {
       // Create the duplicated Rutina with " (Copia)" suffix
+      // The duplicated routine belongs to whoever owns the original (creadorId stays the same)
       const newRutina = await tx.rutina.create({
         data: {
           nombre: `${original.nombre} (Copia)`,
           tipo: original.tipo,
           descripcion: original.descripcion,
-          // Required FK to User.id
+          // Required FK to User.id - keep original creador
           creadorId: original.creadorId,
         },
       });
@@ -280,16 +318,19 @@ export async function duplicateRutina(
 
 /**
  * Delete a Rutina
+ * 
+ * TRAINER can only delete their own rutinas.
  */
 export async function deleteRutina(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  // Verify admin access
-  const authCheck = await verifyAdmin(await headers());
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
   }
+  const session = authCheck.session!;
 
   const id = formData.get("id") as string;
 
@@ -300,6 +341,17 @@ export async function deleteRutina(
       success: false,
       message: "ID de rutina inválido",
     };
+  }
+
+  // TRAINER ownership check: can only delete own rutinas
+  if (session.user.role === "TRAINER") {
+    const existing = await prisma.rutina.findUnique({ where: { id: parsed.data } });
+    if (!existing) {
+      return { success: false, message: "Rutina no encontrada" };
+    }
+    if (existing.creadorId !== session.user.id) {
+      return { success: false, message: "No tienes permiso para eliminar esta rutina" };
+    }
   }
 
   try {
@@ -326,12 +378,14 @@ export async function deleteRutina(
 
 /**
  * Delete multiple Rutinas (bulk delete)
+ * 
+ * ADMIN only - bulk delete is an admin-level operation.
  */
 export async function deleteRutinas(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ deletedCount: number }>> {
-  // Verify admin access
+  // Verify admin access (bulk delete is admin-only)
   const authCheck = await verifyAdmin(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
@@ -489,24 +543,24 @@ function parseNestedFormData(formData: FormData): Record<string, unknown> {
 
 /**
  * Create a complete Rutina with nested Dias and Ejercicios
+ * 
+ * Both ADMIN and TRAINER can create rutinas. The routine is assigned
+ * to the session user's id (creadorId = session.user.id).
  */
 export async function createRutinaCompleta(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ id: string }>> {
-  // Verify admin access
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return { success: false, message: "Debes iniciar sesión" };
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
+  if (!authCheck.authorized) {
+    return { success: false, message: authCheck.message };
   }
-  const user = session.user as { admin?: boolean; name?: string; id?: string } | undefined;
-  if (!user?.admin) {
-    return { success: false, message: "No tienes permisos de administrador" };
-  }
-  if (!user.id) {
+  const session = authCheck.session!;
+  if (!session.user.id) {
     return { success: false, message: "Error: ID de usuario no encontrado" };
   }
-  const creadorId = user.id;
+  const creadorId = session.user.id;
 
   // Parse nested FormData
   const rawData = parseNestedFormData(formData);
@@ -598,16 +652,19 @@ export async function createRutinaCompleta(
 /**
  * Update a complete Rutina with nested Dias and Ejercicios
  * This replaces all days and ejercicios with the new data provided.
+ * 
+ * TRAINER can only update their own rutinas.
  */
 export async function updateRutinaCompleta(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState<{ id: string }>> {
-  // Verify admin access
-  const authCheck = await verifyAdmin(await headers());
+  // Verify admin or trainer access
+  const authCheck = await verifyAdminOrTrainer(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
   }
+  const session = authCheck.session!;
 
   const id = formData.get("id") as string;
   if (!id) {
@@ -621,6 +678,17 @@ export async function updateRutinaCompleta(
       success: false,
       message: "ID de rutina inválido",
     };
+  }
+
+  // TRAINER ownership check: can only update own rutinas
+  if (session.user.role === "TRAINER") {
+    const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
+    if (!existing) {
+      return { success: false, message: "Rutina no encontrada" };
+    }
+    if (existing.creadorId !== session.user.id) {
+      return { success: false, message: "No tienes permiso para modificar esta rutina" };
+    }
   }
 
   // Parse nested FormData
