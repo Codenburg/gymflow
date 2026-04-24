@@ -4,6 +4,25 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.13.0] - 2026-04-24
+
+### Added
+- Role enum system (ADMIN/TRAINER/USER) replacing admin boolean
+- Trainer CRUD page (/admin/trainers) with soft-delete
+- Role-based auth helpers (isAdmin, isTrainer, isAdminOrTrainer)
+- Sidebar navigation filtering by role (ADMIN sees all, TRAINER sees only Rutinas/Feriados)
+- Routine ownership isolation (trainers can only CRUD their own rutinas)
+
+### Changed
+- Admin layout: auth gate uses role instead of admin boolean
+- All server actions migrated from `admin: boolean` to `role` enum
+- Better Auth sign-up disabled via disabledPaths
+
+### Removed
+- admin boolean field from User model (replaced by role enum)
+
+---
+
 ## [0.12.1] - 2026-04-15
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Champion Gym — Gestor de Rutinas
 
-v0.12.1 · Next.js 16 + React 19 + TypeScript + Tailwind v4 + Prisma + PostgreSQL
+v0.13.0 · Next.js 16 + React 19 + TypeScript + Tailwind v4 + Prisma + PostgreSQL
 
 Sistema web para gestionar y visualizar rutinas de entrenamiento. Admins crean rutinas (Rutina → Día → Ejercicio), usuarios públicos las exploran. Incluye gestión de feriados, promociones y descuentos por duración.
 
@@ -52,7 +52,7 @@ Rutina (nombre, tipo, descripcion, creador)
 Gym (singleton: price, feriados[], promociones[], descuentosDuracion[])
 Promocion (titulo, descripcion, precio, activo)
 DescuentoDuracion (meses, porcentaje) -- unique(gymId, meses)
-User (dni, admin, role)
+User (dni, role) -- role: ADMIN | TRAINER | USER
 ```
 
 ---
