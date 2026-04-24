@@ -23,6 +23,7 @@ import {
   LogOut,
   User,
   ChevronDown,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,19 +53,38 @@ const navItems = [
     label: "Descuentos",
     icon: Clock,
   },
+  {
+    href: "/admin/trainers",
+    label: "Entrenadores",
+    icon: Users,
+  },
 ];
+
+// Filter nav items based on role
+function getVisibleNavItems(role?: string) {
+  if (role === "TRAINER") {
+    return navItems.filter((item) =>
+      ["Rutinas", "Feriados"].includes(item.label)
+    );
+  }
+  // ADMIN sees all items including Trainers
+  return navItems;
+}
 
 function SidebarContent({
   onItemClick,
   username,
+  role,
 }: {
   onItemClick?: () => void;
   username?: string;
+  role?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const visibleNavItems = getVisibleNavItems(role);
 
   const handleSignOut = async () => {
     try {
@@ -100,7 +120,7 @@ function SidebarContent({
 
       {/* Navigation */}
       <nav className="flex-1 px-2">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -158,7 +178,7 @@ function SidebarContent({
   );
 }
 
-export function AdminSidebar({ username }: { username?: string }) {
+export function AdminSidebar({ username, role }: { username?: string; role?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -166,7 +186,7 @@ export function AdminSidebar({ username }: { username?: string }) {
       {/* Mobile Drawer - Sheet wraps content */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent onItemClick={() => setMobileOpen(false)} username={username} />
+          <SidebarContent onItemClick={() => setMobileOpen(false)} username={username} role={role} />
         </SheetContent>
       </Sheet>
 
@@ -184,7 +204,7 @@ export function AdminSidebar({ username }: { username?: string }) {
       <aside
         className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 bg-secondary border-r border-border z-30"
       >
-        <SidebarContent username={username} />
+        <SidebarContent username={username} role={role} />
       </aside>
     </>
   );

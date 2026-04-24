@@ -14,35 +14,41 @@ import {
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { LogOut, User, Sun, Moon, House } from "lucide-react";
 import { useThemeStore } from "@/store/theme-store";
+import { toast } from "sonner";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   username: string;
+  role: string;
 }
 
-export function AdminLayout({ children, username }: AdminLayoutProps) {
+export function AdminLayout({ children, username, role }: AdminLayoutProps) {
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
   const userName = username;
 
   const handleSignOut = async () => {
-    await Promise.all([
-      signOut(),
-      router.push("/admin/login"),
-      router.refresh(),
-    ]);
+    try {
+      await Promise.all([
+        signOut(),
+        router.push("/admin/login"),
+        router.refresh(),
+      ]);
+    } catch {
+      toast.error("Error al cerrar sesión");
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile: floating hamburger top-left */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-        <AdminSidebar username={userName} />
+        <AdminSidebar username={userName} role={role} />
       </div>
 
       {/* Desktop: sidebar h-screen, content offset */}
       <div className="hidden lg:flex">
-        <AdminSidebar username={userName} />
+        <AdminSidebar username={userName} role={role} />
         <div className="ml-64 flex-1 p-6">{children}</div>
       </div>
 

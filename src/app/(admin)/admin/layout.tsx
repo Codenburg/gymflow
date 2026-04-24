@@ -9,13 +9,13 @@
  * Flujo de validación:
  * 1. Obtener sesión con auth.api.getSession({ headers })
  * 2. Si no hay sesión → redirect("/admin/login") - NO renderiza nada
- * 3. Si no es admin → redirect("/") - NO renderiza nada
+ * 3. Si no es admin ni trainer → redirect("/") - NO renderiza nada
  * 4. Solo si pasa validación → renderizar AdminLayoutComponent (client)
  */
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth, isAdminOrTrainer } from "@/lib/auth";
 import { AdminLayout as AdminLayoutComponent } from "@/components/admin/admin-layout";
 
 export default async function AdminLayout({
@@ -36,18 +36,18 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
-  // Verificar rol de admin
-  const user = session.user as { admin?: boolean; name?: string } | undefined;
-  if (!user?.admin) {
-    // No es admin → redirect al home, NO revela la existencia de admin
+  // Verificar rol: solo ADMIN o TRAINER pueden acceder al panel de admin
+  // Trainers necesitan acceso para gestionar sus rutinas
+  if (!isAdminOrTrainer(session)) {
+    // No es admin ni trainer → redirect al home
     redirect("/");
   }
 
-  // Sesión válida y es admin → renderizar con el layout de admin
+  // Sesión válida y tiene rol permitido → renderizar con el layout de admin
   // El AdminLayoutComponent es un Client Component para el dropdown, etc.
   // Pero ya está validado que el usuario tiene permisos
   return (
-    <AdminLayoutComponent username={user.name || "Admin"}>
+    <AdminLayoutComponent username={session.user.name || "Admin"} role={session.user.role}>
       {children}
     </AdminLayoutComponent>
   );
