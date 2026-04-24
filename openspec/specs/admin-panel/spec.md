@@ -421,3 +421,152 @@ If session data is unavailable or admin name is not set, the system SHALL displa
 - WHEN the header renders
 - THEN the profile button SHOULD display a fallback (e.g., "Admin" or just the User icon)
 - AND the application MUST NOT crash
+
+---
+
+## Role-Based Access Control
+
+This section defines requirements for the admin-trainer-roles system that replaces the flat `admin: boolean` with a `role` enum.
+
+### Requirement: Role-Based Authorization
+
+The system MUST verify user role for all administrative actions. The layout MUST redirect non-admin-trainer users to the homepage.
+
+#### Scenario: Admin user accesses admin panel
+
+- GIVEN a user with role ADMIN is authenticated
+- WHEN they navigate to /admin
+- THEN the admin panel MUST be accessible
+- AND all admin features MUST be available
+
+#### Scenario: Trainer user accesses admin panel
+
+- GIVEN a user with role TRAINER is authenticated
+- WHEN they navigate to /admin
+- THEN the admin panel MUST be accessible
+- AND only Rutinas and Feriados features MUST be available
+
+#### Scenario: Regular user redirected to homepage
+
+- GIVEN a user with role USER is authenticated
+- WHEN they navigate to /admin
+- THEN the user MUST be redirected to the homepage
+- AND the admin panel MUST NOT be accessible
+
+### Requirement: Trainer Management Panel
+
+Admins MUST be able to manage trainers via a dedicated UI at `/admin/trainers`.
+
+#### Scenario: Admin sees Trainers nav item
+
+- GIVEN an authenticated admin with role ADMIN
+- WHEN the admin sidebar renders
+- THEN the "Entrenadores" nav item MUST be visible
+
+#### Scenario: Trainer does not see Trainers nav item
+
+- GIVEN an authenticated user with role TRAINER
+- WHEN the trainer sidebar renders
+- THEN the "Entrenadores" nav item MUST NOT be visible
+
+#### Scenario: Admin creates a new trainer
+
+- GIVEN an authenticated admin visits `/admin/trainers`
+- WHEN the admin fills the trainer creation form and submits
+- THEN a new user with role TRAINER MUST be created
+- AND the trainer can log in with the provided credentials
+
+#### Scenario: Admin updates a trainer
+
+- GIVEN an authenticated admin visits `/admin/trainers`
+- WHEN the admin selects an existing trainer and updates their data
+- THEN the trainer's data MUST be updated in the database
+
+#### Scenario: Admin deletes (deactivates) a trainer
+
+- GIVEN an authenticated admin visits `/admin/trainers`
+- WHEN the admin deletes a trainer
+- THEN the trainer's role MUST be set to USER (soft delete)
+- AND the trainer MUST NOT be able to log in
+
+### Requirement: Sidebar Navigation Filtered by Role
+
+The sidebar navigation items MUST be filtered based on the user's role.
+
+#### Scenario: Admin sees all nav items
+
+- GIVEN an authenticated admin with role ADMIN
+- WHEN the admin sidebar renders
+- THEN all nav items MUST be visible:
+  - Dashboard
+  - Rutinas
+  - Entrenadores
+  - Feriados
+  - Promociones
+  - Gym
+
+#### Scenario: Trainer sees only permitted nav items
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer sidebar renders
+- THEN only these nav items MUST be visible:
+  - Rutinas
+  - Feriados
+- AND these items MUST NOT be visible:
+  - Entrenadores
+  - Promociones
+  - Gym
+
+### Requirement: Trainer Routine Isolation
+
+Trainers MUST only be able to view and manage their own routines. Admins can view and manage all routines.
+
+#### Scenario: Trainer sees only their routines
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer views the rutinas list
+- THEN only routines where `creadorId === trainer.id` MUST be displayed
+- AND routines created by other trainers or admins MUST NOT be visible
+
+#### Scenario: Trainer creates routine with their creator ID
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer creates a new routine
+- THEN the routine's `creadorId` MUST be set to the trainer's user ID
+
+#### Scenario: Trainer cannot edit other trainer's routine
+
+- GIVEN an authenticated trainer with role TRAINER
+- AND a routine created by another trainer
+- WHEN the trainer attempts to edit the other trainer's routine
+- THEN the edit MUST be rejected
+- AND an error message MUST be displayed
+
+#### Scenario: Admin sees all routines
+
+- GIVEN an authenticated admin with role ADMIN
+- WHEN the admin views the rutinas list
+- THEN ALL routines from all trainers and admins MUST be displayed
+
+### Requirement: Trainer Redirect on Protected Routes
+
+Trainers MUST be redirected to `/admin/rutinas` when attempting to access protected routes.
+
+#### Scenario: Trainer accessing trainers page
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer navigates to `/admin/trainers`
+- THEN the trainer MUST be redirected to `/admin/rutinas`
+- AND an error message MAY be displayed
+
+#### Scenario: Trainer accessing promociones page
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer navigates to `/admin/promociones`
+- THEN the trainer MUST be redirected to `/admin/rutinas`
+
+#### Scenario: Trainer accessing descuentos page
+
+- GIVEN an authenticated trainer with role TRAINER
+- WHEN the trainer navigates to `/admin/descuentos-duracion`
+- THEN the trainer MUST be redirected to `/admin/rutinas`

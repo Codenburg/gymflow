@@ -293,6 +293,32 @@ The system MUST implement soft delete on the User model to preserve historical d
 | outgoingTransfers | OwnershipTransfer[] | relation | Transfers initiated by this user |
 | incomingTransfers | OwnershipTransfer[] | relation | Transfers received by this user |
 
+### Data Model: Role Enum
+
+The system uses a Role enum to define user access levels.
+
+| Value | Description |
+|-------|-------------|
+| ADMIN | Full admin access to all admin panel features |
+| TRAINER | Restricted access: only Rutinas and Feriados |
+| USER | Standard user (cannot access admin panel) |
+
+### Requirement: User Role Field
+
+The User model MUST have a `role` field of type `Role` enum with default value `USER`.
+
+#### Scenario: User model has role field
+
+- GIVEN the Prisma schema is configured
+- WHEN the schema is parsed
+- THEN User model MUST have `role Role @default(USER)`
+
+#### Scenario: Role enum values
+
+- GIVEN the Role enum is defined
+- WHEN the schema is parsed
+- THEN the enum MUST have values: `ADMIN`, `TRAINER`, `USER`
+
 ### Requirement: OwnershipTransfer Audit Table
 
 The system MUST track all routine ownership changes in the OwnershipTransfer table.
