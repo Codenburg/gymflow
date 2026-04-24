@@ -204,25 +204,21 @@ export async function updateTrainer(
   }
 
   try {
-    const updateData: { name?: string; password?: string } = {};
+    // Hash password once if provided (empty string is treated as absent)
+    const hashedPassword = parsed.data.password
+      ? await bcrypt.hash(parsed.data.password, 12)
+      : null;
 
+    // Update name if provided
     if (parsed.data.name) {
-      updateData.name = parsed.data.name;
+      await prisma.user.update({
+        where: { id },
+        data: { name: parsed.data.name },
+      });
     }
 
-    if (parsed.data.password) {
-      updateData.password = await bcrypt.hash(parsed.data.password, 12);
-    }
-
-    // Update user
-    await prisma.user.update({
-      where: { id },
-      data: updateData,
-    });
-
-    // If password changed, update the account
-    if (parsed.data.password) {
-      // Find the account for this user with credential provider
+    // Only update Account if password changed
+    if (hashedPassword) {
       const account = await prisma.account.findFirst({
         where: {
           userId: id,
@@ -233,9 +229,7 @@ export async function updateTrainer(
       if (account) {
         await prisma.account.update({
           where: { id: account.id },
-          data: {
-            password: await bcrypt.hash(parsed.data.password, 12),
-          },
+          data: { password: hashedPassword },
         });
       }
     }
