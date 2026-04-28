@@ -151,7 +151,15 @@ export function TrainerDialog({
                 <Input
                   id="edit-name"
                   placeholder="Juan Pérez"
-                  {...updateForm.register("name")}
+                  value={updateForm.watch("name")}
+                  onChange={(e) => updateForm.setValue("name", e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      updateForm.handleSubmit(handleUpdateSubmit)()
+                    }
+                  }}
                   aria-invalid={!!updateForm.formState.errors.name}
                 />
                 {updateForm.formState.errors.name && (
