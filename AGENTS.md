@@ -5,32 +5,107 @@
 - **NEVER run interactive `git rebase` without explicit user permission.**
 - **Before any destructive git operation, STOP and ASK.**
 
-### Skills
-When working with React, read `~/skills/react-19/SKILL.md` first.
-When working with Next.js, read `~/skills/nextjs-best-practices/SKILL.md` first.
-When working with TypeScript, read `~/skills/typescript/SKILL.md` first.
-When working with Tailwind CSS, read `~/skills/tailwind-design-system/SKILL.md` first.
-When working with Prisma, read `~/skills/prisma/SKILL.md` first.
-When Set-up Prisma with ProstgreSQL, Nodejs and Typescript, read `~/skills/prisma-database-setup/SKILL.md` first.
-When working with zod-4v, read `~/skills/zod-4/SKILL.md` first.
-When Working with zustand-5v, read `~/skills/zustand-5/SKILL.md` first.
-When Working on frontend design, read `~/skills/frontend-design/SKILL.md` first.
+### Frameworks & Libraries
 
-When working with authentication, read `~/skills/better-auth-best-practices/SKILL.md` first.
-When implementing server-side auth with Next.js App Router (flicker-free), read /skills/nextjs-auth-server-side/SKILL.md` first.
-When working with username/DNI login, read `~/skills/better-auth-username/SKILL.md` first.
-When Working with Forms, read `~/skills/react-hook-form/SKILL.md` first.
-When Working with Shadcn UI, read `~/skills/shadcn/SKILL.md` first.
-When maintaining README as single source of truth with versioning after commits, read /skills/readme-guardian/SKILL.md` first.
-For testing and debugging, read `~/skills/testing-debugging/SKILL.md` first.
+When working with **React 19** (React Compiler, Server Components, Actions), read `~/skills/react-19/SKILL.md` first.
 
+When working with **Next.js** (App Router, RSC, API routes, caching), read `~/skills/next-best-practices/SKILL.md` first.
 
+When working with **Next.js 16 Cache Components** (PPR, use cache, cacheLife, cacheTag), read `~/skills/next-cache-components/SKILL.md` first.
 
-## Not installed:
-When working with Frontend design, read `~/skills/frontend-design/SKILL.md` first.
-When workinkg with postgreSQL, read `~/skills/postgresql-best-practices/SKILL.md` first.
-When writting API, read  `~/skills/api-testing-patterns/SKILL.md` first.
-# Code Review Rules
+When working with **React Hook Form** (useForm, useWatch, useController, useFieldArray), read `~/skills/react-hook-form/SKILL.md` first.
+
+When working with **Zustand 5** (state management, persist, immer, devtools, slices), read `~/skills/zustand-5/SKILL.md` first.
+
+When working with **shadcn/ui** (component registry, presets, styling, components.json), read `~/skills/shadcn/SKILL.md` first.
+
+When working with **TanStack Table** (headless tables, sorting, filtering, pagination, datagrids), read `~/skills/tanstack-table/SKILL.md` first.
+
+When working with **Zod 4** (schema validation, breaking changes from v3, top-level validators), read `~/skills/zod-4/SKILL.md` first.
+
+---
+
+### Styling & Design
+
+When working with **Tailwind CSS v4** (design tokens, component libraries, responsive, dark mode), read `~/skills/tailwind-design-system/SKILL.md` first.
+
+When working with **Frontend Design** (production-grade interfaces, landing pages, dashboards, components), read `~/skills/frontend-design/SKILL.md` first.
+
+---
+
+### Database & ORM
+
+When working with **Prisma** (type-safe database operations, schema design, Prisma Client, migrations), read `~/skills/prisma/SKILL.md` first.
+
+When working with **Prisma Database Setup** (PostgreSQL, MySQL, SQLite, MongoDB, connection config), read `~/skills/prisma-database-setup/SKILL.md` first.
+
+---
+
+### Testing
+
+When working with **Playwright** (E2E tests, Page Objects, locators, test structure), read `~/skills/playwright/SKILL.md` first.
+
+When working with **Go Testing** (Bubbletea TUI, teatest, golden files), read `~/skills/go-testing/SKILL.md` first.
+
+---
+
+### Development Workflows
+
+When working with **Spec-Driven Development** (SDD), read `~/skills/sdd-init/SKILL.md` first.
+
+When creating a **new SDD change proposal**, read `~/skills/sdd-propose/SKILL.md` first.
+
+When **writing SDD specifications**, read `~/skills/sdd-spec/SKILL.md` first.
+
+When **creating SDD technical design**, read `~/skills/sdd-design/SKILL.md` first.
+
+When **breaking down SDD into tasks**, read `~/skills/sdd-tasks/SKILL.md` first.
+
+When **implementing SDD tasks**, read `~/skills/sdd-apply/SKILL.md` first.
+
+When **verifying SDD implementation**, read `~/skills/sdd-verify/SKILL.md` first.
+
+When **archiving a completed SDD change**, read `~/skills/sdd-archive/SKILL.md` first.
+
+When **exploring codebase or thinking through ideas**, read `~/skills/sdd-explore/SKILL.md` first.
+
+When **onboarding to SDD** (guided walkthrough), read `~/skills/sdd-onboard/SKILL.md` first.
+
+When doing **Code Review** (adversarial, dual-judge, fix and re-judge), read `~/skills/judgment-day/SKILL.md` first.
+
+When **splitting oversized changes** into chained or stacked PRs, read `~/skills/chained-pr/SKILL.md` first.
+
+When **planning commits** as reviewable work units, read `~/skills/work-unit-commits/SKILL.md` first.
+
+When **designing documentation** with reduced cognitive load, read `~/skills/cognitive-doc-design/SKILL.md` first.
+
+---
+
+### GitHub & Issues
+
+When **creating GitHub issues** or **reporting bugs**, read `~/skills/issue-creation/SKILL.md` first.
+
+When **creating pull requests**, read `~/skills/branch-pr/SKILL.md` first.
+
+When **writing collaboration comments** (PR feedback, reviews, Slack, GitHub comments), read `~/skills/comment-writer/SKILL.md` first.
+
+---
+
+### Project Maintenance
+
+When **maintaining README/CHANGELOG** with semver versioning, read `~/skills/readme-guardian/SKILL.md` first.
+
+---
+
+### Skill Development
+
+When **creating new AI agent skills**, read `~/skills/skill-creator/SKILL.md` first.
+
+When **searching for available skills**, read `~/skills/find-skills/SKILL.md` first.
+
+When **improving or auditing** existing AI agent skills, read `~/skills/skill-improver/SKILL.md` first.
+
+When **updating the skill registry** after adding or removing skills, read `~/skills/skill-registry/SKILL.md` first.
 
 ## References
 
