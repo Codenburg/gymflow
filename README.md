@@ -25,6 +25,7 @@ Sistema web para gestionar y visualizar rutinas de entrenamiento. Admins crean r
 ```bash
 pnpm install
 cp .env.example .env        # configurar DATABASE_URL y BETTER_AUTH_SECRET
+docker compose up -d        # levantar PostgreSQL
 pnpm dlx prisma db push
 pnpm run db:seed            # opcional
 pnpm run dev                # puerto 3000

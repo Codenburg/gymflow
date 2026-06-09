@@ -116,7 +116,7 @@ describe('4.2 - updatePromocionPrecioSchema', () => {
       })
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('El precio debe ser un entero positivo')
+        expect(result.error.issues[0].message).toBe('El precio debe ser un valor positivo')
       }
     })
 

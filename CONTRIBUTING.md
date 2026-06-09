@@ -134,11 +134,25 @@ pnpm run test:unit:watch # Vitest watch mode
 
 ## DB
 
+Primero, levantar PostgreSQL:
+
+```bash
+docker compose up -d        # Iniciar PostgreSQL en background
+```
+
+Luego, aplicar esquema y datos:
+
 ```bash
 pnpm dlx prisma generate   # Generar Prisma client
 pnpm dlx prisma db push    # Push schema
 pnpm run db:seed           # Seed data
 pnpm dlx prisma studio     # Prisma Studio
+```
+
+Para detener la DB:
+
+```bash
+docker compose down
 ```
 
 ## Memorias (Engram)
