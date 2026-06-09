@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const STORAGE_KEY = "feriados_last_seen_at";
 const API_URL = "/api/feriados/latest";
+const THROTTLE_MS = 5 * 60 * 1000; // 5 minutes between refetches
 
 interface UseFeriadosNotificationReturn {
   hasNew: boolean;
@@ -29,6 +30,7 @@ interface UseFeriadosNotificationReturn {
 export function useFeriadosNotification(): UseFeriadosNotificationReturn {
   const [hasNew, setHasNew] = useState(false);
   const [latestFeriadoDate, setLatestFeriadoDate] = useState<string | null>(null);
+  const lastCheckRef = useRef<number>(0);
 
   function markAsSeen() {
     if (latestFeriadoDate) {
@@ -41,6 +43,10 @@ export function useFeriadosNotification(): UseFeriadosNotificationReturn {
     let cancelled = false;
 
     async function checkForNew() {
+      const now = Date.now();
+      if (now - lastCheckRef.current < THROTTLE_MS) return;
+      lastCheckRef.current = now;
+
       try {
         const lastSeen = localStorage.getItem(STORAGE_KEY);
 
