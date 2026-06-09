@@ -82,7 +82,7 @@ Status: KNOWN_FAILURES (pre-existing, not introduced by current changes)
 
 ## Recommendations
 
-1. **Run `npm run db:seed`** before test suite execution to populate test DB with required seed data (Full Body - Santi, Resistencia - Leo routines)
+1. **Run `pnpm run db:seed`** before test suite execution to populate test DB with required seed data (Full Body - Santi, Resistencia - Leo routines)
 
 2. **UI duplicate search inputs**: Consolidate search inputs in homepage header/sidebar — only one should exist
 

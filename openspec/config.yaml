@@ -11,7 +11,7 @@ context: |
   Tech stack: Next.js 16.1.6 + React 19 + TypeScript 5 + Tailwind CSS 4 + Prisma 7 + PostgreSQL 18.3
   Architecture: Next.js App Router
   Runtime: Node.js
-  Package manager: npm
+  Package manager: pnpm
   Testing: E2E tests with Playwright, unit tests with Vitest (baseline required, real assertions only, no false green, classify failures: baseline/regression/invalid, regression_policy: fix_tests_if_behavior_changed, selectors: data-testid, invalid_tests: remove_or_rewrite, DnD must validate state+DOM+persistencia)
   Style: ESLint 9 flat config
   Dev server: MUST always use port 3000 (never 3001, 3002, etc.)
@@ -158,7 +158,7 @@ ui_components:
   rules:
     - MUST use shadcn/ui for all UI components
     - MUST NOT create custom button, input, select, dialog, dropdown, or card components
-    - SHALL use 'npx shadcn@latest add <component>' to add new UI components
+    - SHALL use 'pnpm dlx shadcn@latest add <component>' to add new UI components
     - SHOULD search shadcn registries before implementing any new component
     - Components MUST be installed via shadcn CLI, NOT copied from documentation
 

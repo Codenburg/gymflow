@@ -4,6 +4,20 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.15.0] - 2026-06-08
+
+### Changed
+- Migrated package manager from npm to pnpm (v11.2.2) for faster installs, content-addressable disk efficiency, and stricter dependency isolation
+- Lockfile: replaced `package-lock.json` with `pnpm-lock.yaml`
+- Added `.npmrc` with `shamefully-hoist=false`, `strict-peer-dependencies=true`
+- Added `packageManager` field to `package.json`
+- Updated all build scripts: `npx` → `pnpm dlx` in `db:seed`, `prisma.seed`, and `prisma.config.ts`
+- Updated `playwright.config.ts` webserver command: `npm run dev` → `pnpm run dev`
+- Updated `openspec/config.yaml`: `Package manager: npm` → `pnpm`
+- `README.md` and `CONTRIBUTING.md`: all CLI examples migrated to `pnpm` / `pnpm dlx`
+
+---
+
 ## [0.14.1] - 2026-04-24
 
 ### Fixed

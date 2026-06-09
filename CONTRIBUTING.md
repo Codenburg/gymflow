@@ -4,12 +4,6 @@
 **Dependencias**
 - Este proyecto usa el configurador de ecosistemas [Gentleman AI](https://github.com/Gentleman-Programming/gentle-ai). **Es obligatorio usarlo para mantener consistencia en convenciones, código y documentación.**
 
-
-**GIT:**
-- **NEVER** ejecutar `git reset` (hard, soft, mixed) sin permiso explícito del usuario
-- **NEVER** ejecutar `git rebase` interactivo sin permiso explícito
-- Antes de cualquier operación destructiva, **STOP y PREGUNTAR**
-
 **Code Review — REJECT si:**
 - Secrets/credentials hardcoded
 - `console.log` en código de producción
@@ -83,6 +77,7 @@ Para features significativas, usar el workflow SDD:
 | Zustand | 5.0.11 |
 | better-auth | 1.5.4 |
 | shadcn | 4.2.0 |
+| pnpm | 11.2.2 |
 
 ## Agent Setup
 
@@ -126,24 +121,24 @@ El agente lee automáticamente los skills desde `AGENTS.md` cuando detecta el co
 Usar **shadcn/ui** para componentes base. No crear custom para:
 - Button, Input, Select, Dialog, Dropdown, Card
 
-Agregar: `npx shadcn@latest add <componente>`
+Agregar: `pnpm dlx shadcn@latest add <componente>`
 
 ## Testing
 
 ```bash
-npm run test          # Playwright E2E
-npm run test:ui       # Playwright con UI
-npm run test:unit     # Vitest unit tests
-npm run test:unit:watch # Vitest watch mode
+pnpm run test          # Playwright E2E
+pnpm run test:ui       # Playwright con UI
+pnpm run test:unit     # Vitest unit tests
+pnpm run test:unit:watch # Vitest watch mode
 ```
 
 ## DB
 
 ```bash
-npx prisma generate   # Generar Prisma client
-npx prisma db push    # Push schema
-npm run db:seed       # Seed data
-npx prisma studio      # Prisma Studio
+pnpm dlx prisma generate   # Generar Prisma client
+pnpm dlx prisma db push    # Push schema
+pnpm run db:seed           # Seed data
+pnpm dlx prisma studio     # Prisma Studio
 ```
 
 ## Memorias (Engram)

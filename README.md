@@ -1,6 +1,6 @@
 # Champion Gym — Gestor de Rutinas
 
-v0.14.1 · Next.js 16 + React 19 + TypeScript + Tailwind v4 + Prisma + PostgreSQL
+v0.15.0 · Next.js 16 + React 19 + TypeScript + Tailwind v4 + Prisma + PostgreSQL
 
 Sistema web para gestionar y visualizar rutinas de entrenamiento. Admins crean rutinas (Rutina → Día → Ejercicio), usuarios públicos las exploran. Incluye gestión de feriados, promociones y descuentos por duración.
 
@@ -23,11 +23,11 @@ Sistema web para gestionar y visualizar rutinas de entrenamiento. Admins crean r
 ## Setup
 
 ```bash
-npm install
+pnpm install
 cp .env.example .env        # configurar DATABASE_URL y BETTER_AUTH_SECRET
-npx prisma db push
-npm run db:seed             # opcional
-npm run dev                 # puerto 3000
+pnpm dlx prisma db push
+pnpm run db:seed            # opcional
+pnpm run dev                # puerto 3000
 ```
 
 ---
@@ -35,9 +35,9 @@ npm run dev                 # puerto 3000
 ## Scripts
 
 ```bash
-npm run dev / build / start
-npm run test / test:ui
-npm run db:generate / db:push / db:seed / db:studio
+pnpm run dev / build / start
+pnpm run test / test:ui
+pnpm run db:generate / db:push / db:seed / db:studio
 ```
 
 ---
@@ -77,7 +77,7 @@ src/
 
 ## Troubleshooting
 
-**Prisma out of sync** → `npm run db:generate`
+**Prisma out of sync** → `pnpm run db:generate`
 
 **Auth no funciona** → verificar que `BETTER_AUTH_URL` coincida exactamente con la URL (sin slash final)
 
