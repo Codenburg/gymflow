@@ -19,11 +19,15 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Rutas públicas que NO requieren autenticación
+  // Las rutas que no están acá ni son /admin/* pasan igual por el fallthrough.
+  // Este listado es explícito para documentación y cortocircuito rápido.
   const publicPaths = [
-    "/admin/login",
+    "/admin/login",      // Login de admin (público)
     "/api/auth/",        // Better Auth API routes
-    "/api/",             // API routes públicas (si las hay)
-    "/",                 // Página principal
+    "/api/",             // API routes públicas
+    "/feriados",         // Página de feriados
+    "/informacion",      // Página de información
+    "/rutinas",          // Rutinas públicas y detalle
   ];
 
   // Verificar si es una ruta pública
