@@ -43,7 +43,6 @@ export interface PaginationResult {
     };
   }>;
   total: number;
-  trainerCounts: TrainerCount[];
   error?: string;
 }
 
@@ -153,15 +152,6 @@ export function getRoutinesPaginated(
         };
       }
 
-      // Build WHERE clause for trainer counts - ONLY search filter (NO trainer filter)
-      const whereForTrainerCounts: Record<string, unknown> = {};
-      if (search?.trim()) {
-        whereForTrainerCounts.nombre = {
-          contains: search.trim(),
-          mode: "insensitive",
-        };
-      }
-
       try {
         // Query 1: findMany with pagination
         const data = await prisma.rutina.findMany({
@@ -202,36 +192,13 @@ export function getRoutinesPaginated(
         // Query 2: count with same where (no take/skip)
         const total = await prisma.rutina.count({ where });
 
-        // Query 3: groupBy for trainer counts
-        const trainerCountsRaw = await prisma.rutina.groupBy({
-          by: ["creadorId"],
-          where: whereForTrainerCounts,
-          _count: { id: true },
-        });
-
-        // Query 4: Fetch trainer names
-        const groupedTrainerIds = trainerCountsRaw.map((t) => t.creadorId);
-        const trainersMap = new Map<string, string>();
-        if (groupedTrainerIds.length > 0) {
-          const trainersData = await prisma.user.findMany({
-            where: { id: { in: groupedTrainerIds } },
-            select: { id: true, name: true },
-          });
-          trainersData.forEach((t) => trainersMap.set(t.id, t.name));
-        }
-
-        const trainerCounts: TrainerCount[] = trainerCountsRaw.map((t) => ({
-          trainerId: t.creadorId,
-          nombre: trainersMap.get(t.creadorId) || "Unknown",
-          count: t._count.id,
-        }));
-
-        return { data: transformedData, total, trainerCounts };
+        // Trainer counts are fetched separately via getTrainerCounts
+        // (avoiding duplicated groupBy + user lookup)
+        return { data: transformedData, total };
       } catch (error) {
         return {
           data: [],
           total: 0,
-          trainerCounts: [],
           error: error instanceof Error ? error.message : "Unknown error",
         };
       }
