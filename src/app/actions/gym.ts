@@ -220,7 +220,9 @@ export async function updateGymField(
   }
 }
 
-// re-export the public display type so consumers don't need to import from
-// @/lib/schemas separately. Keeping the export here matches the existing
-// pattern (the file already exports getGymConfig for public reads).
-export type { GymDisplay };
+// Note: GymDisplay is defined and exported from @/lib/schemas. It was
+// previously re-exported from this file for convenience, but a
+// "use server" file can only export async functions — type-only
+// re-exports break the Turbopack actions bundler the first time a
+// Server Component route imports any function from this module.
+// Consumers should import GymDisplay directly from @/lib/schemas.
