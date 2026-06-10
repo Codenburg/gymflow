@@ -1,11 +1,11 @@
 /**
  * Admin Layout - Server Component
- * 
+ *
  * Este layout es la ÚNICA fuente de verdad para la autenticación.
  * Aquí se valida la sesión ANTES de renderizar CUALQUIER componente.
- * 
+ *
  * NO hay "use client" aquí - esto es SERVER-SIDE ONLY.
- * 
+ *
  * Flujo de validación:
  * 1. Obtener sesión con auth.api.getSession({ headers })
  * 2. Si no hay sesión → redirect("/admin/login") - NO renderiza nada
@@ -17,6 +17,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth, isAdminOrTrainer } from "@/lib/auth";
 import { AdminLayout as AdminLayoutComponent } from "@/components/admin/admin-layout";
+import { getGymConfigForServer } from "@/app/actions/gym";
+import { resolveGymName } from "@/lib/gym-display";
 
 export default async function AdminLayout({
   children,
@@ -25,7 +27,7 @@ export default async function AdminLayout({
 }) {
   // Obtener headers de la request para validar sesión
   const headersList = await headers();
-  
+
   // Validar sesión en el SERVER - esto consulta la base de datos
   const session = await auth.api.getSession({
     headers: headersList,
@@ -43,11 +45,27 @@ export default async function AdminLayout({
     redirect("/");
   }
 
+  // Resolve gym name via the same DB → env → "Gimnasio" chain used by
+  // the root metadata and the public homepage. Wrapped in try/catch so
+  // a DB outage falls through to the env/chain default instead of
+  // failing the admin layout render.
+  let gymName: string;
+  try {
+    const gym = await getGymConfigForServer();
+    gymName = resolveGymName(gym?.nombre);
+  } catch {
+    gymName = resolveGymName(null);
+  }
+
   // Sesión válida y tiene rol permitido → renderizar con el layout de admin
   // El AdminLayoutComponent es un Client Component para el dropdown, etc.
   // Pero ya está validado que el usuario tiene permisos
   return (
-    <AdminLayoutComponent username={session.user.name || "Admin"} role={session.user.role}>
+    <AdminLayoutComponent
+      username={session.user.name || "Admin"}
+      role={session.user.role}
+      gymName={gymName}
+    >
       {children}
     </AdminLayoutComponent>
   );

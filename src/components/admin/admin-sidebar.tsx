@@ -94,10 +94,18 @@ function SidebarContent({
   onItemClick,
   username,
   role,
+  gymName,
 }: {
   onItemClick?: () => void;
   username?: string;
   role?: string;
+  /**
+   * Gym name resolved by the Server layout via the
+   * `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain. Rendered in the
+   * sidebar logo span. Never hardcode a specific brand name here —
+   * the chain guarantees the value is already safe.
+   */
+  gymName: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -123,7 +131,7 @@ function SidebarContent({
       <div className="p-4 border-b border-border">
         <Link href="/admin" className="flex items-center gap-2">
           <House className="w-5 h-5 text-foreground" />
-          <span className="font-bold text-xl text-foreground uppercase">Champion Gym</span>
+          <span className="font-bold text-xl text-foreground uppercase">{gymName}</span>
         </Link>
       </div>
 
@@ -197,7 +205,15 @@ function SidebarContent({
   );
 }
 
-export function AdminSidebar({ username, role }: { username?: string; role?: string }) {
+export function AdminSidebar({
+  username,
+  role,
+  gymName,
+}: {
+  username?: string;
+  role?: string;
+  gymName: string;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -205,7 +221,12 @@ export function AdminSidebar({ username, role }: { username?: string; role?: str
       {/* Mobile Drawer - Sheet wraps content */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent onItemClick={() => setMobileOpen(false)} username={username} role={role} />
+          <SidebarContent
+            onItemClick={() => setMobileOpen(false)}
+            username={username}
+            role={role}
+            gymName={gymName}
+          />
         </SheetContent>
       </Sheet>
 
@@ -223,7 +244,7 @@ export function AdminSidebar({ username, role }: { username?: string; role?: str
       <aside
         className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 bg-secondary border-r border-border z-30"
       >
-        <SidebarContent username={username} role={role} />
+        <SidebarContent username={username} role={role} gymName={gymName} />
       </aside>
     </>
   );
