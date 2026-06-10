@@ -6,6 +6,12 @@
  * - Rejection of empty `nombre` (min 1)
  * - Rejection of non-URL strings for URL-shaped fields
  *   (mapsEmbedUrl, socialInstagram, socialWhatsapp)
+ * - The structured `horarioJson` variant:
+ *     - Valid HorarioSemanal object (stringified)
+ *     - Valid null payload (stringified "null")
+ *     - Rejection of malformed time format
+ *     - Rejection of missing day keys
+ *     - Rejection of non-JSON strings
  * - Rejection of unknown `field` discriminant (discriminated-union
  *   contract guarantees a single error per miss)
  * - Length caps on string fields
@@ -17,19 +23,32 @@ import { describe, it, expect } from "vitest";
 import {
   gymFieldSchema,
   GYM_FIELD_NAMES,
+  horarioDiaSchema,
+  horarioSemanalSchema,
   type GymField,
   type GymFieldInput,
+  type HorarioSemanal,
 } from "@/lib/schemas";
 
 const validUrl = "https://www.google.com/maps/embed?pb=abc123";
 const anotherValidUrl = "https://wa.me/5491112345678";
 const instagramUrl = "https://instagram.com/titanium";
 
+const allDaysOpen: HorarioSemanal = {
+  lun: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  mar: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  mie: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  jue: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  vie: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  sab: { abierto: true, apertura: "08:00", cierre: "22:00" },
+  dom: { abierto: true, apertura: "08:00", cierre: "22:00" },
+};
+
 describe("gymFieldSchema — accepted fields", () => {
   it.each(GYM_FIELD_NAMES)("accepts a valid value for field=%s", (field) => {
     const value: Record<GymField, string> = {
       nombre: "Titanium Gym",
-      horario: "Lun-Vie 7:00-22:00",
+      horarioJson: JSON.stringify(allDaysOpen),
       direccion: "Av. Siempre Viva 742",
       mapsEmbedUrl: validUrl,
       socialInstagram: instagramUrl,
@@ -39,7 +58,14 @@ describe("gymFieldSchema — accepted fields", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.field).toBe(field);
-      expect(result.data.value).toBe(value[field]);
+      // horarioJson is the only field whose value is transformed
+      // (JSON-parsed into an object). Other fields round-trip the
+      // string verbatim.
+      if (field === "horarioJson") {
+        expect(result.data.value).toEqual(allDaysOpen);
+      } else {
+        expect(result.data.value).toBe(value[field]);
+      }
     }
   });
 });
@@ -84,12 +110,7 @@ describe("gymFieldSchema — empty nombre rejected", () => {
   });
 });
 
-describe("gymFieldSchema — empty values for OTHER string fields are rejected", () => {
-  it("rejects empty horario", () => {
-    const result = gymFieldSchema.safeParse({ field: "horario", value: "" });
-    expect(result.success).toBe(false);
-  });
-
+describe("gymFieldSchema — empty direccion rejected", () => {
   it("rejects empty direccion", () => {
     const result = gymFieldSchema.safeParse({ field: "direccion", value: "" });
     expect(result.success).toBe(false);
@@ -207,6 +228,158 @@ describe("gymFieldSchema — non-string value rejected", () => {
     const result = gymFieldSchema.safeParse({
       field: "mapsEmbedUrl",
       value: null as unknown as string,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("horarioDiaSchema — per-day validation", () => {
+  it("accepts an open day with valid times", () => {
+    const result = horarioDiaSchema.safeParse({
+      abierto: true,
+      apertura: "08:00",
+      cierre: "22:00",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a closed day with null times", () => {
+    const result = horarioDiaSchema.safeParse({
+      abierto: false,
+      apertura: null,
+      cierre: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an invalid time format (HH:MM)", () => {
+    const result = horarioDiaSchema.safeParse({
+      abierto: true,
+      apertura: "25:99",
+      cierre: "22:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-24h time (e.g. 8:00 without leading zero)", () => {
+    const result = horarioDiaSchema.safeParse({
+      abierto: true,
+      apertura: "8:00",
+      cierre: "22:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing abierto field", () => {
+    const result = horarioDiaSchema.safeParse({
+      apertura: "08:00",
+      cierre: "22:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a nullish apertura/cierre (permissive — form is the source of consistency)", () => {
+    // The Zod schema is intentionally permissive: it does not enforce
+    // "abierto=true → times present" because the WeeklyScheduleEditor
+    // hides the time pickers when abierto=false (so the form always
+    // emits consistent data). The schema accepts the shape, the form
+    // is the consistency guarantee.
+    const result = horarioDiaSchema.safeParse({ abierto: true });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("horarioSemanalSchema — weekly validation", () => {
+  it("accepts a full 7-day schedule", () => {
+    const result = horarioSemanalSchema.safeParse(allDaysOpen);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.lun.abierto).toBe(true);
+      expect(result.data.dom.apertura).toBe("08:00");
+    }
+  });
+
+  it("rejects a schedule missing a required day key", () => {
+    const partial = { ...allDaysOpen };
+    delete (partial as Partial<HorarioSemanal>).mie;
+    const result = horarioSemanalSchema.safeParse(partial);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a schedule with a malformed day entry", () => {
+    const result = horarioSemanalSchema.safeParse({
+      ...allDaysOpen,
+      lun: { abierto: true, apertura: "25:99", cierre: "22:00" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an empty object (all 7 day keys required)", () => {
+    const result = horarioSemanalSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("gymFieldSchema — horarioJson variant", () => {
+  it("accepts a valid HorarioSemanal JSON string", () => {
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: JSON.stringify(allDaysOpen),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // After Zod parse, the value is the parsed object (pipe to nullable schema).
+      expect(result.data.value).toEqual(allDaysOpen);
+    }
+  });
+
+  it("accepts a JSON-stringified null (clear schedule)", () => {
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: "null",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.value).toBeNull();
+    }
+  });
+
+  it("rejects malformed JSON", () => {
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: "{not valid json",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message);
+      expect(messages).toContain("horarioJson debe ser JSON válido");
+    }
+  });
+
+  it("rejects a JSON object that fails horarioSemanalSchema (missing days)", () => {
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: JSON.stringify({ lun: { abierto: true, apertura: "08:00", cierre: "22:00" } }),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a JSON object with invalid time format", () => {
+    const invalid = {
+      ...allDaysOpen,
+      lun: { abierto: true, apertura: "25:99", cierre: "22:00" },
+    };
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: JSON.stringify(invalid),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-object JSON value (e.g. a number)", () => {
+    const result = gymFieldSchema.safeParse({
+      field: "horarioJson",
+      value: "42",
     });
     expect(result.success).toBe(false);
   });
