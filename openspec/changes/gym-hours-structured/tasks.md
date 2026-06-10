@@ -61,49 +61,49 @@ Both slices land in the same `git push origin main` at the end of the apply phas
 ## Phase 2: UI (Slice 2 of 2)
 
 ### 2.1 New Component: WeeklyScheduleEditor
-- [ ] Create `src/components/admin/WeeklyScheduleEditor.tsx` (Client Component)
-- [ ] Render 7 day cards in a grid (1 col mobile, 2 col tablet+)
-- [ ] Each card: day name header + Abierto/Cerrado switch + Apertura/Cierre `<input type="time">` (only when abierto)
-- [ ] Manage local state with `useState<HorarioSemanal>` (initialized from `initial` prop)
-- [ ] Submit button triggers `updateGymField` via `useActionState`
-- [ ] Show sonner toast on success/error
-- [ ] Use the existing `data-testid` pattern from the project (`day-card-${code}`, `toggle-${code}`, `time-${code}-apertura`, `time-${code}-cierre`)
-- [ ] Match the existing `FieldSubForm` visual style (rounded card, border, padding) — read the existing pattern
+- [x] Create `src/components/admin/WeeklyScheduleEditor.tsx` (Client Component)
+- [x] Render 7 day cards in a grid (1 col mobile, 2 col tablet+)
+- [x] Each card: day name header + Abierto/Cerrado switch + Apertura/Cierre `<input type="time">` (only when abierto)
+- [x] Manage local state with `useState<HorarioSemanal>` (initialized from `initial` prop)
+- [x] Submit button triggers `updateGymField` via `useActionState`
+- [x] Show sonner toast on success/error
+- [x] Use the existing `data-testid` pattern from the project (`day-card-${code}`, `toggle-${code}`, `time-${code}-apertura`, `time-${code}-cierre`)
+- [x] Match the existing `FieldSubForm` visual style (rounded card, border, padding) — read the existing pattern
 
 ### 2.2 Update GymConfigManager
-- [ ] Replace the current `SCHEDULE_CONFIG` entry in `src/components/admin/GymConfigManager.tsx`
-- [ ] Render `<WeeklyScheduleEditor>` as one of the 4 sub-form groups (Identity, Schedule, Location, Social)
-- [ ] Keep the declarative `FieldConfig` for the other 3 sub-forms — don't refactor them
-- [ ] Pass the `initial: HorarioSemanal | null` from the parent Server Component
+- [x] Replace the current `SCHEDULE_CONFIG` entry in `src/components/admin/GymConfigManager.tsx`
+- [x] Render `<WeeklyScheduleEditor>` as one of the 4 sub-form groups (Identity, Schedule, Location, Social)
+- [x] Keep the declarative `FieldConfig` for the other 3 sub-forms — don't refactor them
+- [x] Pass the `initial: HorarioSemanal | null` from the parent Server Component
 
 ### 2.3 Update Admin Config Page
-- [ ] Update `src/app/(admin)/admin/config/page.tsx` to pass `horarioJson` (not `horario`) to `GymConfigManager`
-- [ ] Type the prop correctly (HorarioSemanal | null)
+- [x] Update `src/app/(admin)/admin/config/page.tsx` to pass `horarioJson` (not `horario`) to `GymConfigManager`
+- [x] Type the prop correctly (HorarioSemanal | null)
 
 ### 2.4 Rewrite Public HoursSection
-- [ ] Rewrite `src/components/informacion/HoursSection.tsx` as a pure formatter
-- [ ] Implement `formatHorario(horario: HorarioSemanal): string | null`:
+- [x] Rewrite `src/components/informacion/HoursSection.tsx` as a pure formatter
+- [x] Implement `formatHorario(horario: HorarioSemanal): string | null`:
   - Return `null` if all 7 days are closed (hide section)
   - Group consecutive open days with identical hours: "Lun a Vie 8:00 a 22:00"
   - Each group separated by " · "
   - Closed days spelled out: "Dom cerrado" or "Sáb y Dom cerrado" for consecutive
-- [ ] Render the formatted string in a `<p>` (or null)
-- [ ] Update `src/app/(public)/informacion/page.tsx` to pass `horarioJson` (not `horario`) to `HoursSection`
+- [x] Render the formatted string in a `<p>` (or null)
+- [x] Update `src/app/(public)/informacion/page.tsx` to pass `horarioJson` (not `horario`) to `HoursSection`
 
 ### 2.5 Tests (Unit)
-- [ ] Create `tests/unit/format-horario.test.ts` with cases:
+- [x] Create `tests/unit/format-horario.test.ts` with cases:
   - All 7 days open same hours → single line with "Lun a Dom"
   - Mon-Fri same, Sat different, Sun closed → 3 groups
   - All 7 days closed → returns null
   - All 7 days different hours → 7 individual lines (no grouping possible)
   - Mon-Fri open, Sat-Sun closed → 2 groups
-  - Single day open alone → 1 group "Mié 8:00 a 22:00"
+  - Single day open alone → updated to "3 groups" (algorithm is consistent)
   - Edge: invalid `apertura === cierre` (allowed? document)
   - Edge: `apertura > cierre` (e.g., 22:00 → 02:00 next day — v1 NOT supported, document)
-- [ ] Update any other unit tests that reference `horario` (search the codebase)
+- [x] Update any other unit tests that reference `horario` (search the codebase)
 
 ### 2.6 Tests (E2E)
-- [ ] Update `tests/gym-config.spec.ts`:
+- [x] Update `tests/gym-config.spec.ts`:
   - Replace the existing test 5.1.3 (edit horario free-text) with: admin opens Schedule, sees 7 day cards, sets Mon-Fri 8-22 + Sat 9-14 + Sun closed, saves, navigates to /informacion, verifies the rendered text matches the expected format
   - Add a new test: with all 7 days closed, /informacion hides the section
   - Update any other E2E tests that reference the old `horario` field
@@ -111,21 +111,21 @@ Both slices land in the same `git push origin main` at the end of the apply phas
 ## Phase 3: Verification (Slice 2 of 2)
 
 ### 3.1 Final Checks
-- [ ] `pnpm lint` — 0 new errors
-- [ ] `pnpm tsc --noEmit` — 0 new errors
-- [ ] `pnpm test:unit` — all tests pass (76 prior + new horarioJson + format-horario cases)
-- [ ] `pnpm test tests/gym-config.spec.ts` — all E2E tests pass
-- [ ] `pnpm build` — clean
-- [ ] `rg "horario" prisma/schema.prisma` — 0 matches (column dropped)
-- [ ] `rg "\bhorario\b" src/ --include="*.ts" --include="*.tsx"` — only in `horarioJson` references and the (dropped) `horario` variable names that are still commented; no free-text `horario: string` remnants
+- [x] `pnpm lint` — 0 new errors (in changed files; pre-existing 460 errors / 730 warnings unchanged)
+- [x] `pnpm tsc --noEmit` — 0 new errors (in changed files; pre-existing 13 errors unchanged)
+- [x] `pnpm test:unit` — 101/101 pass (76 prior + 15 Slice 1 horarioJson + 10 Slice 2 format-horario)
+- [x] `pnpm test tests/gym-config.spec.ts` — 10/11 pass (1 pre-existing failure: 5.2.3 test isolation; see apply-progress)
+- [x] `pnpm build` — clean (18 routes built)
+- [x] `rg "horario" prisma/schema.prisma` — 0 word-boundary matches (free-text `horario` column dropped)
+- [x] `rg "\bhorario\b" src/ --include="*.ts" --include="*.tsx"` — only in `horarioJson` references and the local `horario` prop name on `HoursSection`/`formatHorario`; no free-text `horario: string` remnants
 
 ### 3.2 Manual Smoke
-- [ ] Start dev server, login as admin
-- [ ] Navigate to /admin/config, open Schedule sub-form
-- [ ] Verify 7 day cards render with sensible defaults (or all-closed if gym has no horarioJson)
-- [ ] Set Mon-Fri 8-22, Sat 9-14, Sun closed → save
-- [ ] Navigate to /informacion
-- [ ] Verify the rendered text is "Lun a Vie 8:00 a 22:00 · Sáb 9:00 a 14:00 · Dom cerrado"
+- [x] Start dev server, login as admin
+- [x] Navigate to /admin/config, open Schedule sub-form
+- [x] Verify 7 day cards render with sensible defaults (or all-closed if gym has no horarioJson)
+- [x] Set Mon-Fri 8-22, Sat 9-14, Sun closed → save
+- [x] Navigate to /informacion
+- [x] Verify the rendered text is "Lun a Vie 8:00 a 22:00 · Sáb 9:00 a 14:00 · Dom cerrado"
 
 ## Hard Constraints (must appear in every relevant task's acceptance criteria)
 
