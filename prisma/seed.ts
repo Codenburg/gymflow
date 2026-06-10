@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from '../generated/client';
+import { PrismaClient, Prisma, Role } from '../generated/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import 'dotenv/config';
@@ -70,7 +70,10 @@ async function main() {
         id: 'gym',
         price: 45000,
         nombre: null,
-        horarioJson: null,
+        // horarioJson: Prisma.JsonNull writes JSON null to the JSONB cell.
+        // The read boundary Zod-validates against horarioSemanalSchema; a
+        // JSON null is treated as "unconfigured" (public HoursSection hides).
+        horarioJson: Prisma.JsonNull,
         direccion: null,
         mapsEmbedUrl: null,
         socialInstagram: null,

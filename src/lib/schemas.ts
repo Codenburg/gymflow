@@ -371,13 +371,50 @@ export interface FormState<T = void> {
 // by its `field` discriminant so Zod can apply the right rule:
 //   - string-typed fields: trimmed, non-empty, bounded length
 //   - URL-typed fields: must be a valid URL, bounded length
+//   - horarioJson: a full HorarioSemanal object (or null when unconfigured)
 //
 // Designed for the `updateGymField` server action, which accepts a
 // FormData payload with `field` and `value` keys. Pairs with GymField type.
 
+// HH:MM 24-hour format regex — used by horarioDiaSchema.
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Per-day schedule entry.
+ *
+ * `abierto: false` indicates the gym is closed that day; the time pickers
+ * are hidden at the form level so `apertura`/`cierre` are typically `null`,
+ * but the Zod schema is intentionally permissive (nullish) so partial
+ * data can be saved if needed. Cross-midnight schedules (apertura > cierre)
+ * are NOT handled in v1 — documented in the spec.
+ */
+export const horarioDiaSchema = z.object({
+  abierto: z.boolean(),
+  apertura: z.string().regex(HHMM, { error: "Formato de hora inválido (HH:MM)" }).nullish(),
+  cierre: z.string().regex(HHMM, { error: "Formato de hora inválido (HH:MM)" }).nullish(),
+});
+
+/**
+ * Full weekly schedule — exactly 7 day entries in fixed order.
+ * Validation is strict: every day key MUST be present.
+ * `horarioJson` on the Gym singleton is either `null` or this exact shape.
+ */
+export const horarioSemanalSchema = z.object({
+  lun: horarioDiaSchema,
+  mar: horarioDiaSchema,
+  mie: horarioDiaSchema,
+  jue: horarioDiaSchema,
+  vie: horarioDiaSchema,
+  sab: horarioDiaSchema,
+  dom: horarioDiaSchema,
+});
+
+export type HorarioDia = z.infer<typeof horarioDiaSchema>;
+export type HorarioSemanal = z.infer<typeof horarioSemanalSchema>;
+
 export const GYM_FIELD_NAMES = [
   "nombre",
-  "horario",
+  "horarioJson",
   "direccion",
   "mapsEmbedUrl",
   "socialInstagram",
@@ -396,12 +433,23 @@ export const gymFieldSchema = z.discriminatedUnion("field", [
       .max(80, { error: "El nombre no puede superar 80 caracteres" }),
   }),
   z.object({
-    field: z.literal("horario"),
+    field: z.literal("horarioJson"),
+    // The form posts a JSON-stringified HorarioSemanal; Zod parses
+    // the string first and then validates the inner object.
     value: z
       .string()
-      .trim()
-      .min(1, { error: "El horario no puede estar vacío" })
-      .max(200, { error: "El horario no puede superar 200 caracteres" }),
+      .transform((raw, ctx) => {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "horarioJson debe ser JSON válido",
+          });
+          return z.NEVER;
+        }
+      })
+      .pipe(horarioSemanalSchema.nullable()),
   }),
   z.object({
     field: z.literal("direccion"),
@@ -442,7 +490,7 @@ export type GymFieldInput = z.infer<typeof gymFieldSchema>;
 // Public type for the display fields — used by readers and form components.
 export interface GymDisplay {
   nombre: string | null;
-  horario: string | null;
+  horarioJson: HorarioSemanal | null;
   direccion: string | null;
   mapsEmbedUrl: string | null;
   socialInstagram: string | null;
