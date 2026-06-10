@@ -15,8 +15,14 @@ import type { FormState, GymDisplay, GymField } from "@/lib/schemas";
  * Per-field FormState — paired with `updateGymField`.
  * `data` carries the saved `{ field, value }` so the manager can resync
  * the input when the action completes.
+ *
+ * `value` is `unknown` (not `string`) because the same `updateGymField`
+ * action is shared with the structured `horarioJson` variant (whose
+ * value is a `HorarioSemanal` object). `useGymFieldForm` is only used
+ * by the 5 string sub-forms — it casts the value to `string` when
+ * reading it for `displayedValue`.
  */
-type FieldFormState = FormState<{ field: GymField; value: string }>;
+type FieldFormState = FormState<{ field: GymField; value: unknown }>;
 
 interface GymConfigManagerProps {
   initial: GymDisplay;
@@ -192,9 +198,15 @@ function useGymFieldForm(field: GymField, initialValue: string | null): UseGymFi
 
   // Server-returned value wins on success — the input resyncs
   // even after edits in another tab.
+  //
+  // The hook is only used by the 5 string sub-forms; the action's wider
+  // `value: unknown` covers the structured `horarioJson` case which is
+  // owned by `<WeeklyScheduleEditor>`. Narrow with a string assertion
+  // since the discriminant check above guarantees we only reach this
+  // branch for a string-typed field.
   const displayedValue =
     state.success && state.data?.field === field
-      ? state.data.value
+      ? (state.data.value as string)
       : initialValue ?? "";
 
   const fieldError = state.errors?.[field]?.[0] ?? null;

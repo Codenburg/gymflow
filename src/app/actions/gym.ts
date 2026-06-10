@@ -8,7 +8,9 @@ import { auth } from "@/lib/auth";
 import {
   type FormState,
   type GymField,
+  type HorarioSemanal,
   gymFieldSchema,
+  horarioSemanalSchema,
 } from "@/lib/schemas";
 
 /**
@@ -70,6 +72,44 @@ export const getGymConfigForServer = unstable_cache(
     }
   },
   ["gym-config"],
+  { tags: ["gym-config"], revalidate: 60 }
+);
+
+/**
+ * Zod-narrowed snapshot of the gym display fields, ready to be passed
+ * to client components. The raw `prisma.gym` row types `horarioJson`
+ * as `Prisma.JsonValue` (loose), so we validate it against
+ * `horarioSemanalSchema` at this read boundary. A corrupt / legacy row
+ * collapses to `null` — the public `HoursSection` hides itself, the
+ * admin `WeeklyScheduleEditor` falls back to the "all closed" default.
+ *
+ * Tied to the same `gym-config` tag as `getGymConfigForServer`, so
+ * `revalidateTag("gym-config")` (fired by `updateGymField`) purges
+ * both readers in lockstep.
+ */
+export const getGymDisplayForServer = unstable_cache(
+  async () => {
+    try {
+      const gym = await prisma.gym.findUnique({ where: { id: "gym" } });
+      if (!gym) return null;
+      const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
+      const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
+        ? horarioJsonParsed.data
+        : null;
+      return {
+        nombre: gym.nombre,
+        horarioJson,
+        direccion: gym.direccion,
+        mapsEmbedUrl: gym.mapsEmbedUrl,
+        socialInstagram: gym.socialInstagram,
+        socialWhatsapp: gym.socialWhatsapp,
+      };
+    } catch (error) {
+      console.error("Error fetching cached gym display:", error);
+      return null;
+    }
+  },
+  ["gym-display"],
   { tags: ["gym-config"], revalidate: 60 }
 );
 

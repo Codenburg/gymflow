@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth, isAdmin } from "@/lib/auth";
-import { getGymConfigForServer } from "@/app/actions/gym";
+import { getGymDisplayForServer } from "@/app/actions/gym";
 import { GymConfigManager } from "@/components/admin/GymConfigManager";
 import { PageHeader } from "@/components/admin/page-header";
 
@@ -30,7 +30,7 @@ export default async function AdminConfigPage() {
     redirect("/admin/rutinas");
   }
 
-  const gym = await getGymConfigForServer();
+  const display = await getGymDisplayForServer();
 
   return (
     <div className="space-y-6">
@@ -42,12 +42,12 @@ export default async function AdminConfigPage() {
 
       <GymConfigManager
         initial={{
-          nombre: gym?.nombre ?? null,
-          horario: gym?.horario ?? null,
-          direccion: gym?.direccion ?? null,
-          mapsEmbedUrl: gym?.mapsEmbedUrl ?? null,
-          socialInstagram: gym?.socialInstagram ?? null,
-          socialWhatsapp: gym?.socialWhatsapp ?? null,
+          nombre: display?.nombre ?? null,
+          horarioJson: display?.horarioJson ?? null,
+          direccion: display?.direccion ?? null,
+          mapsEmbedUrl: display?.mapsEmbedUrl ?? null,
+          socialInstagram: display?.socialInstagram ?? null,
+          socialWhatsapp: display?.socialWhatsapp ?? null,
         }}
       />
     </div>

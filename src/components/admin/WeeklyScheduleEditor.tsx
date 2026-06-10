@@ -90,11 +90,15 @@ export function WeeklyScheduleEditor({ initial }: WeeklyScheduleEditorProps) {
 
   // The action returns the saved object in `state.data`; resync the form
   // state to the server-canonical payload on success so the toggles reflect
-  // the persisted truth (matches the FieldSubForm resync pattern).
+  // the persisted truth (matches the FieldSubForm resync pattern). The
+  // setState is intentional: the server is the source of truth on save,
+  // and Zod may have normalized the payload (e.g. coerced nullish times
+  // to null). Same pattern as GymPriceEditor — see the disable comment.
   useEffect(() => {
     if (!isPending && state.success) {
       const saved = state.data?.value;
       if (saved && typeof saved === "object") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSchedule(saved as HorarioSemanal);
       }
       toast.success("Horarios actualizados");
