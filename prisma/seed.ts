@@ -61,6 +61,8 @@ async function main() {
     // Display fields are intentionally NOT seeded with brand strings — admins
     // configure them via the gym config page. Nullable defaults keep the
     // singleton in a "no brand identity" state until the admin fills them in.
+    // `horarioJson` is the structured weekly schedule; null = unconfigured
+    // (public HoursSection hides itself).
     await tx.gym.upsert({
       where: { id: 'gym' },
       update: {},
@@ -68,7 +70,7 @@ async function main() {
         id: 'gym',
         price: 45000,
         nombre: null,
-        horario: null,
+        horarioJson: null,
         direccion: null,
         mapsEmbedUrl: null,
         socialInstagram: null,
