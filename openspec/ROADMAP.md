@@ -76,6 +76,7 @@ _Last updated: 2026-06-10_ | _Version: 0.16.0_
 - [ ] Generación de PDF por rutina (@react-pdf/renderer)
 - [ ] Cache warming cron para SEO
 - [ ] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir `getGymConfigForServer` con `'use cache'` + `cacheLife`
+- [ ] **Horario estructurado (reemplazar free-text por formulario por día)** — `horario: String?` actual permite texto libre e inconsistente. Follow-up: formulario con 7 cards (Lun a Dom), cada uno con `abierto: boolean` + `apertura: time | null` + `cierre: time | null`. Schema: `horarioJson: Json?` o tabla `HorarioDia`. Render: `HoursSection` formatea string uniforme desde la estructura. Así el admin no controla el formato, lo controla la app
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas

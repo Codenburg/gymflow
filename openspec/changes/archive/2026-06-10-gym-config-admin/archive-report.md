@@ -112,6 +112,8 @@ These were explicitly deferred from this change and should become their own SDD 
 
 - **Migrate `unstable_cache` → `use cache` (Next 16 Cache Components)** — `getGymConfigForServer` currently uses `unstable_cache` because `cacheComponents: true` is not enabled in `next.config.ts`. Follow-up: enable the flag, rewrite the cached reader to use `'use cache'` + `cacheTag('gym-config')` + `cacheLife({ revalidate: 60 })`, validate that no runtime API (`cookies()`, `headers()`) leaks into the cached function. Documented in `design.md` § Known Follow-ups.
 
+- **Structured `horario` instead of free-text** — the current `horario: String?` field lets the admin write any text, which produces inconsistent render output across deploys. Follow-up: replace with a structured per-day form (7 day cards: Lun a Dom, each with `abierto: boolean` + `apertura: time | null` + `cierre: time | null`), so the application controls the render format. Data model: `horarioJson: Json?` or a normalized `HorarioDia` child table. UI: 7 day cards in the Schedule sub-form of `GymConfigManager`. Render: `HoursSection` formats a uniform string from the structure. Documented in `design.md` § Known Follow-ups and `proposal.md` § Deferred.
+
 ---
 
 ## Notes

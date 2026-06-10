@@ -81,6 +81,8 @@ Revert the additive migration (`prisma migrate dev` rollback), revert all file c
 
 - **Migrate `unstable_cache` → `use cache` (Next 16 Cache Components)** — see `design.md` Known Follow-ups. This change uses `unstable_cache` because `cacheComponents` is not yet enabled in `next.config.ts`. The follow-up enables the flag, rewrites the cached reader to use `'use cache'` + `cacheTag('gym-config')` + `cacheLife({ revalidate: 60 })`, and validates no runtime APIs leak into the cached function. The current code is structured to make this an isolated change.
 
+- **Structured `horario` instead of free-text** — see `design.md` Known Follow-ups. The current `horario: String?` field lets the admin write any text, which produces inconsistent render output across deploys. The follow-up replaces it with a structured per-day form (one card per weekday with `abierto: boolean` + `apertura: time | null` + `cierre: time | null`), so the application controls the render format. Data model: either `horarioJson: Json?` or a normalized `HorarioDia` child table. UI: 7 day cards in the Schedule sub-form of `GymConfigManager`. Render: `HoursSection` formats a uniform string from the structure (e.g. "Lun a Vie 8:00 a 22:00 · Sáb 9:00 a 14:00 · Dom cerrado").
+
 ## Success Criteria
 
 - [ ] Admin can set name, hours, address, social links from `/admin/config`
