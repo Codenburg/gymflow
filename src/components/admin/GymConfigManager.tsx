@@ -3,7 +3,7 @@
 import { useActionState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Building2, Clock, MapPin, type LucideIcon } from "lucide-react";
+import { Building2, Clock, Instagram, MapPin, MessageCircle, type LucideIcon } from "lucide-react";
 import { updateGymField } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -44,6 +44,14 @@ export function GymConfigManager({ initial }: GymConfigManagerProps) {
       <FieldSubForm
         config={MAPS_EMBED_URL_CONFIG}
         initialValue={initial.mapsEmbedUrl}
+      />
+      <FieldSubForm
+        config={SOCIAL_INSTAGRAM_CONFIG}
+        initialValue={initial.socialInstagram}
+      />
+      <FieldSubForm
+        config={SOCIAL_WHATSAPP_CONFIG}
+        initialValue={initial.socialWhatsapp}
       />
     </div>
   );
@@ -130,6 +138,43 @@ const MAPS_EMBED_URL_CONFIG: FieldConfig = {
     description:
       "Dirección y enlace de Google Maps. Cada campo se guarda por separado.",
   },
+};
+
+/**
+ * Shared section header for the Social sub-forms. Instagram is the
+ * first social sub-form so it carries the sectionHeader; WhatsApp
+ * just renders its own card (no sectionHeader in its config).
+ */
+const SOCIAL_SECTION_HEADER: NonNullable<FieldConfig["sectionHeader"]> = {
+  icon: MessageCircle,
+  title: "Redes",
+  description:
+    "Enlaces a Instagram y WhatsApp. Cada campo se guarda por separado.",
+};
+
+const SOCIAL_INSTAGRAM_CONFIG: FieldConfig = {
+  field: "socialInstagram",
+  title: "Instagram",
+  description: "URL completa del perfil o publicación.",
+  icon: Instagram,
+  inputLabel: "URL de Instagram",
+  inputKind: "url",
+  maxLength: 500,
+  placeholder: "https://www.instagram.com/tu_gimnasio",
+  saveLabel: "Guardar Instagram",
+  sectionHeader: SOCIAL_SECTION_HEADER,
+};
+
+const SOCIAL_WHATSAPP_CONFIG: FieldConfig = {
+  field: "socialWhatsapp",
+  title: "WhatsApp",
+  description: "URL de wa.me o enlace directo al chat.",
+  icon: MessageCircle,
+  inputLabel: "URL de WhatsApp",
+  inputKind: "url",
+  maxLength: 500,
+  placeholder: "https://wa.me/5491112345678",
+  saveLabel: "Guardar WhatsApp",
 };
 
 // ============================================================
