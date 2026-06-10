@@ -3,16 +3,25 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "../../../../generated/client";
+import {
+  horarioSemanalSchema,
+  type HorarioSemanal,
+} from "@/lib/schemas";
 
 /**
  * Gym singleton response
+ *
+ * `horarioJson` is a structured `HorarioSemanal` object (or `null` when
+ * unconfigured). The Zod schema narrows the DB value at the read boundary
+ * so a corrupt or legacy row is never propagated as unvalidated data.
  */
 interface GymResponse {
   id: string;
   price: number;
   // Display fields — all nullable until an admin configures them.
   nombre: string | null;
-  horario: string | null;
+  horarioJson: HorarioSemanal | null;
   direccion: string | null;
   mapsEmbedUrl: string | null;
   socialInstagram: string | null;
@@ -24,10 +33,12 @@ interface GymResponse {
 /**
  * Schema for updating the gym singleton via the REST endpoint.
  *
- * Accepts any subset of price + the 6 display fields. At least one
- * field MUST be present. URL fields use z.string().url(); nombre is
- * required non-empty when present; horario/direccion are free-text
- * (bounded length).
+ * Accepts any subset of price + the 5 string display fields + the
+ * structured `horarioJson`. At least one field MUST be present. URL
+ * fields use z.string().url(); nombre is required non-empty when
+ * present; direccion is free-text (bounded length). horarioJson
+ * accepts the full `HorarioSemanal` object or `null` (which clears
+ * the schedule).
  *
  * Note: this REST PATCH exists for symmetry with the GET endpoint
  * and for any external tooling. The recommended write path for the
@@ -43,12 +54,7 @@ const gymUpdateSchema = z
       .min(1, { message: "El nombre no puede estar vacío" })
       .max(80, { message: "El nombre no puede superar 80 caracteres" })
       .optional(),
-    horario: z
-      .string()
-      .trim()
-      .min(1, { message: "El horario no puede estar vacío" })
-      .max(200, { message: "El horario no puede superar 200 caracteres" })
-      .optional(),
+    horarioJson: horarioSemanalSchema.nullable().optional(),
     direccion: z
       .string()
       .trim()
@@ -78,7 +84,7 @@ const gymUpdateSchema = z
     (data) =>
       data.price !== undefined ||
       data.nombre !== undefined ||
-      data.horario !== undefined ||
+      data.horarioJson !== undefined ||
       data.direccion !== undefined ||
       data.mapsEmbedUrl !== undefined ||
       data.socialInstagram !== undefined ||
@@ -111,8 +117,9 @@ async function verifyAdmin(
  * Returns the singleton gym configuration
  *
  * Response 200:
- * - Gym object with id, price, the 6 display fields (any may be null),
- *   createdAt, updatedAt
+ * - Gym object with id, price, the 5 string display fields (any may be
+ *   null), the structured `horarioJson` (object | null, Zod-narrowed at
+ *   the read boundary), and createdAt/updatedAt.
  *
  * Response 500:
  * - Error message indicating service unavailability
@@ -130,12 +137,20 @@ export async function GET(): Promise<NextResponse> {
       });
     }
 
+    // Zod-narrow the horarioJson column at the read boundary. If the DB
+    // value is corrupt (legacy shape, manual edit, partial migration) we
+    // return null instead of propagating unvalidated data to clients.
+    const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
+    const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
+      ? horarioJsonParsed.data
+      : null;
+
     // Convert Decimal to number for JSON response
     const response: GymResponse = {
       id: gym.id,
       price: Number(gym.price),
       nombre: gym.nombre ?? null,
-      horario: gym.horario ?? null,
+      horarioJson,
       direccion: gym.direccion ?? null,
       mapsEmbedUrl: gym.mapsEmbedUrl ?? null,
       socialInstagram: gym.socialInstagram ?? null,
@@ -162,7 +177,7 @@ export async function GET(): Promise<NextResponse> {
  * Request Body (at least one field required):
  * - price: number (optional, positive)
  * - nombre: string (optional, 1-80 chars)
- * - horario: string (optional, 1-200 chars)
+ * - horarioJson: HorarioSemanal | null (optional, structured weekly schedule)
  * - direccion: string (optional, 1-200 chars)
  * - mapsEmbedUrl: string (optional, valid URL, <=2000 chars)
  * - socialInstagram: string (optional, valid URL, <=500 chars)
@@ -217,9 +232,19 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // When horarioJson is null in the payload, persist SQL NULL so the
+    // read boundary returns null and the public HoursSection hides itself.
+    // Prisma 7 requires explicit NullableJsonNullValueInput for null on
+    // a Json? column. We forward the parsed value directly otherwise.
+    const updateData: Record<string, unknown> = { ...parsed.data };
+    if (Object.prototype.hasOwnProperty.call(parsed.data, "horarioJson") &&
+        parsed.data.horarioJson === null) {
+      updateData.horarioJson = Prisma.JsonNull;
+    }
+
     const gym = await prisma.gym.update({
       where: { id: "gym" },
-      data: parsed.data,
+      data: updateData,
     });
 
     // Revalidate pages that display gym config
@@ -228,11 +253,17 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     revalidatePath("/admin");
     revalidatePath("/api/gym");
 
+    // Zod-narrow the freshly-persisted value to be consistent with GET.
+    const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
+    const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
+      ? horarioJsonParsed.data
+      : null;
+
     const response: GymResponse = {
       id: gym.id,
       price: Number(gym.price),
       nombre: gym.nombre ?? null,
-      horario: gym.horario ?? null,
+      horarioJson,
       direccion: gym.direccion ?? null,
       mapsEmbedUrl: gym.mapsEmbedUrl ?? null,
       socialInstagram: gym.socialInstagram ?? null,
