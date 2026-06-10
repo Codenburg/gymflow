@@ -1,11 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { type FormState } from "@/lib/schemas";
+import {
+  type FormState,
+  type GymDisplay,
+  type GymField,
+  gymFieldSchema,
+} from "@/lib/schemas";
 
 /**
  * Helper function to verify admin access
@@ -29,6 +34,8 @@ async function verifyAdmin(
 
 /**
  * Get Gym configuration (for server components)
+ *
+ * Uncached, fresh read. Prefer `getGymConfigForServer` for hot paths.
  */
 export async function getGymConfig() {
   try {
@@ -41,6 +48,31 @@ export async function getGymConfig() {
     return null;
   }
 }
+
+/**
+ * Cached read of the Gym singleton for server-side consumers
+ * (root metadata, public pages, admin layout).
+ *
+ * - 60s TTL safety net
+ * - tagged "gym-config" so `revalidateTag("gym-config")` in
+ *   `updateGymField` purges the cache immediately on save
+ *
+ * Note: uses `unstable_cache` (Next 15.x). The migration path to
+ * `use cache` + `cacheTag` is documented in the design and will be
+ * applied when `cacheComponents: true` is enabled in next.config.ts.
+ */
+export const getGymConfigForServer = unstable_cache(
+  async () => {
+    try {
+      return await prisma.gym.findUnique({ where: { id: "gym" } });
+    } catch (error) {
+      console.error("Error fetching cached gym config:", error);
+      return null;
+    }
+  },
+  ["gym-config"],
+  { tags: ["gym-config"], revalidate: 60 }
+);
 
 /**
  * Zod schema for price validation
@@ -112,3 +144,79 @@ export async function updateGymPrice(
     return { success: false, message: "Error al actualizar el precio" };
   }
 }
+
+/**
+ * Update a single Gym display field (admin only).
+ *
+ * Per-field (not bulk) so partial saves do not overwrite siblings with
+ * empty strings. The discriminated union `gymFieldSchema` in schemas.ts
+ * picks the right validator per discriminant:
+ *   - string fields: trim + min(1) + max(N)
+ *   - URL fields: z.string().url() + max(N)
+ *
+ * On success, the action:
+ *   1. Updates the singleton Gym row with `[field]: value`.
+ *   2. `revalidateTag("gym-config")` — purges the cached reader used by
+ *      generateMetadata and the public pages.
+ *   3. `revalidatePath` for `/`, `/informacion`, `/admin` — forces a
+ *      fresh render of every page that consumes the gym config.
+ *
+ * Returns FormState<{ field, value }> so the calling form can resync
+ * inputs and trigger a success toast.
+ */
+export async function updateGymField(
+  prevState: FormState<{ field: GymField; value: string }>,
+  formData: FormData
+): Promise<FormState<{ field: GymField; value: string }>> {
+  const authCheck = await verifyAdmin(await headers());
+  if (!authCheck.authorized) {
+    return { success: false, message: authCheck.message || "No autorizado" };
+  }
+
+  const parsed = gymFieldSchema.safeParse({
+    field: formData.get("field"),
+    value: formData.get("value"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: parsed.error.flatten().fieldErrors,
+      message: "Error de validación",
+    };
+  }
+
+  try {
+    const existing = await prisma.gym.findUnique({ where: { id: "gym" } });
+    if (!existing) {
+      return { success: false, message: "Configuración del gym no encontrada" };
+    }
+
+    await prisma.gym.update({
+      where: { id: "gym" },
+      data: { [parsed.data.field]: parsed.data.value },
+    });
+
+    revalidateTag("gym-config");
+    revalidatePath("/");
+    revalidatePath("/informacion");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      data: { field: parsed.data.field, value: parsed.data.value },
+      message: "Configuración actualizada",
+    };
+  } catch (error) {
+    console.error("[updateGymField] failed", error);
+    return {
+      success: false,
+      message: "Error al guardar la configuración",
+    };
+  }
+}
+
+// re-export the public display type so consumers don't need to import from
+// @/lib/schemas separately. Keeping the export here matches the existing
+// pattern (the file already exports getGymConfig for public reads).
+export type { GymDisplay };

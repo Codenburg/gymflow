@@ -362,3 +362,93 @@ export interface FormState<T = void> {
   statusCode?: number;
   code?: string;
 }
+
+// ======================
+// Gym Display Field Schema
+// ======================
+//
+// Per-field validation for the gym config admin page. Each variant is keyed
+// by its `field` discriminant so Zod can apply the right rule:
+//   - string-typed fields: trimmed, non-empty, bounded length
+//   - URL-typed fields: must be a valid URL, bounded length
+//
+// Designed for the `updateGymField` server action, which accepts a
+// FormData payload with `field` and `value` keys. Pairs with GymField type.
+
+export const GYM_FIELD_NAMES = [
+  "nombre",
+  "horario",
+  "direccion",
+  "mapsEmbedUrl",
+  "socialInstagram",
+  "socialWhatsapp",
+] as const;
+
+export type GymField = (typeof GYM_FIELD_NAMES)[number];
+
+export const gymFieldSchema = z.discriminatedUnion("field", [
+  z.object({
+    field: z.literal("nombre"),
+    value: z
+      .string()
+      .trim()
+      .min(1, { error: "El nombre no puede estar vacío" })
+      .max(80, { error: "El nombre no puede superar 80 caracteres" }),
+  }),
+  z.object({
+    field: z.literal("horario"),
+    value: z
+      .string()
+      .trim()
+      .min(1, { error: "El horario no puede estar vacío" })
+      .max(200, { error: "El horario no puede superar 200 caracteres" }),
+  }),
+  z.object({
+    field: z.literal("direccion"),
+    value: z
+      .string()
+      .trim()
+      .min(1, { error: "La dirección no puede estar vacía" })
+      .max(200, { error: "La dirección no puede superar 200 caracteres" }),
+  }),
+  z.object({
+    field: z.literal("mapsEmbedUrl"),
+    value: z
+      .string()
+      .trim()
+      .url({ error: "URL de mapa inválida" })
+      .max(2000, { error: "La URL de mapa es demasiado larga" }),
+  }),
+  z.object({
+    field: z.literal("socialInstagram"),
+    value: z
+      .string()
+      .trim()
+      .url({ error: "URL de Instagram inválida" })
+      .max(500, { error: "La URL de Instagram es demasiado larga" }),
+  }),
+  z.object({
+    field: z.literal("socialWhatsapp"),
+    value: z
+      .string()
+      .trim()
+      .url({ error: "URL de WhatsApp inválida" })
+      .max(500, { error: "La URL de WhatsApp es demasiado larga" }),
+  }),
+]);
+
+export type GymFieldInput = z.infer<typeof gymFieldSchema>;
+
+// Public type for the display fields — used by readers and form components.
+export interface GymDisplay {
+  nombre: string | null;
+  horario: string | null;
+  direccion: string | null;
+  mapsEmbedUrl: string | null;
+  socialInstagram: string | null;
+  socialWhatsapp: string | null;
+}
+
+// Generic last-resort fallback for unauthenticated gym-name rendering.
+// Intentionally neutral — must NOT identify any specific gym or client.
+export const GENERIC_GYM_NAME = "Gimnasio";
