@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-06-09_ | _Version: 0.15.1_
+_Last updated: 2026-06-10_ | _Version: 0.16.0_
 
 ---
 
@@ -28,6 +28,8 @@ _Last updated: 2026-06-09_ | _Version: 0.15.1_
 - [x] Admin panel de promociones refactorizado con acciones atómicas y UI mejorada (v0.10.0)
 - [x] Mejora visual en tarjetas de promociones: borde izquierdo verde, jerarquía de título, badge de precio (v0.10.3)
 - [x] Mensajes de error en español para validación de precio en formularios Zod (v0.10.4)
+- [x] Configuración de gimnasio desde admin: nombre, horarios, dirección, redes sociales (v0.16.0)
+- [x] Fallback chain DB → env var → "Gimnasio" genérico para evitar filtrar identidad de cliente (v0.16.0)
 
 ### Rendimiento y seguridad
 - [x] Notificación de feriados: throttle de 5min en window focus (v0.15.1)
@@ -39,6 +41,8 @@ _Last updated: 2026-06-09_ | _Version: 0.15.1_
 - [x] Sistema de roles ADMIN/TRAINER/USER (v0.13.0)
 - [x] Trainer CRUD con soft-delete y aislamiento de rutinas propias (v0.13.0)
 - [x] Trainer manager: dialog-based UI para create/edit (v0.14.0)
+- [x] Centralized resolveGymName helper con fallback chain (v0.16.0)
+- [x] Migración a `unstable_cache` con `cacheTag("gym-config")` + 60s TTL (v0.16.0)
 
 ### Técnico
 - [x] Next.js 16.1.6 + React 19.2.3
@@ -71,6 +75,7 @@ _Last updated: 2026-06-09_ | _Version: 0.15.1_
 ### Media Prioridad
 - [ ] Generación de PDF por rutina (@react-pdf/renderer)
 - [ ] Cache warming cron para SEO
+- [ ] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir `getGymConfigForServer` con `'use cache'` + `cacheLife`
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas

@@ -4,6 +4,31 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.16.0] - 2026-06-10
+
+### Added
+- **Admin gym configuration page** at `/admin/config` — admin can now edit gym display name, hours, address, Google Maps embed URL, Instagram URL, and WhatsApp URL from the admin panel
+- New Gym model fields: `nombre`, `horario`, `direccion`, `mapsEmbedUrl`, `socialInstagram`, `socialWhatsapp` (all nullable, additive migration)
+- Extended `GET /api/gym` and `PATCH /api/gym` with the new display fields (Zod-validated)
+- Per-field server action `updateGymField` with discriminated union, role check, and cache invalidation
+- Cached server reader `getGymConfigForServer` using `unstable_cache` with `cacheTag("gym-config")` + 60s TTL
+- Centralized fallback chain `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` via `resolveGymName` helper in `src/lib/gym-display.ts`
+- Sidebar nav: new "Configuración" entry visible only to ADMIN role (TRAINER still sees Rutinas + Feriados)
+- 28 unit tests for the gym field Zod schema, 10 E2E tests covering the admin flow, fallback chain, and auth gate
+
+### Changed
+- Root layout `metadata` migrated from static `export const metadata` to `generateMetadata()` (DB-driven with env var + generic fallback)
+- Public homepage, loading skeleton, and admin sidebar now read gym name from the database (no more hardcoded brand string)
+- `/informacion` page: HoursSection, AddressSection, and SocialLinksSection now accept nullable props and render nothing when the corresponding field is null (no fake data)
+- Login page: gym name now sourced from `NEXT_PUBLIC_GYM_NAME` env var instead of being hardcoded
+- Admin sidebar filter: refactored from hard-coded TRAINER allowlist to a declarative `adminOnly: true` flag per nav item
+
+### Fixed
+- Login page no longer renders a specific client's gym name as a hardcoded fallback (privacy/branding leak across deploys)
+- 2 pre-existing stale Playwright assertions updated for the dynamic metadata model
+
+---
+
 ## [0.15.1] - 2026-06-09
 
 ### Fixed
