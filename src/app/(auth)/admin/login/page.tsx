@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
+import { GENERIC_GYM_NAME } from "@/lib/schemas";
 
 interface LoginFormData {
   dni: string;
@@ -16,6 +17,15 @@ interface LoginFormData {
 export default function AdminLoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  // The login page is a Client Component — it has no auth context, so it
+  // cannot read from the DB. The fallback chain collapses to:
+  //   `NEXT_PUBLIC_GYM_NAME → GENERIC_GYM_NAME`.
+  // We intentionally do NOT include the DB step here, because the DB read
+  // would either fail (no session) or require a public, unauthenticated
+  // query just to render a title.
+  const gymName =
+    process.env.NEXT_PUBLIC_GYM_NAME?.trim() || GENERIC_GYM_NAME;
 
   const {
     register,
@@ -62,7 +72,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md p-8 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">Champion Gym</h1>
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">{gymName}</h1>
           <p className="text-[var(--muted-foreground)]">Panel de Administración</p>
         </div>
 
