@@ -24,6 +24,7 @@ import {
   User,
   ChevronDown,
   Users,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,7 +33,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof FileText;
+  /**
+   * True when the item is restricted to ADMIN only.
+   * TRAINER users see only items with `adminOnly: false` (or unset).
+   * Defaults to false (visible to all admin roles).
+   */
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   {
     href: "/admin/rutinas",
     label: "Rutinas",
@@ -57,17 +70,23 @@ const navItems = [
     href: "/admin/trainers",
     label: "Entrenadores",
     icon: Users,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/config",
+    label: "Configuración",
+    icon: Settings,
+    adminOnly: true,
   },
 ];
 
 // Filter nav items based on role
 function getVisibleNavItems(role?: string) {
   if (role === "TRAINER") {
-    return navItems.filter((item) =>
-      ["Rutinas", "Feriados"].includes(item.label)
-    );
+    // TRAINER sees only items not flagged as admin-only.
+    return navItems.filter((item) => !item.adminOnly);
   }
-  // ADMIN sees all items including Trainers
+  // ADMIN sees all items.
   return navItems;
 }
 
