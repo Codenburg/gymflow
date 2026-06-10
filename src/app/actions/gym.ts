@@ -152,21 +152,28 @@ export async function updateGymPrice(
  * picks the right validator per discriminant:
  *   - string fields: trim + min(1) + max(N)
  *   - URL fields: z.string().url() + max(N)
+ *   - horarioJson: a JSON-stringified HorarioSemanal object (or "null")
  *
  * On success, the action:
  *   1. Updates the singleton Gym row with `[field]: value`.
+ *      For string fields, `value` is the literal string. For
+ *      `horarioJson`, `value` is the parsed HorarioSemanal object
+ *      (or null) — Prisma accepts a JSON object directly into a `Json?`
+ *      column.
  *   2. `revalidateTag("gym-config")` — purges the cached reader used by
  *      generateMetadata and the public pages.
  *   3. `revalidatePath` for `/`, `/informacion`, `/admin` — forces a
  *      fresh render of every page that consumes the gym config.
  *
  * Returns FormState<{ field, value }> so the calling form can resync
- * inputs and trigger a success toast.
+ * inputs and trigger a success toast. The `value` is the post-parse
+ * payload: a string for string/URL fields, a `HorarioSemanal` object
+ * (or null) for `horarioJson`.
  */
 export async function updateGymField(
-  prevState: FormState<{ field: GymField; value: string }>,
+  prevState: FormState<{ field: GymField; value: unknown }>,
   formData: FormData
-): Promise<FormState<{ field: GymField; value: string }>> {
+): Promise<FormState<{ field: GymField; value: unknown }>> {
   const authCheck = await verifyAdmin(await headers());
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message || "No autorizado" };
