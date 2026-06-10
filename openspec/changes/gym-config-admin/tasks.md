@@ -23,8 +23,8 @@ Chain strategy: pending
 |-------|------|--------|--------|---------------|-------------|
 | 1 | Foundation: data model + API + server action + schema tests | Phase 1 + Phase 2 | DONE (6 commits) | ~150-200 | main (or feature tracker) |
 | 2 | Admin config page + sidebar nav | Phase 3 | DONE (5 commits) | ~430 | slice 1 |
-| 3 | Public consumers (layout, loading, pages, info sections) | Phase 4 | PENDING | ~200-300 | slice 2 |
-| 4 | E2E verification + final cleanup | Phase 5 | PENDING | ~100-200 | slice 3 |
+| 3 | Public consumers (layout, loading, pages, info sections) | Phase 4 | DONE (9 commits) | ~335 | slice 2 |
+| 4 | E2E verification + final cleanup | Phase 5 | DONE (2 commits) | ~490 | slice 3 |
 
 Each slice includes its own verification and tests.
 
@@ -64,12 +64,22 @@ Each slice includes its own verification and tests.
 - [x] 4.10 Refactor `src/components/informacion/SocialLinksSection.tsx` to accept `socialInstagram: string | null`, `socialWhatsapp: string | null` props; render only non-null buttons.
 - [x] 4.11 Add `.env.example` entry documenting `NEXT_PUBLIC_GYM_NAME`.
 
-## Phase 5: Verification
+## Phase 5: Verification (Slice 4 — DONE)
 
-- [ ] 5.1 E2E (Playwright): admin flow — login → `/admin/config` → edit each field group → save → verify public pages (`/`, `/informacion`, `/admin` sidebar) reflect new values.
-- [ ] 5.2 E2E (Playwright): fallback chain — with DB `nombre=null`, `/` shows env var; with both DB and env unavailable, shows generic "Gimnasio" (never another client's brand). Use env override.
-- [ ] 5.3 E2E (Playwright): auth gate — hitting `/admin/config` while logged out redirects to `/admin/login`; non-admin roles redirect per existing RBAC.
-- [ ] 5.4 Lint, type-check (`tsc --noEmit`), and `next build` all pass; grep the repo for any hardcoded specific brand string and confirm only `"Gimnasio"` and `NEXT_PUBLIC_GYM_NAME` remain as fallback literals.
+- [x] 5.1 E2E (Playwright): admin flow — login → `/admin/config` → edit each field group → save → verify public pages (`/`, `/informacion`, `/admin` sidebar) reflect new values.
+- [x] 5.2 E2E (Playwright): fallback chain — with DB `nombre=null`, `/` shows env var; with both DB and env unavailable, shows generic "Gimnasio" (never another client's brand). Use env override.
+- [x] 5.3 E2E (Playwright): auth gate — hitting `/admin/config` while logged out redirects to `/admin/login`; non-admin roles redirect per existing RBAC.
+- [x] 5.4 Lint, type-check (`tsc --noEmit`), and `next build` all pass; grep the repo for any hardcoded specific brand string and confirm only `"Gimnasio"` and `NEXT_PUBLIC_GYM_NAME` remain as fallback literals.
+
+**Slice 4 verification results (all PASS):**
+- `pnpm test:unit`: 76/76 tests pass.
+- `pnpm test tests/gym-config.spec.ts`: 10/10 E2E tests pass (admin flow × 5, fallback chain × 3, auth gate × 2).
+- `pnpm exec tsc --noEmit` on new test file: 0 errors. (15 pre-existing errors in other files, unchanged.)
+- `pnpm exec eslint tests/gym-config.spec.ts`: 0 errors, 0 warnings.
+- `pnpm build`: succeeds; all 28 routes registered.
+- `rg "Champion Gym" src/ .env* tests/`: **ZERO matches** — the hardcoded brand is fully removed from the application source, env, and test suite.
+- `rg "Gimnasio" src/ .env* tests/`: only matches the canonical `GENERIC_GYM_NAME` constant, doc comments, admin UI titles, and intentional test assertions for the chain behavior. No additional hardcoded `"Gimnasio"` strings in any consumer.
+- `rg "NEXT_PUBLIC_GYM_NAME" src/ .env*`: only matches env var definition, helper definitions, doc comments, and `.env.example`. No leaked `process.env` reads on surfaces that should use the DB.
 
 ---
 
