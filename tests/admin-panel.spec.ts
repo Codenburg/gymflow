@@ -133,7 +133,10 @@ test.describe('Admin Pages Load', () => {
 test.describe('Admin Integration Tests', () => {
   test('7.4.1 - Homepage still works', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Rutinas Champion Gym')).toBeVisible({ timeout: 10000 });
+    // The home page renders an h1 with the gym name resolved by the
+    // DB → env → "Gimnasio" chain. We assert the h1 is present instead
+    // of a hardcoded brand name.
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('7.4.2 - Public routine detail pages work', async ({ page }) => {
