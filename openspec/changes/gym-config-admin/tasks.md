@@ -50,19 +50,19 @@ Each slice includes its own verification and tests.
 - [x] 3.3 Add "Configuración" entry to `src/components/admin/admin-sidebar.tsx` nav (with admin role filter), pointing to `/admin/config`. Filter refactored to declarative `adminOnly: true` flag.
 - [x] 3.4 Verify admin-only access: TRAINER → redirect to /admin/rutinas (page-level guard); unauthenticated → redirect to `/admin/login` (parent layout). E2E coverage deferred to Slice 4.
 
-## Phase 4: Layout + Public Consumers
+## Phase 4: Layout + Public Consumers (Slice 3 — DONE)
 
-- [ ] 4.1 Convert `src/app/layout.tsx` from static `metadata` to `generateMetadata()`; resolve name via `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain. NO hardcoded specific brand string.
-- [ ] 4.2 Update `src/app/loading.tsx` to use the same `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain.
-- [ ] 4.3 Update `src/app/(public)/page.tsx` to fetch gym name via `getGymConfigForServer()` and apply fallback chain.
-- [ ] 4.4 Update `src/app/(auth)/admin/login/page.tsx` to use `process.env.NEXT_PUBLIC_GYM_NAME ?? "Gimnasio"` (NO DB read — Client Component).
-- [ ] 4.5 Update `src/components/admin/admin-sidebar.tsx` to accept `gymName: string` prop; remove any hardcoded literal.
-- [ ] 4.6 Update `src/app/(admin)/admin/layout.tsx` to fetch gym name and pass to `AdminLayoutComponent`; update `src/components/admin/admin-layout.tsx` to forward the `gymName` prop to `AdminSidebar`.
-- [ ] 4.7 Update `src/app/(public)/informacion/page.tsx` to fetch expanded gym config and pass as props to child sections.
-- [ ] 4.8 Refactor `src/components/informacion/HoursSection.tsx` to accept `horario: string | null` prop; hide section when null.
-- [ ] 4.9 Refactor `src/components/informacion/AddressSection.tsx` to accept `direccion: string | null`, `mapsEmbedUrl: string | null` props; hide section when either is null.
-- [ ] 4.10 Refactor `src/components/informacion/SocialLinksSection.tsx` to accept `socialInstagram: string | null`, `socialWhatsapp: string | null` props; render only non-null buttons.
-- [ ] 4.11 Add `.env.example` entry documenting `NEXT_PUBLIC_GYM_NAME`.
+- [x] 4.1 Convert `src/app/layout.tsx` from static `metadata` to `generateMetadata()`; resolve name via `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain. NO hardcoded specific brand string.
+- [x] 4.2 Update `src/app/loading.tsx` to use the same `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain.
+- [x] 4.3 Update `src/app/(public)/page.tsx` to fetch gym name via `getGymConfigForServer()` and apply fallback chain.
+- [x] 4.4 Update `src/app/(auth)/admin/login/page.tsx` to use `process.env.NEXT_PUBLIC_GYM_NAME ?? "Gimnasio"` (NO DB read — Client Component).
+- [x] 4.5 Update `src/components/admin/admin-sidebar.tsx` to accept `gymName: string` prop; remove any hardcoded literal.
+- [x] 4.6 Update `src/app/(admin)/admin/layout.tsx` to fetch gym name and pass to `AdminLayoutComponent`; update `src/components/admin/admin-layout.tsx` to forward the `gymName` prop to `AdminSidebar`.
+- [x] 4.7 Update `src/app/(public)/informacion/page.tsx` to fetch expanded gym config and pass as props to child sections.
+- [x] 4.8 Refactor `src/components/informacion/HoursSection.tsx` to accept `horario: string | null` prop; hide section when null.
+- [x] 4.9 Refactor `src/components/informacion/AddressSection.tsx` to accept `direccion: string | null`, `mapsEmbedUrl: string | null` props; hide section when either is null.
+- [x] 4.10 Refactor `src/components/informacion/SocialLinksSection.tsx` to accept `socialInstagram: string | null`, `socialWhatsapp: string | null` props; render only non-null buttons.
+- [x] 4.11 Add `.env.example` entry documenting `NEXT_PUBLIC_GYM_NAME`.
 
 ## Phase 5: Verification
 
