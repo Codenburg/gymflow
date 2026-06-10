@@ -179,10 +179,10 @@ model Gym {
 
   // Display fields (admin-managed, all nullable, additive)
   nombre          String?  // Display name (DB → NEXT_PUBLIC_GYM_NAME env → "Gimnasio" generic)
-  // horarioJson replaces the previous free-text `horario` field. Stores a
-  // HorarioSemanal object (7 day entries: lun..dom, each {abierto, apertura, cierre})
-  // validated at every read boundary by horarioSemanalSchema (Zod).
-  // Null = unconfigured (public HoursSection hides itself).
+  // Structured weekly schedule (HorarioSemanal: 7 day entries lun..dom,
+  // each {abierto, apertura, cierre}) — Zod-validated at every read
+  // boundary by horarioSemanalSchema. Null = unconfigured (the public
+  // HoursSection hides itself in that case).
   horarioJson     Json?    // Weekly schedule (HorarioSemanal) — JSONB
   direccion       String?  @db.Text // Free-text physical address
   mapsEmbedUrl    String?  @db.Text // Google Maps embed URL

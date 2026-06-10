@@ -37,9 +37,11 @@ const ADMIN_PASSWORD = 'nando123';
 const HOME_H1 = 'main h1';
 const SIDEBAR_LOGO = 'aside [class*="font-bold"]';
 
-// Admin /admin/config selectors. The 6 sub-form groups are rendered as
-// <form> cards; each <input name="value"> is the editable field and the
-// save <button type="submit"> uses the per-field saveLabel text.
+// Admin /admin/config selectors. The 5 sub-form groups (Identity,
+// Location, Social x2) are rendered as <form> cards; the Schedule
+// sub-form is now a composite WeeklyScheduleEditor (7 day cards +
+// a single "Guardar horarios" submit) and uses `data-testid`
+// selectors instead of form-scoped queries.
 //
 // IMPORTANT: React 19 / Next 16 `useActionState` renders each form
 // TWICE — once visible and once inside a `<div hidden id="S:N">` for
@@ -47,11 +49,18 @@ const SIDEBAR_LOGO = 'aside [class*="font-bold"]';
 // `name="field"` value. We filter to `:visible` to match only the
 // visible form.
 const IDENTITY_FORM = 'form:visible:has(input[name="field"][value="nombre"])';
-const SCHEDULE_FORM = 'form:visible:has(input[name="field"][value="horario"])';
 const DIRECCION_FORM = 'form:visible:has(input[name="field"][value="direccion"])';
 const MAPS_FORM = 'form:visible:has(input[name="field"][value="mapsEmbedUrl"])';
 const INSTAGRAM_FORM = 'form:visible:has(input[name="field"][value="socialInstagram"])';
 const WHATSAPP_FORM = 'form:visible:has(input[name="field"][value="socialWhatsapp"])';
+
+// WeeklyScheduleEditor selectors — match the data-testid attributes
+// documented in src/components/admin/WeeklyScheduleEditor.tsx.
+const SCHEDULE_SUBMIT = '[data-testid="submit-schedule"]';
+const DAY_TOGGLE = (code: string) => `[data-testid="toggle-${code}"]`;
+const DAY_TIME_APERTURA = (code: string) => `[data-testid="time-${code}-apertura"]`;
+const DAY_TIME_CIERRE = (code: string) => `[data-testid="time-${code}-cierre"]`;
+const DAY_CARD = (code: string) => `[data-testid="day-card-${code}"]`;
 
 const PAGE_TITLE = 'Configuración del Gimnasio';
 
@@ -59,7 +68,6 @@ const PAGE_TITLE = 'Configuración del Gimnasio';
 // run so reruns don't conflict with persisted state from prior runs.
 const RUN_ID = Date.now();
 const NEW_NOMBRE = `Gym-E2E-${RUN_ID}`;
-const NEW_HORARIO = `Lun a Vie 8 a 20\nSab 9 a 13`;
 const NEW_DIRECCION = `Av. E2E ${RUN_ID}, CABA`;
 const NEW_MAPS_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1000!2d1000!3d1000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1sen!2sar!4v1700000000000';
 const NEW_INSTAGRAM = `https://www.instagram.com/gym_e2e_${RUN_ID}`;
@@ -130,10 +138,12 @@ test.describe('Gym Config — Admin flow', () => {
     });
 
     // The 4 logical sections (Identity, Schedule, Location, Social) and
-    // 6 sub-form inputs (nombre, horario, direccion, mapsEmbedUrl,
-    // socialInstagram, socialWhatsapp) all render. Note: each form is
-    // rendered twice (visible + hidden server-action copy), so we use
-    // .first() for strict-mode-safe matching.
+    // 5 sub-form inputs (nombre, direccion, mapsEmbedUrl,
+    // socialInstagram, socialWhatsapp) all render. The Schedule sub-form
+    // is now a composite WeeklyScheduleEditor (7 day cards + 1 submit)
+    // and does NOT use the single-input FieldConfig pattern.
+    // Note: each form is rendered twice (visible + hidden server-action
+    // copy), so we use .first() for strict-mode-safe matching.
     await expect(page.getByText('Identidad').first()).toBeVisible();
     await expect(page.getByText('Horarios').first()).toBeVisible();
     await expect(page.getByText('Dirección').first()).toBeVisible();
@@ -143,7 +153,9 @@ test.describe('Gym Config — Admin flow', () => {
     await expect(page.getByText('Instagram').first()).toBeVisible();
     await expect(page.getByText('WhatsApp').first()).toBeVisible();
 
-    // Every form group has a save button.
+    // 5 single-input sub-forms + 1 WeeklyScheduleEditor submit = 6 visible
+    // submit buttons (each form renders a submit; the schedule editor's
+    // submit is also a button[type=submit]).
     const saveButtons = page.locator('button[type="submit"]:visible');
     expect(await saveButtons.count()).toBe(6);
   });
@@ -188,15 +200,74 @@ test.describe('Gym Config — Admin flow', () => {
     await expect(page).toHaveTitle(new RegExp(NEW_NOMBRE, 'i'));
   });
 
-  test('5.1.3 - edit horario + direccion + maps → /informacion shows new sections', async ({ page }) => {
+  test('5.1.3 - configure weekly schedule per day → /informacion renders the formatted string', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/admin/config');
 
-    // Helper: fill a field, submit, wait for the server action to
-    // complete (state.success), wait for the success toast, and let the
-    // unstable_cache settle (revalidateTag fires AFTER the action
-    // returns; the next read of getGymConfigForServer can briefly serve
-    // the stale value on the dev server if we navigate too quickly).
+    // IMPORTANT: React 19 / Next 16 `useActionState` renders the
+    // WeeklyScheduleEditor form TWICE — once visible and once inside
+    // a `<div hidden id="S:N">` for the server-action POST handler.
+    // Every data-testid selector below uses `:visible` to match only
+    // the visible copy. Without this, the test would fail in strict
+    // mode with "resolved to 2 elements".
+
+    // Configure a 3-bucket week: Mon-Fri 8-22, Sat 9-14, Sun closed.
+    // The default state when initial=null is ALL CLOSED — we need to
+    // open each day explicitly. We use `aria-checked` (not `data-checked`)
+    // — base-ui Switch sets `aria-checked` as the source-of-truth state
+    // attribute; the visual color comes from a Tailwind `data-[checked]:`
+    // selector and lags slightly during a state transition.
+    const weekdayCodes = ['lun', 'mar', 'mie', 'jue', 'vie'] as const;
+    for (const code of weekdayCodes) {
+      // The toggle is a base-ui Switch (role=switch).
+      const toggle = page.locator(DAY_TOGGLE(code)).locator('visible=true');
+      const apertura = page.locator(DAY_TIME_APERTURA(code)).locator('visible=true');
+      const cierre = page.locator(DAY_TIME_CIERRE(code)).locator('visible=true');
+      // First, ensure the day is open.
+      const isChecked = await toggle.getAttribute('aria-checked');
+      if (isChecked !== 'true') {
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-checked', 'true', {
+          timeout: 5000,
+        });
+      }
+      // Now the time inputs are visible. Set them.
+      await apertura.fill('08:00');
+      await cierre.fill('22:00');
+    }
+
+    // Saturday: 9-14.
+    const sabToggle = page.locator(DAY_TOGGLE('sab')).locator('visible=true');
+    const sabApertura = page.locator(DAY_TIME_APERTURA('sab')).locator('visible=true');
+    const sabCierre = page.locator(DAY_TIME_CIERRE('sab')).locator('visible=true');
+    const sabChecked = await sabToggle.getAttribute('aria-checked');
+    if (sabChecked !== 'true') {
+      await sabToggle.click();
+      await expect(sabToggle).toHaveAttribute('aria-checked', 'true', {
+        timeout: 5000,
+      });
+    }
+    await sabApertura.fill('09:00');
+    await sabCierre.fill('14:00');
+
+    // Sunday: leave closed (default state).
+
+    // Save the schedule.
+    await page.locator(SCHEDULE_SUBMIT).locator('visible=true').click();
+
+    // The success toast appears.
+    const toast = page.locator('[data-sonner-toast]');
+    await toast
+      .first()
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .catch(() => {
+        /* toast may have already appeared and dismissed */
+      });
+    // Let the unstable_cache + router.refresh() settle.
+    await page.waitForTimeout(1500);
+
+    // Set Direccion + Maps so the AddressSection renders (paired with
+    // the schedule change to keep both flows exercised in one test).
     async function saveField(
       selector: string,
       value: string,
@@ -209,38 +280,28 @@ test.describe('Gym Config — Admin flow', () => {
       await field.clear();
       await field.fill(value);
       await submit.click();
-      // The action returns and the form re-syncs.
       await expect(field).toHaveValue(value, { timeout: 15000 });
-      // The GymConfigManager triggers a sonner toast on success. Wait
-      // for it (or for the toast to disappear) so we know the action
-      // truly completed before mutating the next field.
-      const toast = page.locator('[data-sonner-toast]');
-      await toast
+      const t = page.locator('[data-sonner-toast]');
+      await t
         .first()
         .waitFor({ state: 'visible', timeout: 5000 })
-        .catch(() => {
-          /* toast may have already appeared and dismissed; continue */
-        });
-      // Let the unstable_cache flush + router.refresh() settle.
+        .catch(() => {});
       await page.waitForTimeout(1500);
     }
-
-    // Schedule.
-    await saveField(SCHEDULE_FORM, NEW_HORARIO, true);
-
-    // Direccion + maps (both required for AddressSection to render).
     await saveField(DIRECCION_FORM, NEW_DIRECCION);
     await saveField(MAPS_FORM, NEW_MAPS_URL);
 
-    // /informacion now renders the hours + address sections with the
-    // new values. Hard-reload to bypass any client cache.
+    // Navigate to /informacion and verify the formatted hours string.
     await page.goto('/informacion', { waitUntil: 'load' });
 
-    // The Horarios section card is present and contains the saved text.
+    // The Horarios section card is present and contains the formatted
+    // string. formatHorario output for "Mon-Fri 8-22, Sat 9-14, Sun
+    // closed" is "Lun a Vie 8:00 a 22:00 · Sáb 9:00 a 14:00 · Dom
+    // cerrado".
     const horasHeading = page.getByRole('heading', { name: 'Horarios' });
     await expect(horasHeading).toBeVisible({ timeout: 15000 });
     await expect(
-      page.getByText(/Lun a Vie 8 a 20/i).first()
+      page.getByText('Lun a Vie 8:00 a 22:00 · Sáb 9:00 a 14:00 · Dom cerrado').first()
     ).toBeVisible();
 
     // The Dirección section is present (requires both direccion + maps).
@@ -250,6 +311,49 @@ test.describe('Gym Config — Admin flow', () => {
     // The map iframe has the saved src.
     const iframe = page.locator(`iframe[src="${NEW_MAPS_URL}"]`);
     await expect(iframe).toBeVisible();
+  });
+
+  test('5.1.3.1 - all-7-days-closed schedule → /informacion hides the hours section', async ({ page }) => {
+    // Set all 7 days to "Cerrado" via the admin form, save, and verify
+    // the public /informacion page does NOT render the Horarios section
+    // (formatHorario returns null when all days are closed).
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+
+    // If any days are open (from a prior test in this run), toggle them
+    // off. The `:visible` filter is required because React 19 / Next 16
+    // renders the form twice (visible + hidden server-action copy).
+    // We use `aria-checked` (not `data-checked`) — base-ui Switch sets
+    // `aria-checked` as the source-of-truth state attribute; the visual
+    // color comes from a Tailwind `data-[checked]:` selector.
+    for (const code of ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'] as const) {
+      const toggle = page.locator(DAY_TOGGLE(code)).locator('visible=true');
+      const isChecked = await toggle.getAttribute('aria-checked');
+      if (isChecked === 'true') {
+        await toggle.click();
+        // Wait for the state to flip before reading the next toggle.
+        await expect(toggle).toHaveAttribute('aria-checked', 'false', {
+          timeout: 5000,
+        });
+      }
+    }
+
+    // Save the schedule.
+    await page.locator(SCHEDULE_SUBMIT).locator('visible=true').click();
+    const toast = page.locator('[data-sonner-toast]');
+    await toast
+      .first()
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .catch(() => {});
+    await page.waitForTimeout(1500);
+
+    // Navigate to /informacion and verify the Horarios heading is NOT
+    // rendered. The HoursSection returns null when formatHorario
+    // returns null (all-7-closed).
+    await page.goto('/informacion', { waitUntil: 'load' });
+    // The page loads (no error). The Horarios heading should be absent.
+    const horasHeading = page.getByRole('heading', { name: 'Horarios' });
+    await expect(horasHeading).toHaveCount(0);
   });
 
   test('5.1.4 - edit socialInstagram + socialWhatsapp → /informacion shows both buttons', async ({ page }) => {
