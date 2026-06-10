@@ -7,7 +7,6 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import {
   type FormState,
-  type GymDisplay,
   type GymField,
   gymFieldSchema,
 } from "@/lib/schemas";
