@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -58,22 +58,21 @@ export async function getGymConfig() {
  * - tagged "gym-config" so `revalidateTag("gym-config")` in
  *   `updateGymField` purges the cache immediately on save
  *
- * Note: uses `unstable_cache` (Next 15.x). The migration path to
- * `use cache` + `cacheTag` is documented in the design and will be
- * applied when `cacheComponents: true` is enabled in next.config.ts.
+ * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
+ * Requires `cacheComponents: true` in `next.config.ts` (Slice 2).
  */
-export const getGymConfigForServer = unstable_cache(
-  async () => {
-    try {
-      return await prisma.gym.findUnique({ where: { id: "gym" } });
-    } catch (error) {
-      console.error("Error fetching cached gym config:", error);
-      return null;
-    }
-  },
-  ["gym-config"],
-  { tags: ["gym-config"], revalidate: 60 }
-);
+export async function getGymConfigForServer() {
+  "use cache";
+  cacheTag("gym-config");
+  cacheLife({ revalidate: 60 });
+
+  try {
+    return await prisma.gym.findUnique({ where: { id: "gym" } });
+  } catch (error) {
+    console.error("Error fetching cached gym config:", error);
+    return null;
+  }
+}
 
 /**
  * Zod-narrowed snapshot of the gym display fields, ready to be passed
@@ -86,32 +85,34 @@ export const getGymConfigForServer = unstable_cache(
  * Tied to the same `gym-config` tag as `getGymConfigForServer`, so
  * `revalidateTag("gym-config")` (fired by `updateGymField`) purges
  * both readers in lockstep.
+ *
+ * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  */
-export const getGymDisplayForServer = unstable_cache(
-  async () => {
-    try {
-      const gym = await prisma.gym.findUnique({ where: { id: "gym" } });
-      if (!gym) return null;
-      const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
-      const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
-        ? horarioJsonParsed.data
-        : null;
-      return {
-        nombre: gym.nombre,
-        horarioJson,
-        direccion: gym.direccion,
-        mapsEmbedUrl: gym.mapsEmbedUrl,
-        socialInstagram: gym.socialInstagram,
-        socialWhatsapp: gym.socialWhatsapp,
-      };
-    } catch (error) {
-      console.error("Error fetching cached gym display:", error);
-      return null;
-    }
-  },
-  ["gym-display"],
-  { tags: ["gym-config"], revalidate: 60 }
-);
+export async function getGymDisplayForServer() {
+  "use cache";
+  cacheTag("gym-config");
+  cacheLife({ revalidate: 60 });
+
+  try {
+    const gym = await prisma.gym.findUnique({ where: { id: "gym" } });
+    if (!gym) return null;
+    const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
+    const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
+      ? horarioJsonParsed.data
+      : null;
+    return {
+      nombre: gym.nombre,
+      horarioJson,
+      direccion: gym.direccion,
+      mapsEmbedUrl: gym.mapsEmbedUrl,
+      socialInstagram: gym.socialInstagram,
+      socialWhatsapp: gym.socialWhatsapp,
+    };
+  } catch (error) {
+    console.error("Error fetching cached gym display:", error);
+    return null;
+  }
+}
 
 /**
  * Zod schema for price validation
