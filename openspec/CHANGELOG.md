@@ -4,6 +4,19 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.18.1] - 2026-06-11
+
+### Changed
+- **Routine navigation now feels instant**: `prefetch={true}` added to `RoutineCard` link so Next.js prefetches the destination route in the background; click on a routine card on the homepage now navigates immediately
+- **`/rutinas/[id]` route now shows a page-shaped skeleton** (`RoutineDetailSkeleton`) during route transition instead of the generic `<DumbbellSpinner />` — matches the page layout so the user sees "this is the routine detail page" while it loads
+- **Removed unused public route** `/rutinas/[id]/dias/[diaId]/` (page, loading, and orphan components `DayCard` + `DayDetailSkeleton`). The route was implemented in 2026-03 but never wired up in the UI. Admin route + API route + the `diaId` database FK concept are preserved (per user decision).
+
+### Notes
+- This is a PATCH release because the changes are UX polish (perceived perf) + dead code removal, not new features
+- The 4 commits since v0.18.0 are: 2 `feat:` (loading.tsx files, eligible for MINOR) + 1 `perf:` (prefetch hint) + 1 `refactor:` (delete unused route). Per readme-guardian tiebreaker ("if doubt between MINOR and PATCH → use MINOR"), MINOR was possible, but PATCH is more honest about the user-facing impact (no new features)
+
+---
+
 ## [0.18.0] - 2026-06-11
 
 ### Added
