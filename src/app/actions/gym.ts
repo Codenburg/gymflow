@@ -174,6 +174,13 @@ export async function updateGymPrice(
     revalidatePath("/informacion");
     revalidatePath("/admin");
 
+    // Invalidate the "gym-config" cache tag (getGymConfigForServer,
+    // getGymDisplayForServer, and getGymPrice all subscribe to it).
+    // Next 16 revalidateTag requires a profile arg; match the pattern
+    // already used by updateGymField in this same file.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("gym-config");
+
     return {
       success: true,
       data: { price: Number(gym.price) },
