@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// FORCE DYNAMIC: Never cache this endpoint - always fetch fresh data
-export const dynamic = "force-dynamic";
-
 /**
  * GET /api/feriados/latest
  * Returns the creation date of the most recently created Feriado.
