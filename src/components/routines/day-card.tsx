@@ -23,7 +23,7 @@ interface DayCardProps {
 
 export function DayCard({ dia, rutinaId }: DayCardProps) {
   return (
-    <Link href={`/rutinas/${rutinaId}/dias/${dia.id}`}>
+    <Link href={`/rutinas/${rutinaId}/dias/${dia.id}`} prefetch={true}>
       <Card className="group cursor-pointer transition-all duration-200 hover:border-red-500/50 hover:shadow-md hover:shadow-red-500/10">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
