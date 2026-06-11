@@ -311,12 +311,13 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
 }
 
 function renderInput(config: FieldConfig, displayedValue: string, isPending: boolean): ReactNode {
+  // NOTE: `key` MUST be passed directly to JSX, not via spread.
+  // React 19+ throws a console error if `key` is in a spread object.
+  // We re-mount when server value changes so the input resyncs
+  // (controlled vs uncontrolled dance avoided).
   const common = {
     name: "value",
     defaultValue: displayedValue,
-    // Re-mount when server value changes so the input resyncs
-    // (controlled vs uncontrolled dance avoided).
-    key: displayedValue,
     maxLength: config.maxLength,
     disabled: isPending,
     placeholder: config.placeholder,
@@ -324,12 +325,12 @@ function renderInput(config: FieldConfig, displayedValue: string, isPending: boo
   } as const;
 
   if (config.inputKind === "textarea") {
-    return <textarea {...common} rows={3} className={`${INPUT_CLASS} resize-y`} />;
+    return <textarea key={displayedValue} {...common} rows={3} className={`${INPUT_CLASS} resize-y`} />;
   }
   if (config.inputKind === "url") {
-    return <input type="url" {...common} />;
+    return <input key={displayedValue} type="url" {...common} />;
   }
-  return <input type="text" {...common} />;
+  return <input key={displayedValue} type="text" {...common} />;
 }
 
 function SectionHeader({
