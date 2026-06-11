@@ -6,9 +6,6 @@ import { AdminCard } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
 import { FileText, Calendar, TrendingUp } from "lucide-react";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 export default async function AdminDashboardPage() {
   const [stats, rutinas, gymPrice] = await Promise.all([
     getStats(),
