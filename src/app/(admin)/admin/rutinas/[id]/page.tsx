@@ -12,9 +12,6 @@ function buildFormato(series: number | null, repes: number | null): string {
   return "";
 }
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 interface EditRutinaPageProps {
   params: Promise<{ id: string }>;
 }
