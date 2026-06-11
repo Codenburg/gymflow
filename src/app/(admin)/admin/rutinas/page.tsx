@@ -6,9 +6,6 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 export default async function AdminRutinasPage() {
   // Parent layout already validated the session; this call is memoized
   // per request via React.cache(), so it dedupes with the layout's
