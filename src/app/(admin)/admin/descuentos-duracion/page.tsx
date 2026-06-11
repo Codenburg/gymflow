@@ -1,11 +1,9 @@
-import prisma from '@/lib/prisma';
+import { getDescuentos } from '@/lib/descuentos';
 import { DescuentoDuracionManager } from '@/components/admin/descuento-duracion-manager'
 import { PageHeader } from '@/components/admin/page-header'
 
 export default async function DescuentosDuracionAdminPage() {
-  const descuentos = await prisma.descuentoDuracion.findMany({
-    orderBy: { meses: 'asc' }
-  });
+  const descuentos = await getDescuentos();
 
   return (
     <div className="container py-8">
