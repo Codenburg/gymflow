@@ -1,4 +1,4 @@
-import { getFeriados } from "@/app/actions/feriados";
+import { getFeriados } from "@/lib/feriados";
 import { FeriadoManager } from "@/components/admin/feriado-manager";
 import { PageHeader } from "@/components/admin/page-header";
 
