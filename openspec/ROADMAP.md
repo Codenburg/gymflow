@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-06-10_ | _Version: 0.16.0_
+_Last updated: 2026-06-10_ | _Version: 0.17.0_
 
 ---
 
@@ -30,6 +30,7 @@ _Last updated: 2026-06-10_ | _Version: 0.16.0_
 - [x] Mensajes de error en español para validación de precio en formularios Zod (v0.10.4)
 - [x] Configuración de gimnasio desde admin: nombre, horarios, dirección, redes sociales (v0.16.0)
 - [x] Fallback chain DB → env var → "Gimnasio" genérico para evitar filtrar identidad de cliente (v0.16.0)
+- [x] Horario estructurado (formulario por día en vez de free-text) — `horarioJson: Json?` con 7 day cards (Lun a Dom), render app-controlled `"Lun a Vie 8:00 a 22:00 · …"` (v0.17.0)
 
 ### Rendimiento y seguridad
 - [x] Notificación de feriados: throttle de 5min en window focus (v0.15.1)
@@ -43,6 +44,8 @@ _Last updated: 2026-06-10_ | _Version: 0.16.0_
 - [x] Trainer manager: dialog-based UI para create/edit (v0.14.0)
 - [x] Centralized resolveGymName helper con fallback chain (v0.16.0)
 - [x] Migración a `unstable_cache` con `cacheTag("gym-config")` + 60s TTL (v0.16.0)
+- [x] Zod-validated `HorarioSemanal` shape (horarioDiaSchema + horarioSemanalSchema) con 15 unit tests (v0.17.0)
+- [x] Pure `formatHorario` formatter con 10 unit tests, render app-controlled de `/informacion` (v0.17.0)
 
 ### Técnico
 - [x] Next.js 16.1.6 + React 19.2.3
@@ -76,7 +79,18 @@ _Last updated: 2026-06-10_ | _Version: 0.16.0_
 - [ ] Generación de PDF por rutina (@react-pdf/renderer)
 - [ ] Cache warming cron para SEO
 - [ ] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir `getGymConfigForServer` con `'use cache'` + `cacheLife`
-- [ ] **Horario estructurado (reemplazar free-text por formulario por día)** — `horario: String?` actual permite texto libre e inconsistente. Follow-up: formulario con 7 cards (Lun a Dom), cada uno con `abierto: boolean` + `apertura: time | null` + `cierre: time | null`. Schema: `horarioJson: Json?` o tabla `HorarioDia`. Render: `HoursSection` formatea string uniforme desde la estructura. Así el admin no controla el formato, lo controla la app
+- [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
+- [ ] **E2E test 5.2.3 isolation issue** — `tests/gym-config.spec.ts:5.2.3` falla cuando corre después de 5.2.1 en el mismo suite (5.2.1 muta `gym.nombre` a un test value, 5.2.3 espera "Gimnasio" fallback). Pasa en aislamiento. Fix: `test.describe.configure({ mode: 'serial' })` + reset state en 5.2.3 (v0.17.0 follow-up)
+
+### Baja Prioridad
+- [ ] Exportación CSV de rutinas
+- [ ] i18n (multi-idioma)
+- [ ] PWA support (offline PDF access)
+- [ ] Multi-gym support
+- [ ] **GGA pre-commit hook falsos positivos** — el hook revisa el WHOLE file (no solo el diff) y flagea código pre-existente (`console.error`, `as any` casts) que no fue cambiado. Causa `--no-verify` recurrente. Fix: que el hook revise diff-only, o agregar `.gga-ignore` para issues pre-existentes (v0.17.0 follow-up)
+- [ ] **Pre-existing TypeScript errors (13)** — en `rutina-completa-form.tsx`, `pagination.ts`, `check-*.ts`, `promocion-schemas.test.ts`, `use-feriados-notification.test.ts`, `verify-password.ts`. Project-wide, no introducidos por cambios recientes. Cleanup en change aparte (v0.17.0 follow-up)
+- [ ] **Pre-existing lint issues (460 errors, 730 warnings)** — incluye `as any` en `revalidateTag`, `console.error` en data layer, `z.coerce.number().min(1).min(1000)` chain en `priceSchema`. Cleanup en change aparte (v0.17.0 follow-up)
+- [ ] **Prisma migration workflow** — el proyecto usa `db push` + `migrate resolve --applied` en vez de `migrate dev` por shadow database issues. Documentar el patrón como estándar del equipo (v0.17.0 follow-up)
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas
