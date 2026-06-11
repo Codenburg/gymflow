@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { cacheTag, cacheLife } from "next/cache";
 import prisma from "@/lib/prisma";
 
 /**
@@ -14,22 +14,19 @@ import prisma from "@/lib/prisma";
  * client-side from this same reader (or split into a separate
  * `getPromocionesActivasPublic` reader — TBD at Slice 3).
  *
- * Note: uses `unstable_cache` (Next 15.x). The migration path to
- * `use cache` + `cacheTag` + `cacheLife` is documented in the design
- * and will be applied when `cacheComponents: true` is enabled in
- * next.config.ts.
+ * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  */
-export const getPromociones = unstable_cache(
-  async () => {
-    try {
-      return await prisma.promocion.findMany({
-        orderBy: { createdAt: "desc" },
-      });
-    } catch (error) {
-      console.error("[getPromociones] Failed to fetch promociones:", error);
-      return [];
-    }
-  },
-  ["promociones"],
-  { tags: ["promociones"], revalidate: 60 }
-);
+export async function getPromociones() {
+  "use cache";
+  cacheTag("promociones");
+  cacheLife({ revalidate: 60 });
+
+  try {
+    return await prisma.promocion.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("[getPromociones] Failed to fetch promociones:", error);
+    return [];
+  }
+}
