@@ -3,9 +3,6 @@ import { getCachedRutinaById } from "@/lib/rutinas";
 import { EjercicioList } from "@/components/admin/ejercicio-list";
 import { PageHeader } from "@/components/admin/page-header";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 interface EjerciciosPageProps {
   params: Promise<{
     id: string;
