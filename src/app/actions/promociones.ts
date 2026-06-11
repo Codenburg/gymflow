@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -105,6 +105,12 @@ export async function createPromocion(
       data: { ...parsed.data, gymId: "gym" },
     });
 
+    // Next 16 revalidateTag requires a profile arg; the existing project
+    // pattern (src/lib/rutinas.ts, src/app/actions/gym.ts) is to cast to
+    // `any` and call with one arg. Follow the same idiom to keep the
+    // call site uniform.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("promociones");
     revalidatePath("/admin/promociones");
     revalidatePath("/precios");
 
@@ -141,6 +147,8 @@ export async function updatePromocionContent(
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("promociones");
     revalidatePath("/admin/promociones");
     revalidatePath("/precios");
 
@@ -176,6 +184,8 @@ export async function updatePromocionPrecio(
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("promociones");
     revalidatePath("/admin/promociones");
     revalidatePath("/precios");
 
@@ -212,6 +222,8 @@ export async function togglePromocionActivo(
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("promociones");
     revalidatePath("/admin/promociones");
     revalidatePath("/precios");
 
@@ -236,6 +248,8 @@ export async function deletePromocion(
   try {
     await prisma.promocion.delete({ where: { id } });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("promociones");
     revalidatePath("/admin/promociones");
     revalidatePath("/precios");
 
