@@ -11,7 +11,7 @@ export function RoutineCard({ rutina }: RoutineCardProps) {
   const diasLabel = rutina.diasCount === 1 ? "1 día" : `${rutina.diasCount} días`;
 
   return (
-    <Link href={`/rutinas/${rutina.id}`}>
+    <Link href={`/rutinas/${rutina.id}`} prefetch={true}>
       <Card className="group cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 h-full flex flex-col">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
