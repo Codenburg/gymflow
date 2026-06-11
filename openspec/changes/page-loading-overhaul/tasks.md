@@ -53,30 +53,30 @@ Chain strategy: stacked-to-main
 ## Phase 2: Admin refactor (Slice 2 of 3)
 
 ### 2.1 Admin session helper (own commit)
-- [ ] Create `src/lib/admin-session.ts` — `getAdminSession` wrapped in `React.cache()`, replaces the redundant `auth.api.getSession` calls in 4 admin pages
+- [x] Create `src/lib/admin-session.ts` — `getAdminSession` wrapped in `React.cache()`, replaces the redundant `auth.api.getSession` calls in 4 admin pages
 
 ### 2.2 Drop redundant session checks (4 pages)
-- [ ] Modify `src/app/(admin)/admin/rutinas/page.tsx` — drop `auth.api.getSession`, use `getAdminSession` from `src/lib/admin-session.ts`
-- [ ] Modify `src/app/(admin)/admin/rutinas/[id]/dias/[diaId]/page.tsx` — same
-- [ ] Modify `src/app/(admin)/admin/trainers/page.tsx` — same
-- [ ] Modify `src/app/(admin)/admin/config/page.tsx` — same
+- [x] Modify `src/app/(admin)/admin/rutinas/page.tsx` — drop `auth.api.getSession`, use `getAdminSession` from `src/lib/admin-session.ts`
+- [x] Modify `src/app/(admin)/admin/rutinas/[id]/dias/[diaId]/page.tsx` — same
+- [x] Modify `src/app/(admin)/admin/trainers/page.tsx` — same
+- [x] Modify `src/app/(admin)/admin/config/page.tsx` — same
 
 ### 2.3 New cached readers (4 readers in `src/lib/`)
-- [ ] Create `src/lib/gym-price.ts` — `getGymPrice` with `unstable_cache(..., { tags: ['gym-config'], revalidate: 60 })`
-- [ ] Create `src/lib/promociones.ts` — `getPromociones` with `unstable_cache(..., { tags: ['promociones'], revalidate: 60 })`
-- [ ] Create `src/lib/descuentos.ts` — `getDescuentos` with `unstable_cache(..., { tags: ['descuentos-duracion'], revalidate: 60 })`
-- [ ] Create or extend `src/lib/feriados.ts` — `getFeriados` with `unstable_cache(..., { tags: ['feriados'], revalidate: 30 })` (NOT 60s — "new" badge freshness, see proposal Tech Debt Inventory)
+- [x] Create `src/lib/gym-price.ts` — `getGymPrice` with `unstable_cache(..., { tags: ['gym-config'], revalidate: 60 })`
+- [x] Create `src/lib/promociones.ts` — `getPromociones` with `unstable_cache(..., { tags: ['promociones'], revalidate: 60 })`
+- [x] Create `src/lib/descuentos.ts` — `getDescuentos` with `unstable_cache(..., { tags: ['descuentos-duracion'], revalidate: 60 })`
+- [x] Create or extend `src/lib/feriados.ts` — `getFeriados` with `unstable_cache(..., { tags: ['feriados'], revalidate: 30 })` (NOT 60s — "new" badge freshness, see proposal Tech Debt Inventory)
 
 ### 2.4 Wire admin pages to use the cached readers
-- [ ] Modify `src/app/(admin)/admin/page.tsx` — use `getGymPrice` (cached) instead of uncached Prisma direct
-- [ ] Modify `src/app/(admin)/admin/promociones/page.tsx` — use `getPromociones` (cached)
-- [ ] Modify `src/app/(admin)/admin/descuentos-duracion/page.tsx` — use `getDescuentos` (cached)
-- [ ] Modify `src/app/(admin)/admin/feriados/page.tsx` — use `getFeriados` (cached)
+- [x] Modify `src/app/(admin)/admin/page.tsx` — use `getGymPrice` (cached) instead of uncached Prisma direct
+- [x] Modify `src/app/(admin)/admin/promociones/page.tsx` — use `getPromociones` (cached)
+- [x] Modify `src/app/(admin)/admin/descuentos-duracion/page.tsx` — use `getDescuentos` (cached)
+- [x] Modify `src/app/(admin)/admin/feriados/page.tsx` — use `getFeriados` (cached)
 
 ### 2.5 Server action `revalidateTag` additions
-- [ ] Modify `src/app/actions/promociones.ts` — add `revalidateTag("promociones")` to every mutation function alongside the existing `revalidatePath`
-- [ ] Modify `src/app/actions/descuentos-duracion.ts` — same with `revalidateTag("descuentos-duracion")`
-- [ ] Modify `src/app/actions/feriados.ts` — same with `revalidateTag("feriados")`
+- [x] Modify `src/app/actions/promociones.ts` — add `revalidateTag("promociones")` to every mutation function alongside the existing `revalidatePath`
+- [x] Modify `src/app/actions/descuentos-duracion.ts` — same with `revalidateTag("descuentos-duracion")`
+- [x] Modify `src/app/actions/feriados.ts` — same with `revalidateTag("feriados")`
 
 ## Phase 3: Public refactor (Slice 3 of 3)
 
