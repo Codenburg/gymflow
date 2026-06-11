@@ -101,11 +101,77 @@ _Last updated: 2026-06-11_ | _Version: 0.18.0_
 - [ ] **Hardcoded `gymId: "gym"`** en `actions/promociones.ts:96`, `descuentos-duracion.ts:91`. Identificador del singleton, no un secret. Pre-existente (v0.18.0 follow-up)
 - [ ] **Commit duplicado `cfb79f0`** en este mismo change (pathspec misinterpreted en `git commit -- openspec/ROADMAP.md`). Cosmético, ya compensado por `ce3d7e8`. Limpiar con `git rebase -i 010fd5e` antes del push si querés (v0.18.0 follow-up)
 
-### Baja Prioridad
-- [ ] Exportación CSV de rutinas
-- [ ] i18n (multi-idioma)
-- [ ] PWA support (offline PDF access)
-- [ ] Multi-gym support
-
 ### Deferred (baja traffic actual)
 - [ ] Optimización de rendimiento avanzada (lazy loading, code splitting)
+
+---
+
+## 🎯 Sugerencias para 1.0 prep
+
+Basado en el audit de los 3 SDD cycles cerrados (`gym-config-admin` v0.16.0, `gym-hours-structured` v0.17.0, `page-loading-overhaul` v0.18.0), estas son las **4 SDD changes recomendadas como bloque de preparación para 1.0.0**. Cada una tiene contexto completo + prompt para el agente que la ejecute.
+
+### Recomendación 1: `1.0-prep: migrate unstable_cache to use cache` (Alta Prioridad para 1.0)
+
+Habilita `cacheComponents: true` en `next.config.ts` y migra los 11 `unstable_cache` readers a `use cache` + `cacheTag` + `cacheLife`. **También remueve los 6 `export const dynamic = "force-dynamic"`** (anulan el caching). Verifica que cada server action de mutación llame `revalidateTag` además de `revalidatePath`.
+
+**Contexto completo**: `openspec/changes/page-loading-overhaul/proposal.md` § "Tech Debt Inventory" tiene el inventario de los 11 readers, los 6 force-dynamic, y un prompt de contexto paso a paso para el agente del follow-up.
+
+**Severidad**: Alta. Sin esto, la app no usa el caching nativo de Next 16.
+
+**Slices estimados**: 2-3 slices (cambio de flag + migrar 11 readers + remover 6 force-dynamic).
+
+---
+
+### Recomendación 2: `1.0-prep: fix pre-existing TypeScript errors + remove ignoreBuildErrors` (Alta Prioridad para 1.0)
+
+Resuelve los 15 errores TypeScript pre-existentes en archivos no tocados por los cambios recientes (`rutina-completa-form.tsx`, `pagination.ts`, `check-*.ts` debug scripts, `promocion-schemas.test.ts`, `use-feriados-notification.test.ts`, `verify-password.ts`). **Saca `ignoreBuildErrors: true` de `next.config.ts`** después.
+
+**Severidad**: Alta. Un proyecto 1.0 no compila con errores + `ignoreBuildErrors` activo es una banda.
+
+**Slices estimados**: 1-2 slices (audit + fix + remove flag).
+
+---
+
+### Recomendación 3: `1.0-prep: E2E coverage for critical flows` (Alta Prioridad para 1.0)
+
+Completa la cobertura E2E de los flujos críticos que faltan. Lo que está cubierto: admin flow gym-config (v0.16.0), admin flow horario (v0.17.0), admin flow page-loading (v0.18.0). Lo que falta:
+- Rutina CRUD end-to-end (crear, editar, eliminar, asignar días, asignar ejercicios)
+- Feriado CRUD completo (v0.16.0 cubre solo el flow gym-config)
+- Promociones + Descuentos CRUD end-to-end
+- Trainer CRUD end-to-end
+- Auth flow completo (login + logout + session expiry)
+
+**Severidad**: Alta. Tests E2E con cobertura completa es un criterio de 1.0.
+
+**Slices estimados**: 2-3 slices (rutinas, feriados+promos+descuentos, trainers+auth).
+
+---
+
+### Recomendación 4: `1.0-prep: GGA pre-commit hook diff-only + fix false positives` (Media Prioridad para 1.0)
+
+El hook actual revisa el WHOLE file y flagea código pre-existente, causando `--no-verify` recurrente. Fix: revisar diff-only, o agregar un mecanismo `.gga-ignore` para issues pre-existentes conocidos. **Limpia también los issues pre-existentes que el hook estaba flageando** (los 6 GGA issues documentados en `archive/2026-06-11-page-loading-overhaul/archive-report.md` + los 8 acumulados de cambios anteriores).
+
+**Severidad**: Media. Quality gate que no funciona bien = falsa sensación de seguridad.
+
+**Slices estimados**: 1-2 slices (audit de los issues + fix del hook).
+
+---
+
+### Recomendación BONUS: cleanup opportunities (No son 1.0 blockers, pero ayudan)
+
+- **Git index corruption recurrente** (Media) — `git fsck` reporta missing blobs después de cada cambio nuevo. Workaround aplicado (`git update-index --force-remove` + re-add). Root cause probable en `.engram/config.json` o interacción con el hook. Investigar y resolver de raíz.
+- **`revalidatePath("/admin/descuentos")` mismatch** (Media) en `actions/descuentos-duracion.ts:94,138,167` — la ruta real es `/admin/descuentos-duracion`. Pre-existente, fix de 1 línea.
+- **Prisma migration workflow documentation** (Baja) — el proyecto usa `db push` + `migrate resolve --applied` de una forma no estándar. Documentar el patrón o alinear a `migrate dev`.
+- **E2E test 5.2.3 isolation issue** (Media) — pre-existente de v0.17.0. Fix: `test.describe.configure({ mode: 'serial' })` + reset state.
+
+---
+
+### Orden recomendado para el 1.0 prep
+
+1. **Recomendación 1** (cacheComponents migration) — habilita caching nativo, es el cambio técnico más importante
+2. **Recomendación 2** (TypeScript errors + ignoreBuildErrors) — limpia la banda del build
+3. **Recomendación 3** (E2E coverage) — completa la suite de tests
+4. **Recomendación 4** (GGA hook) — mejora el quality gate
+5. **Cleanup bonus** — se puede hacer en cualquier momento, no bloquea 1.0
+
+Después de los 4 cambios + 1 release bump → **1.0.0 limpio en 4-6 SDD cycles**.
