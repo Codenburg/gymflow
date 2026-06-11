@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Roboto, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
@@ -87,7 +88,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           {children}
-          <Footer />
+          {/* Footer uses usePathname() (uncached data per Next 16 Cache Components
+              semantics). Wrap in Suspense so the page can render without
+              waiting for the pathname lookup. */}
+          <Suspense>
+            <Footer />
+          </Suspense>
           <Toaster position="bottom-right" richColors />
         </ThemeProvider>
       </body>
