@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { cacheTag, cacheLife, unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 import { DataResult, ok, err } from "@/lib/data-result";
 
@@ -121,20 +121,21 @@ async function fetchRutinasListFromDb(ownerId?: string): Promise<Rutina[]> {
 /**
  * Get cached rutinas for admin/trainer dashboard.
  * This is the SINGLE source of truth for reading rutinas.
- * 
+ *
  * @param ownerId - Optional filter by creadorId (for trainer view).
  *                   ADMIN: omit ownerId to get all rutinas.
  *                   TRAINER: provide session.user.id to get only their rutinas.
+ *
+ * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
+ * `ownerId` is part of the function signature so it becomes part of
+ * the auto-generated cache key (different ownerId = different cache entry).
  */
 export async function getRutinas(ownerId?: string) {
-  return unstable_cache(
-    () => fetchRutinasListFromDb(ownerId),
-    ["rutinas", ownerId ?? "all"],
-    {
-      revalidate: 60,
-      tags: [RUTINAS_CACHE_TAG],
-    }
-  )();
+  "use cache";
+  cacheTag(RUTINAS_CACHE_TAG);
+  cacheLife({ revalidate: 60 });
+
+  return fetchRutinasListFromDb(ownerId);
 }
 
 // Cache tag for manual revalidation
@@ -209,14 +210,11 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
 }
 
 export async function getCachedRutinaById(id: string): Promise<RutinaDetail | null> {
-  return unstable_cache(
-    () => fetchRutinaById(id),
-    ["rutina", id],
-    {
-      revalidate: 60,
-      tags: [RUTINAS_CACHE_TAG],
-    }
-  )();
+  "use cache";
+  cacheTag(RUTINAS_CACHE_TAG);
+  cacheLife({ revalidate: 60 });
+
+  return fetchRutinaById(id);
 }
 
 /**
