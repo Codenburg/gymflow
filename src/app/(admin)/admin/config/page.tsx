@@ -5,10 +5,6 @@ import { getGymDisplayForServer } from "@/app/actions/gym";
 import { GymConfigManager } from "@/components/admin/GymConfigManager";
 import { PageHeader } from "@/components/admin/page-header";
 
-// Force dynamic rendering — config writes are admin-only and must
-// bypass the route-level cache.
-export const dynamic = "force-dynamic";
-
 /**
  * /admin/config
  *
