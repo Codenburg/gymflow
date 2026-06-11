@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -88,6 +88,13 @@ export async function reorderEjercicios(
     );
 
     revalidatePath(`/admin/rutinas/${dia.rutinaId}`);
+
+    // Invalidate the rutinas cache tag — reordering exercises can
+    // change the orderBy-driven list shown on the public home page
+    // (getRoutinesPaginated subscribes to it) and the trainer counts
+    // (getTrainerCounts subscribes to it).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (revalidateTag as any)("rutinas");
 
     return {
       success: true,
