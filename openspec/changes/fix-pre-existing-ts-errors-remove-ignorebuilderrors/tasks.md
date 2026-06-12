@@ -29,10 +29,10 @@
 - [x] Verify: 5 test cases now pass typecheck
 
 ### 2.5 Verify Slice 2
-- [ ] `pnpm tsc --noEmit` reports 0 errors
-- [ ] `pnpm test:unit` still 101/101 passes
-- [ ] `pnpm test tests/gym-config.spec.ts` still 10/11 passes (same pre-existing 5.2.3 env-var failure)
-- [ ] `pnpm build` still succeeds (with `ignoreBuildErrors: true` still in place)
+- [x] `pnpm tsc --noEmit` reports 0 errors
+- [x] `pnpm test:unit` still 101/101 passes
+- [x] `pnpm test tests/gym-config.spec.ts` still 10/11 passes (same pre-existing 5.2.3 env-var failure)
+- [x] `pnpm build` still succeeds (with `ignoreBuildErrors: true` still in place)
 
 ## Phase 3: Remove safety net (Slice 3 of 3)
 
