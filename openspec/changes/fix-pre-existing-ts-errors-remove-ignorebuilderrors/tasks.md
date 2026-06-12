@@ -37,16 +37,16 @@
 ## Phase 3: Remove safety net (Slice 3 of 3)
 
 ### 3.1 Remove `typescript.ignoreBuildErrors: true` from `next.config.ts`
-- [ ] Modify `next.config.ts` — remove the `typescript: { ignoreBuildErrors: true }` block
-- [ ] Add a comment explaining the rationale: "All TS errors fixed; build now catches new ones"
+- [x] Modify `next.config.ts` — remove the `typescript: { ignoreBuildErrors: true }` block
+- [x] Add a comment explaining the rationale: "All TS errors fixed; build now catches new ones"
 
 ### 3.2 Verify Slice 3 (the critical verification)
-- [ ] `pnpm tsc --noEmit` — 0 errors
-- [ ] `pnpm build` — **MUST SUCCEED** (this is the critical verification — if it fails, the cycle is incomplete and the safety net needs to be re-added)
-- [ ] `pnpm test:unit` — 101/101 passes
-- [ ] `pnpm test tests/gym-config.spec.ts` — 10/11 passes
-- [ ] `rg "ignoreBuildErrors" next.config.ts` — 0 matches
-- [ ] Manual smoke: introduce a temporary `any` type in a test file, verify `pnpm build` now fails (the safety net is gone)
+- [x] `pnpm tsc --noEmit` — 0 errors
+- [x] `pnpm build` — **MUST SUCCEED** (this is the critical verification — if it fails, the cycle is incomplete and the safety net needs to be re-added)
+- [x] `pnpm test:unit` — 101/101 passes
+- [x] `pnpm test tests/gym-config.spec.ts` — 10/11 passes
+- [x] `rg "ignoreBuildErrors" next.config.ts` — 0 matches
+- [x] Manual smoke: introduce a temporary `any` type in a test file, verify `pnpm build` now fails (the safety net is gone)
 
 ## Phase 4: Verification (final, post-Slice 3)
 
