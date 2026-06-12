@@ -295,7 +295,10 @@ The component MUST NOT depend on any free-text input from the admin. The applica
 
 ### Requirement: Cached Public Price Reader
 
-The public-facing price value displayed on `/informacion` and other public pages MUST be read through a cached reader (`getGymPrice` / `getGymConfigForServer` pattern) that uses the `gym-config` cache tag with a 60-second TTL. The cached reader MUST be invalidated when `updateGymField` (or equivalent price mutation action) is called — the mutation action MUST call both `revalidatePath` for affected routes AND `revalidateTag("gym-config")`. The reader MUST NOT be the direct Prisma `gym.findUnique` call (which bypasses the cache).
+The public-facing price value displayed on `/informacion` and other public pages MUST be read through a cached reader (`getGymConfigForServer` / `getGymPrice`) implemented with the Next.js 16 `use cache` directive. The reader MUST declare `cacheTag("gym-config")` and `cacheLife({ revalidate: 60 })` (60-second TTL). The reader MUST NOT be the direct Prisma `gym.findUnique` call.
+
+The mutation action `updateGymField` (and any equivalent price-mutating action) MUST call BOTH `revalidatePath` for affected routes AND `revalidateTag("gym-config")` — omitting `revalidateTag` is the latent bug class fixed by this change.
+(Previously: Reader used the legacy `unstable_cache` API; mutation actions called `revalidatePath` only.)
 
 #### Scenario: Public price read goes through cached reader
 
@@ -358,3 +361,45 @@ Public-facing consumers of gym configuration (HoursSection, AddressSection, Soci
 - WHEN a user attempts to click, focus, or copy from the skeleton
 - THEN the element MUST NOT be interactive (no clickable, no selectable text, no focusable element)
 - AND the user MUST NOT be misled into believing the placeholder is real content
+
+---
+
+## ADDED Requirements (Cache Components Migration — v0.19.0)
+
+### Requirement: getGymDisplayForServer uses use cache
+
+`getGymDisplayForServer` (in `src/app/actions/gym.ts`) MUST be implemented with the `use cache` directive, `cacheTag("gym-config")`, and `cacheLife({ revalidate: 60 })`. Its return shape and consumer-facing behavior MUST be unchanged from the previous `unstable_cache` implementation. The reader MUST invalidate when `updateGymField` calls `revalidateTag("gym-config")`.
+
+#### Scenario: getGymDisplayForServer is cached with gym-config tag
+
+- GIVEN `getGymDisplayForServer` is called from a Server Component
+- WHEN the function source is inspected
+- THEN it MUST declare `"use cache"` as the first statement
+- AND it MUST call `cacheTag("gym-config")` and `cacheLife({ revalidate: 60 })`
+- AND the response shape MUST match the previous `unstable_cache` implementation
+
+#### Scenario: Display fields reflect new data after update
+
+- GIVEN an admin updates a display field (`nombre`, `direccion`, `mapsEmbedUrl`, `socialInstagram`, `socialWhatsapp`) via `updateGymField`
+- WHEN the action calls `revalidateTag("gym-config")`
+- THEN the next read of `getGymDisplayForServer` MUST return the updated value
+
+### Requirement: getGymConfigForServer is a use cache reader
+
+`getGymConfigForServer` (in `src/app/actions/gym.ts`) MUST be implemented with the `use cache` directive, `cacheTag("gym-config")`, and `cacheLife({ revalidate: 60 })`. The reader MUST NOT call `cookies()`, `headers()`, or `searchParams` inside the `use cache` body. The reader MUST NOT use `use cache: private`.
+
+#### Scenario: getGymConfigForServer is implemented with use cache
+
+- GIVEN `getGymConfigForServer` is the public reader for the singleton gym record
+- WHEN the function source is inspected
+- THEN the body MUST start with the `"use cache"` directive
+- AND MUST call `cacheTag("gym-config")` and `cacheLife({ revalidate: 60 })`
+- AND MUST NOT import or use `unstable_cache` from `next/cache`
+- AND MUST NOT access runtime APIs (`cookies`, `headers`, `searchParams`) inside the function body
+
+#### Scenario: 60-second TTL preserves stale-data window
+
+- GIVEN `getGymConfigForServer` is cached with `cacheLife({ revalidate: 60 })`
+- WHEN an admin updates the gym and the action calls `revalidateTag("gym-config")`
+- THEN subsequent reads within 60s after the revalidation MUST return the new value (the revalidateTag cleared the entry)
+- AND reads in the same window without a revalidation SHALL return the new value as well (the cache was invalidated, not just expired)

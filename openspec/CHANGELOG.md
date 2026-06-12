@@ -4,6 +4,27 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [0.19.0] - 2026-06-11
+
+### Changed
+- **Migrated all cached data readers from `unstable_cache` (Next 15.x legacy) to `use cache` + `cacheTag` + `cacheLife` (Next 16 Cache Components)**. 11 readers across 8 files migrated: `getGymConfigForServer`, `getGymDisplayForServer`, `getRoutinesPaginated`, `getTrainerCounts`, `getRutinas`, `getCachedRutinaById`, `getStats`, `getGymPrice`, `getPromociones`, `getDescuentos`, `getFeriados`. The `getFeriados` 30s TTL is preserved (intentional for "new" badge freshness on the home page).
+- **Enabled `cacheComponents: true` in `next.config.ts`**. Next.js 16 now uses Partial Prerendering (PPR) — pages that read from cached readers get a static shell with dynamic streamed content. This is the largest behavioral change in the project since 0.16.0.
+- **Removed 7 `force-dynamic` flags** (6 admin pages + 1 API route). The `force-dynamic` flags were defeating the cache. With the flag now removed, admin pages benefit from cached readers + `revalidatePath` for write invalidation.
+
+### Fixed
+- **Latent `revalidateTag` gap in `actions/gym.ts:updateGymPrice`** — the function called `revalidatePath` but not `revalidateTag("gym-config")`, which would have caused stale data after a price update. Now fixed.
+- **2 new GGA follow-ups registered** for the project ROADMAP:
+  - `GGA-FOLLOWUP-2` (Medium): replace `(revalidateTag as any)` casts project-wide with the proper Next 16 two-arg signature `revalidateTag("tag", "max")`
+  - `GGA-FOLLOWUP-3` (Low): serialize Prisma `Decimal` to `number`/`string` at reader boundaries for safe client component consumption
+
+### Notes
+- This is a **MINOR** version bump in pre-1.0 semver (signals a large behavioral change), but conceptually it's a "MAJOR" because the caching contract is now different. The user's explicit decision was to bump to 0.19.0.
+- The slice ordering was revised mid-change: original plan had Slice 1 = enable flag, but Next 16 does a parse-time check that rejects `cacheComponents: true` + any `export const dynamic = "force-dynamic"`. The slices were reordered to remove all `force-dynamic` flags first, then enable the flag, then migrate readers.
+- A prerequisite fix for the flag was required: `<Footer />` had to be wrapped in `<Suspense>` in `src/app/layout.tsx` (it uses `usePathname()` which is "uncached data" per Next 16 PPR semantics).
+- Follow-up from the change: the remaining 1.0 prep items are #2 (TypeScript errors), #3 (E2E coverage), #4 (GGA hook).
+
+---
+
 ## [0.18.2] - 2026-06-11
 
 ### Changed

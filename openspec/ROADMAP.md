@@ -81,7 +81,9 @@ _Last updated: 2026-06-11_ | _Version: 0.18.0_
 ### Media Prioridad
 - [ ] Generación de PDF por rutina (@react-pdf/renderer)
 - [ ] Cache warming cron para SEO
-- [ ] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir TODOS los readers (`getGymConfigForServer`, `getGymDisplayForServer`, `getRoutinesPaginated`, `getTrainerCounts`, `getRutinas`, `getCachedRutinaById`, `getStats`, `getGymPrice`, `getPromociones`, `getDescuentos`, `getFeriados`) con `'use cache'` + `cacheTag` + `cacheLife`. **También remover los 6 `export const dynamic = "force-dynamic"`** de las admin pages (dashboard, rutinas list, rutinas/[id] edit, rutinas/[id]/dias/[diaId] edit, feriados, config) — esos flags anulan el caching, son deuda técnica del mismo cambio. Verificar que cada server action de mutación (`actions/rutinas.ts`, `actions/feriados.ts`, `actions/promociones.ts`, `actions/descuentos-duracion.ts`, `actions/gym.ts`) llame `revalidateTag` además de `revalidatePath` para mantener la freshness post-write. **Prompt de contexto completo en `openspec/changes/page-loading-overhaul/proposal.md` § "Tech Debt Inventory"** (v0.18.0 follow-up)
+- [x] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir TODOS los readers con `'use cache'` + `cacheTag` + `cacheLife`. **También remover los 6 `export const dynamic = "force-dynamic"`** de las admin pages. Verificar que cada server action de mutación llame `revalidateTag` además de `revalidatePath`. **COMPLETED in v0.19.0** — pero con 2 follow-ups nuevos descubiertos:
+  - `GGA-FOLLOWUP-2` (Medium): replace `(revalidateTag as any)` casts project-wide con `revalidateTag("tag", "max")` (Next 16 two-arg signature)
+  - `GGA-FOLLOWUP-3` (Low): Prisma Decimal serialization en `getGymConfigForServer` para client components
 - [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
 - [ ] **E2E test 5.2.3 isolation issue** — `tests/gym-config.spec.ts:5.2.3` falla cuando corre después de 5.2.1 en el mismo suite (5.2.1 muta `gym.nombre` a un test value, 5.2.3 espera "Gimnasio" fallback). Pasa en aislamiento. Fix: `test.describe.configure({ mode: 'serial' })` + reset state en 5.2.3 (v0.17.0 follow-up)
 - [ ] **`revalidatePath("/admin/descuentos")` no matchea la ruta real** en `actions/descuentos-duracion.ts:94,138,167` — la ruta es `/admin/descuentos-duracion`. Pre-existente, no introducido por este cambio (v0.18.0 follow-up)
@@ -110,7 +112,7 @@ _Last updated: 2026-06-11_ | _Version: 0.18.0_
 
 Basado en el audit de los 3 SDD cycles cerrados (`gym-config-admin` v0.16.0, `gym-hours-structured` v0.17.0, `page-loading-overhaul` v0.18.0), estas son las **4 SDD changes recomendadas como bloque de preparación para 1.0.0**. Cada una tiene contexto completo + prompt para el agente que la ejecute.
 
-### Recomendación 1: `1.0-prep: migrate unstable_cache to use cache` (Alta Prioridad para 1.0)
+### Recomendación 1: ~~`1.0-prep: migrate unstable_cache to use cache`~~ ✅ **COMPLETED en v0.19.0**
 
 Habilita `cacheComponents: true` en `next.config.ts` y migra los 11 `unstable_cache` readers a `use cache` + `cacheTag` + `cacheLife`. **También remueve los 6 `export const dynamic = "force-dynamic"`** (anulan el caching). Verifica que cada server action de mutación llame `revalidateTag` además de `revalidatePath`.
 
@@ -119,6 +121,12 @@ Habilita `cacheComponents: true` en `next.config.ts` y migra los 11 `unstable_ca
 **Severidad**: Alta. Sin esto, la app no usa el caching nativo de Next 16.
 
 **Slices estimados**: 2-3 slices (cambio de flag + migrar 11 readers + remover 6 force-dynamic).
+
+**Status**: ✅ **COMPLETED en v0.19.0**. Slice 1 (7 force-dynamic removals) + Slice 2 (Footer-in-Suspense prerequisite fix + cacheComponents flag enable) + Slice 3 (11 readers migrated to use cache + 5 revalidateTag gaps fixed). Detalles completos en `openspec/changes/archive/2026-06-11-migrate-unstable-cache-to-use-cache/archive-report.md`.
+
+**Follow-ups nuevos descubiertos durante la migración**:
+- `GGA-FOLLOWUP-2` (Medium): replace `(revalidateTag as any)` casts project-wide con `revalidateTag("tag", "max")` (Next 16 two-arg signature)
+- `GGA-FOLLOWUP-3` (Low): Prisma Decimal serialization en `getGymConfigForServer` para client components
 
 ---
 

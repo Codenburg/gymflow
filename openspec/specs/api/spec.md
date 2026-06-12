@@ -11,7 +11,9 @@ This spec defines the backend API endpoints required to expose the singleton Gym
 ### Requirement: GET /api/gym Endpoint
 
 The system MUST provide a read-only endpoint to retrieve the current gym configuration. The response MUST include the structured `horarioJson` (validated `HorarioSemanal` object or `null`) in place of the previous free-text `horario` field, plus the remaining display fields (`nombre`, `direccion`, `mapsEmbedUrl`, `socialInstagram`, `socialWhatsapp`) and existing `price`, `createdAt`, `updatedAt`.
-(Previously: The response included `horario` as a free-text string.)
+(Previously: The response included `horario` as a free-text string. Reader used the legacy `unstable_cache` API.)
+
+The underlying read MUST be served from `getGymConfigForServer` in `src/app/actions/gym.ts`, implemented with the Next.js 16 `use cache` directive, `cacheTag("gym-config")`, and `cacheLife({ revalidate: 60 })`. The reader MUST NOT call `prisma.gym.findUnique` directly.
 
 #### Scenario: Fetch gym configuration successfully
 
@@ -21,6 +23,12 @@ The system MUST provide a read-only endpoint to retrieve the current gym configu
 - AND The response body MUST contain the Gym object with id, price, createdAt, updatedAt
 - AND The response body MUST also include nombre, horarioJson, direccion, mapsEmbedUrl, socialInstagram, socialWhatsapp (any MAY be null)
 - AND a `horario` free-text field MUST NOT appear in the response
+
+#### Scenario: Response served from use cache on repeat reads
+
+- GIVEN a GET /api/gym was made within the last 60 seconds with no mutation
+- WHEN a second GET /api/gym is made
+- THEN the response MUST be served from cache (no DB round-trip)
 
 #### Scenario: Fetch gym when database is empty
 
@@ -48,7 +56,9 @@ The system MUST provide a read-only endpoint to retrieve the current gym configu
 ### Requirement: PATCH /api/gym Endpoint
 
 The system MUST provide an authenticated endpoint to update gym configuration. The endpoint MUST accept any subset of the five String display fields plus `horarioJson` plus `price`, validate via Zod, and reject invalid input with HTTP 400 and field-level error details.
-(Previously: The endpoint accepted a free-text `horario` string; it now accepts a structured `horarioJson` object.)
+(Previously: The endpoint accepted a free-text `horario` string; it now accepts a structured `horarioJson` object. Actions called `revalidatePath` only.)
+
+On success the action MUST call BOTH `revalidatePath` for every affected route AND `revalidateTag("gym-config")` to invalidate the cached reader. Both calls are MANDATORY — omitting `revalidateTag` is the bug class fixed by this change.
 
 #### Scenario: Update gym price successfully
 
@@ -108,6 +118,18 @@ The system MUST provide an authenticated endpoint to update gym configuration. T
 - WHEN A PATCH request is made to /api/gym with body `{ "price": -100 }`
 - THEN The response MUST return HTTP status 400
 - AND The response body MUST contain validation error details
+
+#### Scenario: Update gym price calls revalidateTag in addition to revalidatePath
+
+- GIVEN an authenticated admin and Gym id "gym" with price 45000
+- WHEN A PATCH /api/gym is made with `{ "price": 50000 }`
+- THEN the action MUST call `revalidateTag("gym-config")` in addition to `revalidatePath`
+
+#### Scenario: Cache invalidation propagates to next GET
+
+- GIVEN an admin updated the gym price via PATCH /api/gym and the action called `revalidateTag("gym-config")`
+- WHEN a subsequent GET /api/gym request is made
+- THEN the response MUST return the new price (NOT the cached stale value)
 
 #### Scenario: Update without authentication
 
@@ -428,3 +450,43 @@ All mutation server actions in `src/app/actions/feriados.ts` (create, update, de
 - WHEN an admin creates or updates a feriado
 - THEN `revalidateTag("feriados")` MUST also invalidate the `getLatestFeriadoDatePublic` cache
 - AND the home page notification badge MUST reflect the new "latest" feriado within 30 seconds of the mutation
+
+---
+
+## ADDED Requirements (Cache Components Migration — v0.19.0)
+
+### Requirement: Server Action Cache Invalidation Contract
+
+Every mutation server action in `src/app/actions/*.ts` that mutates a row read by a `use cache` reader MUST call BOTH `revalidatePath` AND `revalidateTag` for the relevant tag. This contract codifies the latent-bug fix from the v0.19.0 audit (5 action files with zero `revalidateTag` calls, 4 with partial coverage).
+
+Stable tag conventions:
+
+| Tag | Used by readers | Invalidated by |
+|-----|-----------------|----------------|
+| `gym-config` | `getGymConfigForServer`, `getGymDisplayForServer`, `getGymPrice` | `actions/gym.ts` |
+| `rutinas` | `getRoutinesPaginated`, `getTrainerCounts`, `getRutinas`, `getCachedRutinaById`, `getStats` | `actions/rutinas.ts`, `actions/ejercicios.ts`, `actions/dias.ts`, `actions/reorder.ts` |
+| `promociones` | `getPromociones*` | `actions/promociones.ts` |
+| `descuentos-duracion` | `getDescuentos*` | `actions/descuentos-duracion.ts` |
+| `feriados` | `getFeriados*` (incl. `getLatestFeriadoDatePublic`) | `actions/feriados.ts` |
+| `users` | trainer-management readers | `actions/trainers.ts` |
+
+#### Scenario: Every mutation calls revalidateTag for the relevant tag
+
+- GIVEN a server action mutates a row read by a `use cache` reader
+- WHEN the action completes successfully
+- THEN the action MUST call `revalidateTag` for EVERY cache tag subscribed to by the affected reader
+- AND MUST also call `revalidatePath` for every route that renders the data
+- AND omitting `revalidateTag` is a regression of the audit fix
+
+#### Scenario: Zero-coverage action files now invalidate cache
+
+- GIVEN the 5 action files previously with 0 `revalidateTag` calls
+- WHEN the migration is complete
+- THEN EVERY exported mutation in those files MUST call `revalidateTag("rutinas")` (or `revalidateTag("users")` for trainers) in addition to `revalidatePath`
+
+#### Scenario: Tag literals are stable and identical
+
+- GIVEN a tag like `promociones` is declared in a reader's `cacheTag(...)` call
+- WHEN the corresponding action calls `revalidateTag(...)`
+- THEN the string literal MUST be byte-identical between reader and action
+- AND the same tag MUST be used by public and admin readers (one invalidation clears both)
