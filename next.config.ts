@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
   // The project's unstable_cache readers are migrated to `use cache` in
   // a follow-up SDD change.
   cacheComponents: true,
-  typescript: {
-    // Ignore TypeScript errors in tests - they have pre-existing path issues
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;
