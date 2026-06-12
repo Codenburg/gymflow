@@ -208,7 +208,10 @@ describe('Schema isolation - each schema only accepts its specific fields', () =
     // precio should not be in the parsed data (extra fields are stripped by zod by default)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.precio).toBeUndefined()
+      // Cast to a record so we can probe for fields not declared on the
+      // schema's inferred type. The assertion verifies Zod's strip-by-default
+      // behavior for unknown keys.
+      expect((result.data as Record<string, unknown>).precio).toBeUndefined()
     }
   })
 
@@ -220,7 +223,7 @@ describe('Schema isolation - each schema only accepts its specific fields', () =
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.titulo).toBeUndefined()
+      expect((result.data as Record<string, unknown>).titulo).toBeUndefined()
     }
   })
 
@@ -233,8 +236,8 @@ describe('Schema isolation - each schema only accepts its specific fields', () =
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.titulo).toBeUndefined()
-      expect(result.data.precio).toBeUndefined()
+      expect((result.data as Record<string, unknown>).titulo).toBeUndefined()
+      expect((result.data as Record<string, unknown>).precio).toBeUndefined()
     }
   })
 })
