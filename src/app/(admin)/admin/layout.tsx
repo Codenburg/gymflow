@@ -17,7 +17,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth, isAdminOrTrainer } from "@/lib/auth";
 import { AdminLayout as AdminLayoutComponent } from "@/components/admin/admin-layout";
-import { getGymConfigForServer } from "@/app/actions/gym";
+import { getGymNameForServer } from "@/app/actions/gym";
 import { resolveGymName } from "@/lib/gym-display";
 
 export default async function AdminLayout({
@@ -51,8 +51,8 @@ export default async function AdminLayout({
   // failing the admin layout render.
   let gymName: string;
   try {
-    const gym = await getGymConfigForServer();
-    gymName = resolveGymName(gym?.nombre);
+    const dbName = await getGymNameForServer();
+    gymName = resolveGymName(dbName);
   } catch {
     gymName = resolveGymName(null);
   }

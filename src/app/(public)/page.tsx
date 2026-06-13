@@ -9,7 +9,7 @@ import { getRoutinesPaginated, getTrainerCounts, PAGE_SIZE } from "@/services/ro
 import { ErrorState } from "@/components/ui/error-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
-import { getGymConfigForServer } from "@/app/actions/gym";
+import { getGymNameForServer } from "@/app/actions/gym";
 import { resolveGymName } from "@/lib/gym-display";
 
 interface SearchParams {
@@ -36,8 +36,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
   // to the env/chain default instead of failing the page render.
   let gymName: string;
   try {
-    const gym = await getGymConfigForServer();
-    gymName = resolveGymName(gym?.nombre);
+    const dbName = await getGymNameForServer();
+    gymName = resolveGymName(dbName);
   } catch {
     gymName = resolveGymName(null);
   }

@@ -36,7 +36,7 @@ async function verifyAdmin(
 /**
  * Get Gym configuration (for server components)
  *
- * Uncached, fresh read. Prefer `getGymConfigForServer` for hot paths.
+ * Uncached, fresh read. Prefer `getGymNameForServer` for hot paths.
  */
 export async function getGymConfig() {
   try {
@@ -51,8 +51,23 @@ export async function getGymConfig() {
 }
 
 /**
- * Cached read of the Gym singleton for server-side consumers
- * (root metadata, public pages, admin layout).
+ * Cached read of the Gym singleton's `nombre` field for server-side
+ * consumers (root metadata, public pages, admin layout).
+ *
+ * Returns only the raw `dbName` (string | null). The full fallback
+ * chain (`DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"`) is applied by the
+ * `resolveGymName` utility that every caller wraps this in.
+ *
+ * Keeping the read narrow avoids leaking Prisma's `Decimal`,
+ * `Date`, and `Prisma.JsonValue` instances into the cache output.
+ * The RSC serializer cannot pass `Decimal` through the
+ * Server-to-Client boundary, and the previous full-row reader
+ * tripped the browser console with:
+ *
+ *   Only plain objects can be passed to Client Components from
+ *   Server Components. Decimal objects are not supported.
+ *
+ * See GGA-FOLLOWUP-3.
  *
  * - 60s TTL safety net
  * - tagged "gym-config" so `revalidateTag("gym-config")` in
@@ -61,15 +76,19 @@ export async function getGymConfig() {
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  * Requires `cacheComponents: true` in `next.config.ts` (Slice 2).
  */
-export async function getGymConfigForServer() {
+export async function getGymNameForServer(): Promise<string | null> {
   "use cache";
   cacheTag("gym-config");
   cacheLife({ revalidate: 60 });
 
   try {
-    return await prisma.gym.findUnique({ where: { id: "gym" } });
+    const gym = await prisma.gym.findUnique({
+      where: { id: "gym" },
+      select: { nombre: true },
+    });
+    return gym?.nombre ?? null;
   } catch (error) {
-    console.error("Error fetching cached gym config:", error);
+    console.error("Error fetching cached gym name:", error);
     return null;
   }
 }
@@ -82,7 +101,7 @@ export async function getGymConfigForServer() {
  * collapses to `null` — the public `HoursSection` hides itself, the
  * admin `WeeklyScheduleEditor` falls back to the "all closed" default.
  *
- * Tied to the same `gym-config` tag as `getGymConfigForServer`, so
+ * Tied to the same `gym-config` tag as `getGymNameForServer`, so
  * `revalidateTag("gym-config")` (fired by `updateGymField`) purges
  * both readers in lockstep.
  *
@@ -174,7 +193,7 @@ export async function updateGymPrice(
     revalidatePath("/informacion");
     revalidatePath("/admin");
 
-    // Invalidate the "gym-config" cache tag (getGymConfigForServer,
+    // Invalidate the "gym-config" cache tag (getGymNameForServer,
     // getGymDisplayForServer, and getGymPrice all subscribe to it).
     // Next 16 revalidateTag requires a profile arg; match the pattern
     // already used by updateGymField in this same file.

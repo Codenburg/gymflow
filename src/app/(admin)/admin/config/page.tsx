@@ -13,10 +13,11 @@ import { PageHeader } from "@/components/admin/page-header";
  * - TRAINER: redirected to /admin/rutinas (mirrors the trainers page pattern).
  * - USER: redirected to "/" by the parent layout.
  *
- * Reads the current config through `getGymConfigForServer` (the cached
- * reader wired in Slice 1) and passes a serializable snapshot to the
- * client manager. The manager uses `updateGymField` per field, which
- * revalidates the `gym-config` tag and the public paths.
+ * Reads the current config through `getGymDisplayForServer` (the
+ * cached reader that returns a Zod-narrowed subset of the Gym
+ * display fields) and passes it to the client manager. The manager
+ * uses `updateGymField` per field, which revalidates the
+ * `gym-config` tag and the public paths.
  */
 export default async function AdminConfigPage() {
   // Parent layout already validated the session; this call is memoized
