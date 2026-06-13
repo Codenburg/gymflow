@@ -162,7 +162,7 @@ Completa la cobertura E2E de los flujos críticos que faltan. Lo que está cubie
 
 ---
 
-### Recomendación 4: `1.0-prep: GGA pre-commit hook diff-only + fix false positives` (Media Prioridad para 1.0)
+### Recomendación 4: ~~`1.0-prep: GGA pre-commit hook diff-only + fix false positives`~~ ✅ **COMPLETED en v0.20.1**
 
 El hook actual revisa el WHOLE file y flagea código pre-existente, causando `--no-verify` recurrente. Fix: revisar diff-only, o agregar un mecanismo `.gga-ignore` para issues pre-existentes conocidos. **Limpia también los issues pre-existentes que el hook estaba flageando** (los 6 GGA issues documentados en `archive/2026-06-11-page-loading-overhaul/archive-report.md` + los 8 acumulados de cambios anteriores).
 
@@ -170,12 +170,7 @@ El hook actual revisa el WHOLE file y flagea código pre-existente, causando `--
 
 **Slices estimados**: 1-2 slices (audit de los issues + fix del hook).
 
-**Status (2026-06-13)**: SDD cycle `gga-hook-diff-only` en progreso, stacked-to-main chain.
-- **PR 1 — Tooling** ✅ PUSHEADO con `size:exception` (9 commits, +1231 líneas, 2.7× el forecast de 455). Explicación: JSDoc completo + 48 unit tests (44% del slice es tests, apropiado para parsers). Veredicto del review: 0 CRITICAL, 2 WARNING (theoretical), 7 SUGGESTION. Detalles en `openspec/changes/gga-hook-diff-only/tasks.md` y apply-progress en engram (`sdd/gga-hook-diff-only/apply-progress`, id 192).
-- **PR 2 — Cleanups** ✅ PUSHEADO (4 commits, +152/-39, forecast era +28/-9). Explicación: T13 strict TDD requirió test file nuevo (88 líneas), 2 nuevos test cases para el null-guard. Executable real +35/-12 (dentro del spirit del forecast). 151/151 unit tests pass. GGA passed los 4 commits. Archivos: `actions/{promociones,descuentos-duracion,feriados}.ts` modificados, `tests/feriados-null-guard.test.ts` creado.
-- **PR 3 — Seed + Docs + Release** ✅ PUSHEADO (3 commits, +49/-10, forecast era +47/-13, dentro de budget). Archivos: `.gga-ignore` (20 líneas, 11 entries seeded con post-cleanup line numbers validados), `CONTRIBUTING.md` (sección "Pre-commit hook (GGA — diff-only review)" reemplaza el bloque deprecated de `gga install`), `package.json` (0.20.0 → 0.20.1 patch bump). 2 discoveries nuevos: (1) design seed usaba `src/lib/rutinas.ts:*` que el parser rechaza — corregido a whole-file match; (2) line numbers del design eran pre-cleanup, los post-PR 2 reales están shifted +1 a +6. 151/151 tests pass, tsc clean.
-
-**SDD change `gga-hook-diff-only` apply complete**. Pendiente: `sdd-verify` (validate against specs) y `sdd-archive` (sync delta specs).
+**Status (2026-06-13)**: SDD cycle `gga-hook-diff-only` **COMPLETED en v0.20.1**. 3 stacked-to-main PRs landed (PR 1 Tooling T1–T9 con `size:exception`, PR 2 Cleanups T10–T13, PR 3 Seed+Docs+Release T14–T16) + 3 docs commits. Verify PASS (151/151 tests, 0 new TS errors, 6/6 discoveries honored, 4/4 cleanups verificados en source, 11/11 `.gga-ignore` entries parsean). Detalles completos en `openspec/changes/archive/2026-06-13-gga-hook-diff-only/archive-report.md`. El wrapper es opt-in — cada dev debe correr `bash scripts/install-gga-hook.sh` una vez por fresh clone.
 
 ---
 
