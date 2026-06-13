@@ -77,20 +77,25 @@ export async function createFeriado(
 
   // Pre-check for duplicate (UX optimization before DB constraint check)
   // Note: gymId defaults to the single-gym constant since there's only one gym
-  const existing = await prisma.feriado.findFirst({
-    where: {
-      gymId: GYM_SINGLETON_ID,
-      fecha: normalizedFecha, // String comparison directly
-    },
-  });
+  try {
+    const existing = await prisma.feriado.findFirst({
+      where: {
+        gymId: GYM_SINGLETON_ID,
+        fecha: normalizedFecha, // String comparison directly
+      },
+    });
 
-  if (existing) {
-    return {
-      success: false,
-      message: "Ya existe un feriado para esta fecha",
-      statusCode: 409,
-      code: "DUPLICATE",
-    };
+    if (existing) {
+      return {
+        success: false,
+        message: "Ya existe un feriado para esta fecha",
+        statusCode: 409,
+        code: "DUPLICATE",
+      };
+    }
+  } catch (error) {
+    console.error("Error pre-checking for duplicate feriado:", error);
+    throw error;
   }
 
   try {
@@ -186,21 +191,26 @@ export async function updateFeriado(
   // Pre-check for duplicate (excluding current record)
   // Note: gymId defaults to the single-gym constant since there's only one gym
   if (normalizedFecha) {
-    const existing = await prisma.feriado.findFirst({
-      where: {
-        gymId: GYM_SINGLETON_ID,
-        fecha: normalizedFecha, // String comparison directly
-        NOT: { id: parsedId.data },
-      },
-    });
+    try {
+      const existing = await prisma.feriado.findFirst({
+        where: {
+          gymId: GYM_SINGLETON_ID,
+          fecha: normalizedFecha, // String comparison directly
+          NOT: { id: parsedId.data },
+        },
+      });
 
-    if (existing) {
-      return {
-        success: false,
-        message: "Ya existe un feriado para esta fecha",
-        statusCode: 409,
-        code: "DUPLICATE",
-      };
+      if (existing) {
+        return {
+          success: false,
+          message: "Ya existe un feriado para esta fecha",
+          statusCode: 409,
+          code: "DUPLICATE",
+        };
+      }
+    } catch (error) {
+      console.error("Error pre-checking for duplicate feriado:", error);
+      throw error;
     }
   }
 
