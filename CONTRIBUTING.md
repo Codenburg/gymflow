@@ -35,18 +35,37 @@ Usar Conventional Commits:
 | `test:` | tests |
 | `chore:` | mantenimiento |
 
-# Pre-commit hook para validar convenciones:
-Inicair GGA para validar convenciones y código antes de cada commit:
-No funciona con powershell o cmd. Usar WSL o Git Bash.
+## Pre-commit hook (GGA — diff-only review)
 
-**Recomienndo usar Git Bash desde la terminnal de VSCode para evitar problemas con el hook.**
+> **v0.20.1+**: Este repo usa un wrapper local (`scripts/gga-pre-commit.mjs`) en vez de `gga install`. El wrapper filtra las findings de GGA a las **líneas que cambiaste**, con un escape hatch `.gga-ignore` para issues pre-existentes. Target: GGA v2.8.1.
+
+### Instalación / Desinstalación / Kill switch
+
 ```bash
-gga install             # Install git hook
-# Edit .gga to set your PROVIDER
-# Create AGENTS.md with your coding standards
-# Done — every commit gets reviewed 🎉
+bash scripts/install-gga-hook.sh         # Install (idempotente)
+bash scripts/uninstall-gga-hook.sh       # Restore original hook from .bak
+GGA_DIFF_FILTER=off git commit -m "..."  # Pass-through (sin filtro diff)
 ```
-Para mas informacion sobre GGA: ver [GGA Documentation](https://github.com/Gentleman-Programming/gentleman-guardian-angel)
+
+No funciona con PowerShell o cmd — usar WSL o Git Bash (recomendado desde la terminal de VSCode).
+
+### Sintaxis de `.gga-ignore`
+
+Una entrada por línea (`#` comentarios, líneas en blanco se ignoran). Glob con `*` (un segmento) y `**` (cualquier path); `?` y `[abc]` no soportados.
+
+| Sintaxis | Significado |
+|----------|-------------|
+| `path/to/file.ts` | Ignora el archivo completo |
+| `path/to/file.ts:42` | Ignora la línea 42 (1-indexed) |
+| `path/to/file.ts:42-50` | Ignora el rango inclusivo |
+
+### Agregar una entrada
+
+1. Editar `.gga-ignore` con formato `path:line` (o `path:start-end` para rango).
+2. Commitear con un mensaje que explique el por qué.
+3. Re-evaluar en cada release menor — las pre-existentes pueden dejar de ser necesarias.
+
+Para más información sobre GGA: ver [GGA Documentation](https://github.com/Gentleman-Programming/gentleman-guardian-angel).
 
 ## SDD (Spec-Driven Development)
 
