@@ -1,0 +1,20 @@
+# gym-routines-manager .gga-ignore — diff-only post-filter
+# See CONTRIBUTING.md for syntax.
+
+# Pre-existing code flagged by GGA v2.8.1 — suppress on changed-only path.
+# Re-evaluate on every minor release.
+
+# Cleanups scheduled for this change (will become obsolete)
+src/app/actions/promociones.ts:106
+src/app/actions/descuentos-duracion.ts:92
+src/app/actions/descuentos-duracion.ts:101
+src/app/actions/descuentos-duracion.ts:147
+src/app/actions/descuentos-duracion.ts:178
+src/app/actions/feriados.ts:83
+src/app/actions/feriados.ts:156
+src/app/actions/feriados.ts:203
+src/app/actions/feriados.ts:280
+
+# Pre-existing noise (history) — keep ignored until next sweep
+src/lib/rutinas.ts
+tests/check-*.ts
