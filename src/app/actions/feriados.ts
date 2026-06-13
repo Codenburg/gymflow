@@ -152,8 +152,14 @@ export async function updateFeriado(
     return { success: false, message: authCheck.message };
   }
 
-  // Get ID from formData
-  const id = formData.get("id") as string;
+  // Get ID from formData (null-guard before Zod validation for a clearer error)
+  const id = formData.get("id");
+  if (!id || typeof id !== "string") {
+    return {
+      success: false,
+      message: "ID de feriado requerido",
+    };
+  }
 
   // Validate UUID format
   const parsedId = idSchema.safeParse(id);
@@ -271,7 +277,13 @@ export async function deleteFeriado(
     return { success: false, message: authCheck.message };
   }
 
-  const id = formData.get("id") as string;
+  const id = formData.get("id");
+  if (!id || typeof id !== "string") {
+    return {
+      success: false,
+      message: "ID de feriado requerido",
+    };
+  }
 
   // Validate UUID format
   const parsed = idSchema.safeParse(id);
