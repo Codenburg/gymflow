@@ -170,6 +170,11 @@ El hook actual revisa el WHOLE file y flagea código pre-existente, causando `--
 
 **Slices estimados**: 1-2 slices (audit de los issues + fix del hook).
 
+**Status (2026-06-13)**: SDD cycle `gga-hook-diff-only` en progreso, stacked-to-main chain.
+- **PR 1 — Tooling** ✅ PUSHEADO con `size:exception` (9 commits, +1231 líneas, 2.7× el forecast de 455). Explicación: JSDoc completo + 48 unit tests (44% del slice es tests, apropiado para parsers). Veredicto del review: 0 CRITICAL, 2 WARNING (theoretical), 7 SUGGESTION. Detalles en `openspec/changes/gga-hook-diff-only/tasks.md` y apply-progress en engram (`sdd/gga-hook-diff-only/apply-progress`, id 192).
+- **PR 2 — Cleanups** ⏳ Pendiente (4 atomic app-code fixes: gymId constant, revalidatePath, findFirst try/catch, formData.get null-guard).
+- **PR 3 — Seed + Docs + Release** ⏳ Pendiente (`.gga-ignore` con post-cleanup line numbers, `CONTRIBUTING.md` update, version bump).
+
 ---
 
 ### Recomendación BONUS: cleanup opportunities (No son 1.0 blockers, pero ayudan)
