@@ -98,7 +98,7 @@ export async function createDescuentoDuracion(
     // call site uniform.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (revalidateTag as any)("descuentos-duracion");
-    revalidatePath("/admin/descuentos");
+    revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 
     return { success: true, data: descuento };
@@ -144,7 +144,7 @@ export async function updateDescuentoDuracion(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (revalidateTag as any)("descuentos-duracion");
-    revalidatePath("/admin/descuentos");
+    revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 
     return { success: true, data: descuento };
@@ -175,7 +175,7 @@ export async function deleteDescuentoDuracion(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (revalidateTag as any)("descuentos-duracion");
-    revalidatePath("/admin/descuentos");
+    revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 
     return { success: true };
