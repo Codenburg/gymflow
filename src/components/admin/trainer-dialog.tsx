@@ -150,6 +150,7 @@ export function TrainerDialog({
                 </label>
                 <Input
                   id="edit-name"
+                  data-testid="trainer-name-input"
                   placeholder="Juan Pérez"
                   value={updateForm.watch("name")}
                   onChange={(e) => updateForm.setValue("name", e.target.value)}
@@ -201,7 +202,11 @@ export function TrainerDialog({
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <Button type="submit" disabled={updateForm.formState.isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={updateForm.formState.isSubmitting}
+                  data-testid="trainer-submit-button"
+                >
                   <Check className="w-4 h-4 mr-2" />
                   {updateForm.formState.isSubmitting ? "Guardando..." : "Guardar cambios"}
                 </Button>
@@ -231,6 +236,7 @@ export function TrainerDialog({
                   </label>
                   <Input
                     id="create-username"
+                    data-testid="trainer-dni-input"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]{0,8}"
@@ -253,6 +259,7 @@ export function TrainerDialog({
                 </label>
                 <Input
                   id="create-name"
+                  data-testid="trainer-name-input"
                   placeholder="Juan Pérez"
                   {...createForm.register("name")}
                   aria-invalid={!!createForm.formState.errors.name}
@@ -272,6 +279,7 @@ export function TrainerDialog({
                 <div className="relative">
                   <Input
                     id="create-password"
+                    data-testid="trainer-password-input"
                     type={showCreatePassword ? "text" : "password"}
                     placeholder="Mínimo 6 caracteres"
                     {...createForm.register("password")}
@@ -296,7 +304,11 @@ export function TrainerDialog({
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={createForm.formState.isSubmitting}
+                  data-testid="trainer-submit-button"
+                >
                   <Check className="w-4 h-4 mr-2" />
                   {createForm.formState.isSubmitting ? "Creando..." : "Crear Entrenador"}
                 </Button>

@@ -17,6 +17,7 @@ interface LoginFormData {
 export default function AdminLoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // The login page is a Client Component — it has no auth context, so it
   // cannot read from the DB. The fallback chain collapses to:
@@ -39,6 +40,7 @@ export default function AdminLoginPage() {
     if (isLoading) return;
 
     setIsLoading(true);
+    setServerError(null);
 
     try {
       await authClient.signIn.username(
@@ -56,13 +58,20 @@ export default function AdminLoginPage() {
             if (mensaje.includes("Invalid") || mensaje.includes("email")) {
               mensaje = "DNI o contraseña incorrectos";
             }
+            // Surface the error inline (with the data-testid the E2E
+            // tests target) AND fire a sonner toast for the user. The
+            // inline element is the canonical "did login fail" signal
+            // for the AuthPage.expectError() page-object method.
+            setServerError(mensaje);
             toast.error(mensaje);
             setIsLoading(false);
           },
         }
       );
     } catch (err) {
-      toast.error("Error de conexión. Intenta de nuevo.");
+      const mensaje = "Error de conexión. Intenta de nuevo.";
+      setServerError(mensaje);
+      toast.error(mensaje);
       setIsLoading(false);
     }
   };
@@ -78,6 +87,15 @@ export default function AdminLoginPage() {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {serverError && (
+            <p
+              data-testid="login-error-message"
+              role="alert"
+              className="text-[var(--destructive)] text-sm"
+            >
+              {serverError}
+            </p>
+          )}
           <div className="space-y-2">
             <label htmlFor="dni" className="text-[var(--foreground)] text-sm font-medium">
               DNI

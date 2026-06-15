@@ -68,7 +68,10 @@ export function TrainerManager({ initialTrainers }: TrainerManagerProps) {
         title="Entrenadores"
         description="Gestiona los entrenadores del gimnasio"
         actions={
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            data-testid="trainer-add-button"
+          >
             <Plus className="w-4 h-4 mr-1" />
             Nuevo Entrenador
           </Button>
@@ -92,6 +95,7 @@ export function TrainerManager({ initialTrainers }: TrainerManagerProps) {
             trainers.map((trainer) => (
               <div
                 key={trainer.id}
+                data-testid="trainer-list-item"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors group"
               >
                 <div className="flex items-center gap-4">
@@ -126,6 +130,7 @@ export function TrainerManager({ initialTrainers }: TrainerManagerProps) {
                     onClick={() => handleDelete(trainer.id, trainer.name)}
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     title="Eliminar"
+                    data-testid="trainer-delete-button"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
