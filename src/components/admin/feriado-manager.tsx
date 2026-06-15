@@ -114,7 +114,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
       const formData = new FormData();
       formData.append("id", id);
 
-      const result: FormState = await deleteFeriado({ success: false }, formData);
+      const result = await deleteFeriado({ success: false }, formData);
 
       if (result.success) {
         setFeriados((prev) => prev.filter((f) => f.id !== id));

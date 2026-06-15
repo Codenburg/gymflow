@@ -5,7 +5,6 @@
  *   - goto():              navigate to /admin/descuentos-duracion
  *   - fillPorcentaje():    fill the discount percentage (0-100)
  *   - fillMinMeses():      fill the minimum months for this discount
- *   - fillMaxMeses():      fill the maximum months for this discount
  *   - submitCreate():      click the submit button
  *   - expectInList():      assert a descuento is visible
  *   - deleteByPorcentaje(): click delete on a list item by percentage
@@ -14,7 +13,6 @@
  * Per design §5.3 (DescuentoAdminPage) and Decision 8 (data-testid list):
  *   - porcentajeInput     → data-testid='descuento-porcentaje-input'
  *   - minMesesInput       → data-testid='descuento-min-meses-input'
- *   - maxMesesInput       → data-testid='descuento-max-meses-input'
  *   - submitButton        → data-testid='descuento-submit-button'
  *   - listItem(porcentaje) → [data-testid="descuento-list-item"]:has-text(porcentaje)
  *
@@ -22,6 +20,12 @@
  *   S2.D.1 create happy path
  *   S2.D.2 porcentaje > 100 → validation error
  *   S2.D.3 delete
+ *
+ * Note: `fillMaxMeses` was removed because the `DescuentoDuracion`
+ * schema has a single `meses` field, not min/max. The dead
+ * `maxMesesInput` locator + helper went with it. The
+ * `expectValidationError` signature was narrowed to `porcentaje |
+ * minMeses` accordingly.
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -32,7 +36,6 @@ export class DescuentoAdminPage extends BasePage {
   readonly addButton: Locator;
   readonly porcentajeInput: Locator;
   readonly minMesesInput: Locator;
-  readonly maxMesesInput: Locator;
   readonly submitButton: Locator;
 
   constructor(page: Page) {
@@ -41,7 +44,6 @@ export class DescuentoAdminPage extends BasePage {
     this.addButton = page.getByTestId('descuento-add-button');
     this.porcentajeInput = page.getByTestId('descuento-porcentaje-input');
     this.minMesesInput = page.getByTestId('descuento-min-meses-input');
-    this.maxMesesInput = page.getByTestId('descuento-max-meses-input');
     this.submitButton = page.getByTestId('descuento-submit-button');
   }
 
@@ -66,11 +68,6 @@ export class DescuentoAdminPage extends BasePage {
     await this.minMesesInput.fill(String(value));
   }
 
-  /** Fill the maximum months for this discount tier. */
-  async fillMaxMeses(value: number): Promise<void> {
-    await this.maxMesesInput.fill(String(value));
-  }
-
   /** Click the submit button to create the descuento. */
   async submitCreate(): Promise<void> {
     await this.submitButton.click();
@@ -91,16 +88,15 @@ export class DescuentoAdminPage extends BasePage {
 
   /**
    * Assert a validation error is visible for a given field.
-   * `field` is the field name (porcentaje, minMeses, maxMeses).
+   * `field` is the field name (porcentaje or minMeses).
    */
-  async expectValidationError(field: 'porcentaje' | 'minMeses' | 'maxMeses'): Promise<void> {
+  async expectValidationError(field: 'porcentaje' | 'minMeses'): Promise<void> {
     // Field-level errors typically render under the input. We use a
     // role/text match for the common zod error messages.
     const errorPattern = /inv[aá]lido|requerido|mayor|menor/i;
     const inputByField = {
       porcentaje: this.porcentajeInput,
       minMeses: this.minMesesInput,
-      maxMeses: this.maxMesesInput,
     }[field];
     const errorMessage = this.page.locator(`[data-testid="descuento-${field}-error"]`);
     if (await errorMessage.count() > 0) {

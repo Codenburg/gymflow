@@ -19,24 +19,24 @@ import { filterFindings } from '../scripts/gga-pre-commit.mjs'
 import { parseGgaIgnore } from '../scripts/gga-ignore-helper.mjs'
 
 // Hand-rolled Findings (matches the shape produced by scripts/gga-output-parser.mjs).
-const errorOn = (file, line, message = 'error: something off') => ({
+const errorOn = (file: string, line: number, message = 'error: something off') => ({
   file,
   line,
-  severity: 'error',
+  severity: 'error' as const,
   message,
 })
 
-const fileLevel = (file, message = 'file-level note') => ({
+const fileLevel = (file: string, message = 'file-level note') => ({
   file,
-  line: null,
-  severity: 'info',
+  line: null as number | null,
+  severity: 'info' as const,
   message,
 })
 
 const nonLocalizable = (message = 'Unstructured prose line') => ({
   file: 'Unstructured',
-  line: null,
-  severity: 'info',
+  line: null as number | null,
+  severity: 'info' as const,
   message,
 })
 

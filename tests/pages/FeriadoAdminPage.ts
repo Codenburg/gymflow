@@ -8,8 +8,6 @@
  *   - fillHoraInicio() / fillHoraFin(): partial-day hours (HH:mm)
  *   - submitCreate():   click the submit button
  *   - expectCreated():  assert the new feriado is in the list
- *   - expectDuplicateError(): assert the 409 / duplicate-date error
- *   - deleteByFecha():  click delete on a list item by fecha
  *   - expectNotInList(): assert a feriado is no longer in the list
  *
  * Per design §5.3 (FeriadoAdminPage):
@@ -21,6 +19,11 @@
  *   S2.1.1 create (full day)   S2.2.1 create (partial hours)
  *   S2.3.1 reject past date    S2.4.1 reject inverted hours
  *   S2.5.1 delete              S2.6.1 duplicate date (409)
+ *
+ * Note: `expectDuplicateError` + `deleteByFecha` were removed because
+ * the actual spec handles these inline (sonner toast for duplicates
+ * per discovery #213, AlertDialog click for deletes). The page object
+ * stays thin per Decision 6 (no business logic in wrappers).
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -28,24 +31,20 @@ import { BasePage } from './base-page';
 
 export class FeriadoAdminPage extends BasePage {
   readonly pageHeading: Locator;
-  readonly addButton: Locator;
   readonly fechaInput: Locator;
   readonly todoDiaCheckbox: Locator;
   readonly horaInicioInput: Locator;
   readonly horaFinInput: Locator;
   readonly submitButton: Locator;
-  readonly errorMessage: Locator;
 
   constructor(page: Page) {
     super(page);
     this.pageHeading = page.getByRole('heading', { name: /Feriados/i }).first();
-    this.addButton = page.getByTestId('feriado-add-button');
     this.fechaInput = page.getByTestId('feriado-date-input');
     this.todoDiaCheckbox = page.getByTestId('feriado-todo-dia-checkbox');
     this.horaInicioInput = page.getByTestId('feriado-hora-inicio-input');
     this.horaFinInput = page.getByTestId('feriado-hora-fin-input');
     this.submitButton = page.getByTestId('feriado-submit-button');
-    this.errorMessage = page.getByTestId('feriado-error');
   }
 
   /** Navigate to /admin/feriados. */
@@ -91,19 +90,6 @@ export class FeriadoAdminPage extends BasePage {
   /** Assert the new feriado is visible in the list (by fecha string). */
   async expectCreated(fecha: string): Promise<void> {
     await expect(this.listItem(fecha)).toBeVisible({ timeout: 10_000 });
-  }
-
-  /** Assert the duplicate-date error is visible. */
-  async expectDuplicateError(): Promise<void> {
-    await expect(this.errorMessage).toBeVisible({ timeout: 10_000 });
-  }
-
-  /** Click delete on a list item by fecha, accept any confirm dialog. */
-  async deleteByFecha(fecha: string): Promise<void> {
-    const item = this.listItem(fecha);
-    this.page.once('dialog', (d) => d.accept());
-    const deleteButton = item.getByTestId('feriado-delete-button');
-    await deleteButton.click();
   }
 
   /** Assert a feriado is no longer visible in the list. */

@@ -4,14 +4,38 @@ import { getGymPrice } from "@/lib/gym-price";
 import { GymPriceEditor } from "@/components/admin/GymPriceEditor";
 import { AdminCard } from "@/components/admin/admin-card";
 import { PageHeader } from "@/components/admin/page-header";
+import { ErrorState } from "@/components/ui/error-state";
 import { FileText, Calendar, TrendingUp } from "lucide-react";
 
+/**
+ * Admin dashboard.
+ *
+ * The three parallel reads (stats, rutinas, gymPrice) are wrapped in a
+ * try/catch because any of them can fail independently — a single
+ * failed read should not crash the whole dashboard. On failure, the
+ * page renders an inline error state with safe defaults rather than
+ * throwing (the dashboard is the most-frequented admin page; better
+ * degraded than blank).
+ *
+ * Resolves GGA-FOLLOWUP-1 (Promise.all without error boundary).
+ */
 export default async function AdminDashboardPage() {
-  const [stats, rutinas, gymPrice] = await Promise.all([
-    getStats(),
-    getRutinas(),
-    getGymPrice(),
-  ]);
+  let stats, rutinas, gymPrice;
+  try {
+    [stats, rutinas, gymPrice] = await Promise.all([
+      getStats(),
+      getRutinas(),
+      getGymPrice(),
+    ]);
+  } catch (error) {
+    console.error("[AdminDashboardPage] failed to load dashboard data:", error);
+    return (
+      <div className="space-y-8">
+        <PageHeader title="Panel de Administración" />
+        <ErrorState message="No se pudo cargar el panel. Reintentá en unos segundos." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

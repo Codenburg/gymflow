@@ -270,7 +270,7 @@ export async function updateFeriado(
 export async function deleteFeriado(
   prevState: FormState,
   formData: FormData
-): Promise<FormState> {
+): Promise<FormState<{ id: string }>> {
   // Verify admin access
   const authCheck = await verifyAdmin(await headers());
   if (!authCheck.authorized) {
@@ -305,6 +305,7 @@ export async function deleteFeriado(
 
     return {
       success: true,
+      data: { id: parsed.data },
       message: "Feriado eliminado exitosamente",
     };
   } catch (error) {

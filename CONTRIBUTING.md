@@ -168,7 +168,24 @@ pnpm run db:seed           # Seed data
 pnpm dlx prisma studio     # Prisma Studio
 ```
 
-Para detener la DB:
+### Workflow de migraciones (no estándar)
+
+Este proyecto **usa `prisma db push` en vez de `prisma migrate dev`** por shadow database issues (Postgres + docker compose no expone una shadow DB limpia, así que `migrate dev` falla con "drift detected"). Es un trade-off conocido y documentado en el ROADMAP (`GGA-FOLLOWUP-7`).
+
+**Para un cambio de schema local**:
+
+1. Editar `prisma/schema.prisma`
+2. `pnpm dlx prisma db push` — pushea el schema al Postgres local
+3. (Opcional) `pnpm dlx prisma migrate dev --name <name> --create-only` — genera la migration SQL **sin aplicarla** (porque el shadow DB check va a fallar)
+4. `pnpm dlx prisma migrate resolve --applied <migration-name>` — marca la migration como aplicada sin ejecutarla (la SQL ya está aplicada vía `db push`)
+5. Commit el archivo `prisma/migrations/<timestamp>_<name>/migration.sql` con el código
+
+**Cuándo NO usar `db push`**:
+
+- En CI/staging/production: ahí `db push` puede borrar columnas si el schema local está más nuevo. Usar `prisma migrate deploy` con las migrations committed.
+- Cuando el cambio es destructivo (drop column, rename): commit la migration SQL manualmente y aplicar con `prisma migrate deploy` o `psql` directo.
+
+**Estado actual**: 2 migrations committed en `prisma/migrations/` (ver `ls prisma/migrations/`). El schema actual del repo y la DB local están en sync per `db push` (a la fecha del último `db push` local).
 
 ```bash
 docker compose down

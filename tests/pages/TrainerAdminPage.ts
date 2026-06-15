@@ -8,8 +8,6 @@
  *   - fillPassword(): fill the initial password
  *   - submitCreate(): click the submit button
  *   - expectCreated(): assert the new trainer is in the list
- *   - softDeleteByDni(): soft-delete (role → USER) by DNI
- *   - expectNotActive(): assert a trainer is no longer in the active list
  *
  * Per design §5.3 (TrainerAdminPage) and Decision 8 (data-testid list):
  *   - nameInput       → data-testid='trainer-name-input'
@@ -24,10 +22,10 @@
  *   S3.T.3 soft-delete (role → USER)
  *   S3.T.4 reject duplicate DNI
  *
- * Note: S3.T.3 soft-delete is the most interesting scenario. After
- * deletion, the trainer is logged out of the admin role. The new
- * spec will verify by attempting to log in as the deleted trainer
- * and asserting a redirect to / (not /admin).
+ * Note: `softDeleteByDni` + `expectNotActive` were removed because
+ * the actual spec handles soft-delete inline (AlertDialog click
+ * per discovery #213, then direct API call to verify role
+ * downgraded). Keeping the page object thin per Decision 6.
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -85,23 +83,6 @@ export class TrainerAdminPage extends BasePage {
   /** Assert the new trainer is visible in the list (matched by DNI). */
   async expectCreated(dni: string): Promise<void> {
     await expect(this.listItem(dni)).toBeVisible({ timeout: 10_000 });
-  }
-
-  /**
-   * Soft-delete a trainer by DNI. Accepts the confirm dialog. The
-   * trainer's role becomes USER (no longer admin), so subsequent
-   * logins as that DNI will redirect to /.
-   */
-  async softDeleteByDni(dni: string): Promise<void> {
-    const item = this.listItem(dni);
-    this.page.once('dialog', (d) => d.accept());
-    const deleteButton = item.getByTestId('trainer-delete-button');
-    await deleteButton.click();
-  }
-
-  /** Assert a trainer is no longer visible in the active list. */
-  async expectNotActive(dni: string): Promise<void> {
-    await expect(this.listItem(dni)).toHaveCount(0, { timeout: 10_000 });
   }
 
   /** Build the locator for a list item by DNI. */
