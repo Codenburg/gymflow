@@ -110,8 +110,7 @@ export async function createFeriado(
     // pattern (src/lib/rutinas.ts, src/app/actions/gym.ts) is to cast to
     // `any` and call with one arg. Follow the same idiom to keep the
     // call site uniform.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("feriados");
+    revalidateTag("feriados", "max");
     revalidatePath("/admin/informacion");
 
     return {
@@ -235,8 +234,7 @@ export async function updateFeriado(
       data: updateData,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("feriados");
+    revalidateTag("feriados", "max");
     revalidatePath("/admin/informacion");
 
     return {
@@ -299,8 +297,7 @@ export async function deleteFeriado(
       where: { id: parsed.data },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("feriados");
+    revalidateTag("feriados", "max");
     revalidatePath("/admin/informacion");
 
     return {

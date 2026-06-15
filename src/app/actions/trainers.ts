@@ -169,10 +169,7 @@ export async function createTrainer(
     // read (getTrainers in this file) is NOT cached, but the tag
     // wires the invalidation for any future cached reader that
     // subscribes to user data (e.g. a cached getUsers reader).
-    // Next 16 revalidateTag requires a profile arg; cast to `any`
-    // to match the project pattern in src/lib/rutinas.ts.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("users");
+    revalidateTag("users", "max");
 
     return {
       success: true,
@@ -245,8 +242,7 @@ export async function updateTrainer(
 
     revalidatePath("/admin/trainers");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("users");
+    revalidateTag("users", "max");
 
     return { success: true, message: "Entrenador actualizado exitosamente" };
   } catch (error) {
@@ -288,8 +284,7 @@ export async function deleteTrainer(
 
     revalidatePath("/admin/trainers");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("users");
+    revalidateTag("users", "max");
 
     return { success: true, message: "Entrenador eliminado exitosamente" };
   } catch (error) {

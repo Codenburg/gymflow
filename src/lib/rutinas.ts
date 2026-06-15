@@ -222,8 +222,7 @@ export async function getCachedRutinaById(id: string): Promise<RutinaDetail | nu
  */
 export async function revalidateRutinasCache(): Promise<void> {
   const { revalidateTag } = await import("next/cache");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (revalidateTag as any)(RUTINAS_CACHE_TAG);
+  revalidateTag(RUTINAS_CACHE_TAG, "max");
 }
 
 /**

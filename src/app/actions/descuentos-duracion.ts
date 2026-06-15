@@ -96,8 +96,7 @@ export async function createDescuentoDuracion(
     // pattern (src/lib/rutinas.ts, src/app/actions/gym.ts) is to cast to
     // `any` and call with one arg. Follow the same idiom to keep the
     // call site uniform.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("descuentos-duracion");
+    revalidateTag("descuentos-duracion", "max");
     revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 
@@ -142,8 +141,7 @@ export async function updateDescuentoDuracion(
       data: parsed.data,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("descuentos-duracion");
+    revalidateTag("descuentos-duracion", "max");
     revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 
@@ -173,8 +171,7 @@ export async function deleteDescuentoDuracion(
   try {
     await prisma.descuentoDuracion.delete({ where: { id } });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("descuentos-duracion");
+    revalidateTag("descuentos-duracion", "max");
     revalidatePath("/admin/descuentos-duracion");
     revalidatePath("/precios");
 

@@ -82,8 +82,7 @@ export async function createEjercicio(
     // RUTINAS_CACHE_TAG key in src/services/routines/pagination.ts).
     // Next 16 revalidateTag requires a profile arg; the existing
     // project pattern is to cast to `any` and call with one arg.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("rutinas");
+    revalidateTag("rutinas", "max");
 
     return {
       success: true,
@@ -156,8 +155,7 @@ export async function updateEjercicio(
     // Revalidate exact path to the day page
     revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}/dias/${ejercicio.diaId}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("rutinas");
+    revalidateTag("rutinas", "max");
 
     return {
       success: true,
@@ -213,8 +211,7 @@ export async function deleteEjercicio(
     // Revalidate exact path to the day page
     revalidatePath(`/admin/rutinas/${ejercicio.dia.rutinaId}/dias/${ejercicio.diaId}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("rutinas");
+    revalidateTag("rutinas", "max");
 
     return {
       success: true,

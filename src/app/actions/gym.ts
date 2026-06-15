@@ -193,12 +193,7 @@ export async function updateGymPrice(
     revalidatePath("/informacion");
     revalidatePath("/admin");
 
-    // Invalidate the "gym-config" cache tag (getGymNameForServer,
-    // getGymDisplayForServer, and getGymPrice all subscribe to it).
-    // Next 16 revalidateTag requires a profile arg; match the pattern
-    // already used by updateGymField in this same file.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("gym-config");
+    revalidateTag("gym-config", "max");
 
     return {
       success: true,
@@ -270,11 +265,7 @@ export async function updateGymField(
       data: { [parsed.data.field]: parsed.data.value },
     });
 
-    // Next 16 revalidateTag requires a profile arg; the existing project
-    // pattern (src/lib/rutinas.ts) is to cast to `any` and call with one
-    // arg. Follow the same idiom to keep the call site uniform.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("gym-config");
+    revalidateTag("gym-config", "max");
     revalidatePath("/");
     revalidatePath("/informacion");
     revalidatePath("/admin");

@@ -93,8 +93,7 @@ export async function reorderEjercicios(
     // change the orderBy-driven list shown on the public home page
     // (getRoutinesPaginated subscribes to it) and the trainer counts
     // (getTrainerCounts subscribes to it).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (revalidateTag as any)("rutinas");
+    revalidateTag("rutinas", "max");
 
     return {
       success: true,
