@@ -179,3 +179,27 @@ export async function waitForServerAction(
 /** Re-exported from `security-helpers.ts` so future specs (auth.spec.ts) can
  *  import session helpers from a single place. */
 export const setExpiredCookie = setExpiredCookieFromSecurity;
+
+// ============================================
+// Gym config reset (T3.4 — 5.2.3 isolation fix)
+// ============================================
+
+/**
+ * Reset the Gym singleton's `nombre` field to `null` via direct
+ * Prisma access. Used by `gym-config.spec.ts` afterEach to keep the
+ * 5.2.3 fallback-chain test hermetic: 5.1.1/5.2.1 set the field to
+ * TEST_ values, and 5.2.3 asserts the chain terminates at the env
+ * var or "Gimnasio" (which requires `nombre` to be NULL).
+ *
+ * The admin form's `updateGymField` and the `/api/gym` PATCH both
+ * validate `nombre` as non-empty, so neither can clear it. This is
+ * the smallest possible change to fix the isolation bug. See
+ * `tests/utils/gym-reset.ts` for the implementation + rationale.
+ *
+ * Best-effort: never throws. If the DB is unreachable, the test
+ * continues (the 5.2.3 issue is a soft signal).
+ */
+export async function resetGymConfig(): Promise<void> {
+  const { resetGymNombre } = await import('./utils/gym-reset');
+  await resetGymNombre();
+}

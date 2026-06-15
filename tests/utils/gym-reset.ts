@@ -1,0 +1,68 @@
+/**
+ * Test-only utility: reset the Gym singleton's `nombre` field to `null`.
+ *
+ * Why this exists:
+ * The `e2e-coverage-critical-flows` T3.4 task is the 5.2.3 isolation
+ * fix. 5.1.1 and 5.2.1 mutate `gym.nombre` to TEST_ values; 5.2.3
+ * asserts the fallback chain terminates at the env var or "Gimnasio"
+ * (which requires `gym.nombre` to be NULL).
+ *
+ * The admin form's `updateGymField` server action AND the `/api/gym`
+ * PATCH endpoint both validate `nombre` as a non-empty string — so
+ * neither can clear the field to `null`. The only way to reset is
+ * direct DB access. This utility uses Prisma to do that.
+ *
+ * The deviation from project convention (tests normally don't touch
+ * Prisma directly) is intentional and scoped: this is the smallest
+ * possible change to fix a real test-isolation bug. It's marked
+ * test-only by its location in `tests/utils/`.
+ *
+ * The prisma client is a singleton (reused across calls) and is
+ * disconnected on `closeGymReset()` for graceful teardown.
+ */
+
+import { PrismaClient } from '../../generated/client';
+
+let prismaSingleton: PrismaClient | null = null;
+
+function getPrisma(): PrismaClient {
+  if (!prismaSingleton) {
+    prismaSingleton = new PrismaClient();
+  }
+  return prismaSingleton;
+}
+
+/**
+ * Reset `gym.nombre` to `null`. Best-effort — never throws. The Gym
+ * singleton is the row with `id: 'gym'`.
+ */
+export async function resetGymNombre(): Promise<void> {
+  try {
+    const prisma = getPrisma();
+    await prisma.gym.update({
+      where: { id: 'gym' },
+      data: { nombre: null },
+    });
+  } catch (error) {
+    // Best-effort. If the DB is unreachable, the test continues —
+    // the 5.2.3 isolation issue is a soft signal, not a hard fail.
+    // eslint-disable-next-line no-console
+    console.warn('[gym-reset] Failed to reset gym.nombre:', error);
+  }
+}
+
+/**
+ * Disconnect the singleton prisma client. Call from
+ * `test.afterAll` if the test file uses `resetGymNombre` to avoid
+ * open-connection warnings.
+ */
+export async function closeGymReset(): Promise<void> {
+  if (prismaSingleton) {
+    try {
+      await prismaSingleton.$disconnect();
+    } catch {
+      // Ignore.
+    }
+    prismaSingleton = null;
+  }
+}

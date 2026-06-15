@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { loginAsAdmin } from './helpers';
+import { loginAsAdmin, resetGymConfig } from './helpers';
 
 // Next.js 16 + Turbopack dev server compiles routes on first request, and
 // the homepage/admin compile takes 10-30s on a cold cache. The Playwright
@@ -33,6 +33,32 @@ test.setTimeout(120_000);
 // Public-facing selectors.
 const HOME_H1 = 'main h1';
 const SIDEBAR_LOGO = 'aside [class*="font-bold"]';
+
+// ============================================
+// T3.4 — 5.2.3 isolation fix
+// ============================================
+//
+// 5.1.1 and 5.2.1 mutate `gym.nombre` to TEST_ values; 5.2.3 asserts
+// the fallback chain terminates at the env var or "Gimnasio" (which
+// requires `gym.nombre` to be NULL). Without an afterEach reset, 5.2.3
+// would see the TEST_ value from 5.1.1/5.2.1 and fail.
+//
+// Two changes here:
+//   1. `test.describe.configure({ mode: 'serial' })` at the file
+//      level — eliminates worker race on the singleton write.
+//   2. `test.afterEach(resetGymConfig)` at the file level — clears
+//      `gym.nombre` to null after every test, so the next test
+//      starts from a known state. The next-cache TTL (60s) + the
+//      `revalidateTag('gym-config')` fired by the server action mean
+//      subsequent reads see the reset value within ~1s.
+//
+// The `clearGymDisplayFields` no-op in the "Admin flow" describe is
+// preserved for backward compatibility (other code may import it) but
+// is superseded by the file-level afterEach.
+test.describe.configure({ mode: 'serial' });
+test.afterEach(async () => {
+  await resetGymConfig();
+});
 
 // Admin /admin/config selectors. The 5 sub-form groups (Identity,
 // Location, Social x2) are rendered as <form> cards; the Schedule
