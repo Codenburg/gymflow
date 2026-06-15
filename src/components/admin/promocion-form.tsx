@@ -138,6 +138,7 @@ export function PromocionForm({
         </label>
         <Input
           id="titulo"
+          data-testid="promocion-titulo-input"
           placeholder="Ej: Promoción de Verano"
           {...register("titulo")}
           aria-invalid={!!errors.titulo}
@@ -154,6 +155,7 @@ export function PromocionForm({
         </label>
         <Textarea
           id="descripcion"
+          data-testid="promocion-descripcion-input"
           placeholder="Ej: 2 meses de matrícula bonificados"
           rows={2}
           {...register("descripcion")}
@@ -173,6 +175,7 @@ export function PromocionForm({
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
           <Input
             id="precio"
+            data-testid="promocion-precio-input"
             type="number"
             min="0"
             step="1"
@@ -191,7 +194,7 @@ export function PromocionForm({
       <div className="flex gap-2 pt-2">
         {isEditing ? (
           <>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} data-testid="promocion-submit-button">
               <Check className="w-4 h-4 mr-2" />
               {isSubmitting ? "Guardando..." : "Guardar cambios"}
             </Button>
@@ -201,7 +204,7 @@ export function PromocionForm({
             </Button>
           </>
         ) : (
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} data-testid="promocion-submit-button">
             <Check className="w-4 h-4 mr-2" />
             {isSubmitting ? "Creando..." : "Crear Promoción"}
           </Button>

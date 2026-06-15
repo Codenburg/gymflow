@@ -145,7 +145,10 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
         <h3 className="text-lg font-semibold text-foreground mb-4">Agregar Feriado</h3>
         
         {error && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+          <div
+            data-testid="feriado-error"
+            className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm"
+          >
             {error}
           </div>
         )}
@@ -156,6 +159,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
               <input
                 type="date"
                 id="fecha"
+                data-testid="feriado-date-input"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={getToday()}
@@ -167,6 +171,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
             <input
               type="checkbox"
               id="todo_dia"
+              data-testid="feriado-todo-dia-checkbox"
               checked={isFullDay}
               onChange={(e) => setIsFullDay(e.target.checked)}
               className="w-4 h-4 accent-primary rounded"
@@ -181,6 +186,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                 <input
                   type="time"
                   id="hora_inicio"
+                  data-testid="feriado-hora-inicio-input"
                   value={horaInicio}
                   onChange={(e) => setHoraInicio(e.target.value)}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
@@ -190,6 +196,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                 <input
                   type="time"
                   id="hora_fin"
+                  data-testid="feriado-hora-fin-input"
                   value={horaFin}
                   onChange={(e) => setHoraFin(e.target.value)}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
@@ -197,7 +204,11 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
               </AdminFormField>
             </>
           )}
-          <Button onClick={handleAdd} disabled={isAdding}>
+          <Button
+            onClick={handleAdd}
+            disabled={isAdding}
+            data-testid="feriado-submit-button"
+          >
             <Plus className="w-5 h-5 mr-2" />
             {isAdding ? "Agregando..." : "Agregar"}
           </Button>
@@ -217,6 +228,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
             {feriados.map((feriado) => (
               <div
                 key={feriado.id}
+                data-testid="feriado-list-item"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -241,6 +253,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
                 </div>
                 <button
                   onClick={() => handleDelete(feriado.id)}
+                  data-testid="feriado-delete-button"
                   className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
                   title="Eliminar"
                 >

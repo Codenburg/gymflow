@@ -136,7 +136,10 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
       {/* Left column: Form */}
       <div>
         <AdminCard variant="standard">
-          <h3 className="text-lg font-semibold text-foreground mb-4">
+          <h3
+            data-testid="promocion-add-button"
+            className="text-lg font-semibold text-foreground mb-4"
+          >
             {editingPromocionId ? "Editar Promoción" : "Agregar Promoción"}
           </h3>
 

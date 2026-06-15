@@ -211,6 +211,7 @@ export function DescuentoDuracionManager({
                     Duración
                   </label>
                   <select
+                    data-testid="descuento-min-meses-input"
                     value={meses}
                     disabled
                     className="w-full px-4 py-2 bg-muted/50 border border-border rounded-lg text-muted-foreground cursor-not-allowed"
@@ -228,6 +229,7 @@ export function DescuentoDuracionManager({
                   <div className="relative">
                     <input
                       type="number"
+                      data-testid="descuento-porcentaje-input"
                       value={porcentaje}
                       onChange={(e) => setPorcentaje(e.target.value)}
                       placeholder="10"
@@ -241,7 +243,11 @@ export function DescuentoDuracionManager({
 
                 {/* Botones de acción */}
                 <div className="flex gap-2 pb-2">
-                  <Button onClick={() => handleUpdate(editingId)} disabled={isAdding}>
+                  <Button
+                    onClick={() => handleUpdate(editingId)}
+                    disabled={isAdding}
+                    data-testid="descuento-submit-button"
+                  >
                     <Check className="w-5 h-5 mr-2" />
                     {isAdding ? "Guardando..." : "Guardar"}
                   </Button>
@@ -261,7 +267,10 @@ export function DescuentoDuracionManager({
         ) : (
           /* ========== CREATE MODE ========== */
           <>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+            <h3
+              data-testid="descuento-add-button"
+              className="text-lg font-semibold text-foreground mb-4"
+            >
               Agregar Descuento por Duración
             </h3>
 
@@ -274,6 +283,7 @@ export function DescuentoDuracionManager({
             <div className="flex gap-4 items-end">
               <AdminFormField variant="default" label="Duración">
                 <select
+                  data-testid="descuento-min-meses-input"
                   value={meses}
                   onChange={(e) => setMeses(parseInt(e.target.value, 10))}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-ring cursor-pointer"
@@ -290,6 +300,7 @@ export function DescuentoDuracionManager({
                 <div className="relative">
                   <input
                     type="number"
+                    data-testid="descuento-porcentaje-input"
                     value={porcentaje}
                     onChange={(e) => setPorcentaje(e.target.value)}
                     placeholder="10"
@@ -302,7 +313,11 @@ export function DescuentoDuracionManager({
               </AdminFormField>
 
               <div className="flex gap-2 pb-2">
-                <Button onClick={handleAdd} disabled={isAdding}>
+                <Button
+                  onClick={handleAdd}
+                  disabled={isAdding}
+                  data-testid="descuento-submit-button"
+                >
                   <Plus className="w-5 h-5 mr-2" />
                   {isAdding ? "Agregando..." : "Agregar"}
                 </Button>
@@ -325,6 +340,7 @@ export function DescuentoDuracionManager({
             {descuentos.map((descuento) => (
               <div
                 key={descuento.id}
+                data-testid="descuento-list-item"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -357,6 +373,7 @@ export function DescuentoDuracionManager({
                     variant="outline"
                     size="icon"
                     onClick={() => handleDelete(descuento.id)}
+                    data-testid="descuento-delete-button"
                     title="Eliminar"
                     className="text-muted-foreground hover:text-destructive hover:border-destructive/50"
                   >

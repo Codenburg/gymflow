@@ -33,6 +33,7 @@ export function PromocionCard({
 }: PromocionCardProps) {
   return (
     <div
+      data-testid="promocion-list-item"
       className={cn(
         "relative flex items-center justify-between rounded-xl border-l-4 border-l-primary border bg-card p-4 shadow-sm transition-all",
         isEditing
@@ -79,6 +80,7 @@ export function PromocionCard({
           variant="ghost"
           size="icon"
           onClick={() => onEdit(promocion)}
+          data-testid="promocion-edit-button"
           className={cn(
             "hover:bg-primary/10",
             isEditing && "bg-primary/10 text-primary"
@@ -91,6 +93,7 @@ export function PromocionCard({
           variant="ghost"
           size="icon"
           onClick={() => onDelete(promocion.id)}
+          data-testid="promocion-delete-button"
           className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
           title="Eliminar"
         >
