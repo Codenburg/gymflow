@@ -225,7 +225,14 @@ export function RutinasListClient({ rutinas }: RutinasListClientProps) {
         accessorKey: "nombre",
         header: "Nombre",
         cell: ({ row }) => (
-          <span className="text-foreground font-medium">{row.original.nombre}</span>
+          <div data-testid="rutina-list-item">
+            <span
+              className="text-foreground font-medium"
+              data-testid="rutina-list-item-nombre"
+            >
+              {row.original.nombre}
+            </span>
+          </div>
         ),
       },
       {

@@ -481,6 +481,7 @@ export function RutinaCompletaForm() {
                 render={({ field }) => (
                   <Input
                     id="nombre"
+                    data-testid="rutina-nombre-input"
                     type="text"
                     value={field.value ?? ""}
                     onChange={field.onChange}
@@ -500,17 +501,19 @@ export function RutinaCompletaForm() {
                 name="tipo"
                 control={control}
                 render={({ field }) => (
-                  <SegmentedControl
-                    name="tipo"
-                    value={field.value ?? "fuerza"}
-                    onChange={field.onChange}
-                    options={[
-                      { value: "fuerza", label: "Fuerza" },
-                      { value: "cardio", label: "Cardio" },
-                      { value: "flexibilidad", label: "Flexibilidad" },
-                      { value: "hipertrofia", label: "Hipertrofia" },
-                    ]}
-                  />
+                  <div data-testid="rutina-tipo-select">
+                    <SegmentedControl
+                      name="tipo"
+                      value={field.value ?? "fuerza"}
+                      onChange={field.onChange}
+                      options={[
+                        { value: "fuerza", label: "Fuerza" },
+                        { value: "cardio", label: "Cardio" },
+                        { value: "flexibilidad", label: "Flexibilidad" },
+                        { value: "hipertrofia", label: "Hipertrofia" },
+                      ]}
+                    />
+                  </div>
                 )}
               />
             </AdminFormField>
@@ -528,6 +531,7 @@ export function RutinaCompletaForm() {
               render={({ field }) => (
                 <Textarea
                   id="descripcion"
+                  data-testid="rutina-descripcion-input"
                   value={field.value ?? ""}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -613,7 +617,7 @@ export function RutinaCompletaForm() {
           >
             Limpiar
           </Button>
-          <div className="flex gap-3">
+          <div className="flex gap-3" data-testid="rutina-save-button">
             <Button
               type="button"
               variant="outline"
@@ -625,6 +629,7 @@ export function RutinaCompletaForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
+              data-testid="rutina-create-button"
               className="rounded-xl bg-[#48b8c9] text-white hover:bg-[#3da4b3] hover:border-2 hover:border-black cursor-pointer font-semibold dark:bg-[#E11D48] dark:text-white dark:hover:bg-[#c01030] dark:hover:border-2 dark:hover:border-white"
             >
               {isSubmitting ? "Creando..." : "Crear Rutina"}

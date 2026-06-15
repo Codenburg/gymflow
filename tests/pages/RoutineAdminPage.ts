@@ -96,15 +96,25 @@ export class RoutineAdminPage extends BasePage {
     await select.selectOption(value);
   }
 
-  /** Click the create button. The form submits via server action. */
+  /**
+   * Click the create button. The form submits via server action.
+   *
+   * The create form uses `useConfirm` (a custom shadcn/ui AlertDialog,
+   * NOT a native browser dialog) to show "¿Crear rutina?". This method
+   * clicks the form's submit button, waits for the modal to open, then
+   * clicks the modal's "Crear" action button.
+   */
   async submitCreate(): Promise<void> {
-    // Try data-testid first (T1.1), fall back to the button text
     const byTestId = this.page.getByTestId('rutina-create-button');
     if (await byTestId.count() > 0) {
       await byTestId.click();
     } else {
-      await this.page.getByRole('button', { name: /Crear rutina/i }).first().click();
+      await this.page.getByRole('button', { name: /Crear Rutina/i }).first().click();
     }
+    // The useConfirm modal opens with confirmText="Crear". Wait for
+    // the modal title ("¿Crear rutina?") to appear, then click "Crear".
+    await expect(this.page.getByText(/¿Crear rutina\?/i)).toBeVisible({ timeout: 5_000 });
+    await this.page.getByRole('button', { name: /^Crear$/i }).click();
   }
 
   /** Assert the new rutina appears in the visible list. */
@@ -113,14 +123,25 @@ export class RoutineAdminPage extends BasePage {
     await expect(listItem).toBeVisible({ timeout: 10_000 });
   }
 
-  /** Click delete on a list item by nombre, confirm any dialog. */
+  /**
+   * Click delete on a list item by nombre, confirm the useConfirm modal.
+   *
+   * The list uses `useConfirm` (a custom shadcn/ui AlertDialog, NOT a
+   * native browser dialog). We click the row's delete button, then
+   * click the modal's "Eliminar" action button.
+   */
   async deleteByName(nombre: string): Promise<void> {
     const item = this.listItem(nombre);
-    // Accept the confirm dialog if present
-    this.page.once('dialog', (d) => d.accept());
-    // Look for a delete button inside the item (kebab/three-dots menu pattern)
-    const deleteButton = item.getByRole('button', { name: /Eliminar|Borrar/i }).first();
+    // The acciones cell is hover-only (opacity-0 group-hover:opacity-100);
+    // hover the row first so the delete button is interactable.
+    const row = item.locator('xpath=ancestor::tr').first();
+    await row.hover();
+    const deleteButton = row.getByRole('button', { name: /Eliminar|Borrar/i }).first();
     await deleteButton.click();
+    // The AlertDialog renders an "Eliminar" action button in its footer.
+    // Use the last "Eliminar" on the page (the modal's action button) —
+    // the row's delete button has the icon, no text.
+    await this.page.getByRole('button', { name: /^Eliminar$/i }).last().click();
   }
 
   /** Assert a rutina is visible in the list. */
