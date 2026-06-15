@@ -198,6 +198,8 @@
 
 ### T3.1 — `test(app): add data-testid for trainer manager + auth login error`
 
+> ✅ **DONE** — commit `6504872` — 3 files, +39/-4. 8 unique testids (10 attributes with create+edit forms). Added server-error state + inline `<p data-testid="login-error-message">` in login page (sonner toast preserved for the user). See engram #214 finding #1.
+
 - **Files** (8 testids total per design Decision 8):
   - **Modified**: `src/components/admin/trainer-manager.tsx` (+7 testids: `trainer-add-button`, `trainer-name-input`, `trainer-dni-input`, `trainer-password-input`, `trainer-submit-button`, `trainer-list-item`, `trainer-delete-button`)
   - **Modified**: `src/app/(auth)/admin/login/page.tsx` (+1 testid: `login-error-message` on the toast container)
@@ -213,6 +215,8 @@
 - **Special notes**: This is the smallest commit in the change. The login testid MUST be on the toast container (per design Decision 8: "the toast root"), NOT on an inline error span — the existing `auth.spec.ts:8.1.2` gap (engram #200) requires the toast to be visible to the user.
 
 ### T3.2 — `test(e2e): add trainers.spec.ts`
+
+> ✅ **DONE** — commit `f56b904` — 2 files, +356. 4 test cases (S3.T.1-S3.T.4). UI-based cleanup (no DELETE route on /api/trainers). All workarounds from discovery #213 applied.
 
 - **Files**:
   - **New**: `tests/trainers.spec.ts` (~150 LOC, 4 tests per design §6.4)
@@ -231,6 +235,8 @@
 
 ### T3.3 — `test(e2e): add auth.spec.ts`
 
+> ✅ **DONE** — commit `931bbe7` — 1 file, +176. 5 test cases (S3.A.1-S3.A.5). Closes the 8.1.2 gap (admin-e2e.spec.ts:8.1.2 silently `test.skip()`s on success; this new test is non-skipping).
+
 - **Files**:
   - **New**: `tests/auth.spec.ts` (~180 LOC, 5 tests per design §6.5)
 - **Body**: Write 5 E2E tests for the auth flow: S3.A.1 login success (the proposal's 8.1.2 gap — login with valid creds), S3.A.2 invalid DNI (asserts `login-error-message` toast), S3.A.3 invalid password, S3.A.4 logout from profile dropdown, S3.A.5 session expiry (uses `setExpiredCookie` re-exported from `tests/helpers.ts`). Uses `AuthPage` from Slice 0 + the testid from T3.1.
@@ -246,7 +252,9 @@
 - **Special notes**:
   - This is the only commit that exercises the `setExpiredCookie` re-export from `tests/helpers.ts`. Verify the re-export is in place by reading T0.1's helpers.ts before writing this spec.
 
-### T3.4 — `fix(tests): 5.2.3 isolation — add afterEach(cleanTestData) to 5 new specs`
+### T3.4 — `fix(tests): 5.2.3 isolation — serial mode + afterEach reset`
+
+> ✅ **DONE** — commit `624561c` — 3 files, +119/-1. File-level `test.describe.configure({ mode: 'serial' })` + file-level `test.afterEach(resetGymConfig)` in `tests/gym-config.spec.ts`. New `tests/utils/gym-reset.ts` + re-exported `resetGymConfig` in `tests/helpers.ts` implement the reset via direct Prisma access. See engram #214 findings #2 (root cause + why direct Prisma is the only viable path).
 
 - **Files** (5 spec files modified):
   - `tests/rutinas.spec.ts` (add `test.afterEach(async ({ page }) => { await cleanTestData(page); })` after the `test.describe.configure` line)
