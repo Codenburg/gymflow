@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { GYM_SINGLETON_ID } from "@/lib/gym-constants";
@@ -61,7 +62,7 @@ export async function createFeriado(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -176,7 +177,7 @@ export async function updateFeriado(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -190,7 +191,7 @@ export async function updateFeriado(
   // Block past dates at security layer (only if fecha is being updated)
   const today = getToday();
   if (normalizedFecha && normalizedFecha < today) {
-    return { success: false, message: "No se pueden crear feriados en fechas pasadas", statusCode: 400 };
+    return { success: false, message: "No se pueden actualizar feriados a fechas pasadas", statusCode: 400 };
   }
 
   // Pre-check for duplicate (excluding current record)

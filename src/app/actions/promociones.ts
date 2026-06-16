@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { GYM_SINGLETON_ID } from "@/lib/gym-constants";
@@ -98,7 +99,7 @@ export async function createPromocion(
 
   const parsed = createPromocionSchema.safeParse(rawData);
   if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+    return { success: false, errors: z.flattenError(parsed.error).fieldErrors };
   }
 
   try {
@@ -134,7 +135,7 @@ export async function updatePromocionContent(
 
   const parsed = updatePromocionContentSchema.safeParse(data);
   if (!parsed.success) {
-    const firstError = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0] || "Validation error";
+    const firstError = Object.values(z.flattenError(parsed.error).fieldErrors)[0]?.[0] || "Validation error";
     return { data: null, error: { code: "VALIDATION_ERROR", message: firstError } };
   }
 
@@ -171,7 +172,7 @@ export async function updatePromocionPrecio(
 
   const parsed = updatePromocionPrecioSchema.safeParse(data);
   if (!parsed.success) {
-    const firstError = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0] || "Validation error";
+    const firstError = Object.values(z.flattenError(parsed.error).fieldErrors)[0]?.[0] || "Validation error";
     return { data: null, error: { code: "VALIDATION_ERROR", message: firstError } };
   }
 
@@ -208,7 +209,7 @@ export async function togglePromocionActivo(
 
   const parsed = togglePromocionActivoSchema.safeParse(data);
   if (!parsed.success) {
-    const firstError = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0] || "Validation error";
+    const firstError = Object.values(z.flattenError(parsed.error).fieldErrors)[0]?.[0] || "Validation error";
     return { data: null, error: { code: "VALIDATION_ERROR", message: firstError } };
   }
 

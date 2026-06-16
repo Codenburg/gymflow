@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidateRutinasCache } from "@/lib/rutinas";
@@ -78,7 +79,7 @@ export async function createRutina(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -172,7 +173,7 @@ export async function updateRutina(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -571,7 +572,7 @@ export async function createRutinaCompleta(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -700,7 +701,7 @@ export async function updateRutinaCompleta(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }

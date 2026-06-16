@@ -168,7 +168,7 @@ export async function updateGymPrice(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -249,7 +249,7 @@ export async function updateGymField(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }

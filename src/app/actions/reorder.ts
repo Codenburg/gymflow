@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { reorderSchema, type FormState } from "@/lib/schemas";
@@ -58,7 +59,7 @@ export async function reorderEjercicios(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Datos de reorder inválidos",
     };
   }

@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -115,7 +116,7 @@ export async function createTrainer(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -196,7 +197,7 @@ export async function updateTrainer(
 
   const parsed = updateTrainerSchema.safeParse(data);
   if (!parsed.success) {
-    const firstError = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0] || "Error de validación";
+    const firstError = Object.values(z.flattenError(parsed.error).fieldErrors)[0]?.[0] || "Error de validación";
     return { success: false, message: firstError };
   }
 

@@ -107,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { error: "Validation failed", details: z.flattenError(parsed.error).fieldErrors },
         { status: 400 }
       );
     }
@@ -217,7 +217,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { error: "Validation failed", details: z.flattenError(parsed.error).fieldErrors },
         { status: 400 }
       );
     }

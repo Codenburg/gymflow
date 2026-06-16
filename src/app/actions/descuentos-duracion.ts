@@ -2,10 +2,11 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { GYM_SINGLETON_ID } from "@/lib/gym-constants";
-import { createDescuentoDuracionSchema, updateDescuentoDuracionSchema, type FormState, type DescuentoDuracionFormState } from "@/lib/schemas";
+import { createDescuentoDuracionSchema, updateDescuentoDuracionSchema, type DescuentoDuracionFormState } from "@/lib/schemas";
 
 /**
  * Helper function to verify admin access
@@ -84,7 +85,7 @@ export async function createDescuentoDuracion(
 
   const parsed = createDescuentoDuracionSchema.safeParse(rawData);
   if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+    return { success: false, errors: z.flattenError(parsed.error).fieldErrors };
   }
 
   try {
@@ -132,7 +133,7 @@ export async function updateDescuentoDuracion(
 
   const parsed = updateDescuentoDuracionSchema.safeParse(rawData);
   if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+    return { success: false, errors: z.flattenError(parsed.error).fieldErrors };
   }
 
   try {

@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ejercicioSchema, ejercicioUpdateSchema, type FormState } from "@/lib/schemas";
@@ -44,7 +45,7 @@ export async function createEjercicio(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
@@ -127,7 +128,7 @@ export async function updateEjercicio(
   if (!parsed.success) {
     return {
       success: false,
-      errors: parsed.error.flatten().fieldErrors,
+      errors: z.flattenError(parsed.error).fieldErrors,
       message: "Error de validación",
     };
   }
