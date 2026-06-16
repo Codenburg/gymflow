@@ -1,6 +1,6 @@
 {
   "name": "gym-routines-manager",
-  "version": "0.20.1",
+  "version": "1.0.0",
   "packageManager": "pnpm@11.2.2",
   "private": true,
   "scripts": {
