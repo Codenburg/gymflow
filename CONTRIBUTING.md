@@ -98,6 +98,42 @@ Para features significativas, usar el workflow SDD:
 | shadcn | 4.2.0 |
 | pnpm | 11.2.2 |
 
+## Git: `safecommit` alias (workaround for `invalid object 100644` errors)
+
+Este proyecto tiene un issue intermitente de git index corruption en ciertos paths (notablemente `.engram/chunks/*.jsonl.gz` y `openspec/changes/*/*.md`) que se manifiesta con:
+
+```
+error: invalid object 100644 <hash> for '<path>'
+```
+
+El `git fsck` reporta clean, los objetos SÍ existen en el database, y `git cat-file -e <hash>` retorna exit 0. El root cause exacto no fue identificado definitivamente — el issue aparece solo después de múltiples ciclos de stage+revert+commit.
+
+**Workaround efectivo**: refrescar el index entry de cada archivo staged antes de commitear:
+
+```bash
+for f in $(git diff --cached --name-only); do
+  git rm --cached -- "$f" 2>/dev/null
+  git add -- "$f" 2>/dev/null
+done
+git commit -m "..."
+```
+
+**Setup (1 vez por dev)** — definir un alias:
+
+```bash
+git config --local alias.safecommit '!f() {
+  for f in $(git diff --cached --name-only); do
+    git rm --cached -- "$f" 2>/dev/null
+    git add -- "$f" 2>/dev/null
+  done
+  git commit "$@"
+}; f'
+```
+
+Luego usar `git safecommit -m "..."` en vez de `git commit -m "..."` cuando el commit regular falle con "invalid object".
+
+**Estado**: workaround en uso durante todo el 1.0 prep. Root cause open (no bloquea 1.0, post-1.0 tech debt).
+
 ## Agent Setup
 
 Este proyecto usa **opencode** con skills especializados en `~/.config/opencode/skills/`.
