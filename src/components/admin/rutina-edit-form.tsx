@@ -416,6 +416,7 @@ export function RutinaEditFormV2({ initialData, onSuccess }: RutinaEditFormProps
   // Handle form submission
   const onSubmit = useCallback(
     async (data: RutinaFormData) => {
+      // eslint-disable-next-line @admin/no-window-alert
       const confirmed = await confirm({
         title: "¿Actualizar rutina?",
         description: "Se actualizarán los datos de la rutina.",

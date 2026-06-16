@@ -44,6 +44,7 @@ export function TrainerManager({ initialTrainers }: TrainerManagerProps) {
   const { confirm } = useConfirm();
 
   const handleDelete = async (id: string, name: string) => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: `¿Eliminar a ${name}?`,
       description: "El entrenador dejará de tener acceso al panel de administración. Esta acción no se puede deshacer.",

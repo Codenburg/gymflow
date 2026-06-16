@@ -102,6 +102,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
   };
 
   const handleDelete = async (id: string) => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar feriado?",
       description: "Esta acción no se puede deshacer.",

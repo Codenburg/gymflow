@@ -88,6 +88,7 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
   }
 
   const handleDelete = async (id: string) => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar promoción?",
       description: "Esta acción no se puede deshacer.",

@@ -65,6 +65,7 @@ export function EjercicioList({ diaId, diaNombre, rutinaId, ejercicios }: Ejerci
   };
 
   const handleDelete = async (ejercicioId: string) => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar ejercicio?",
       description: "Esta acción no se puede deshacer.",

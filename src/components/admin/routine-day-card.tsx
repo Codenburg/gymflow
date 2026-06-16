@@ -94,6 +94,7 @@ export function RoutineDayCard({
   }, [isEditing, dia.musculosEnfocados]);
 
   const handleDelete = async () => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar día?",
       description: `Esta acción eliminará el día y todos sus ejercicios. Esta acción no se puede deshacer.`,

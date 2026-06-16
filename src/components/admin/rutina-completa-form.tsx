@@ -364,6 +364,7 @@ export function RutinaCompletaForm() {
   // Handle form submission
   const onSubmit = useCallback(
     async (data: RutinaFormData) => {
+      // eslint-disable-next-line @admin/no-window-alert
       const confirmed = await confirm({
         title: "¿Crear rutina?",
         description: "Se creará una nueva rutina con los datos ingresados.",
@@ -394,6 +395,7 @@ export function RutinaCompletaForm() {
 
   // Handle form clear
   const handleClearForm = useCallback(async () => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Limpiar formulario?",
       description:

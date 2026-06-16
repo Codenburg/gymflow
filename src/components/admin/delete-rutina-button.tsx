@@ -17,6 +17,7 @@ export function DeleteRutinaButton({ rutinaId }: DeleteRutinaButtonProps) {
   const { confirm, Dialog } = useConfirm();
 
   const handleDelete = async () => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar rutina?",
       description: "Esta acción no se puede deshacer.",

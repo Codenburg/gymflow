@@ -38,6 +38,7 @@ function TableDuplicateButton({ rutinaId }: { rutinaId: string }) {
   const { confirm, Dialog } = useConfirm();
 
   const handleDuplicate = async () => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Duplicar rutina?",
       variant: "default",
@@ -90,6 +91,7 @@ function TableDeleteButton({ rutinaId }: { rutinaId: string }) {
   const { confirm, Dialog } = useConfirm();
 
   const handleDelete = async () => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar rutina?",
       description: "Esta acción no se puede deshacer.",
@@ -285,6 +287,7 @@ export function RutinasListClient({ rutinas }: RutinasListClientProps) {
   const handleBatchDelete = async () => {
     if (selectedIds.length === 0) return;
 
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: `¿Eliminar ${selectedIds.length} rutina${selectedIds.length > 1 ? "s" : ""}?`,
       description: "Esta acción no se puede deshacer.",

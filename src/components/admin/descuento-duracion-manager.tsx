@@ -145,6 +145,7 @@ export function DescuentoDuracionManager({
   };
 
   const handleDelete = async (id: number) => {
+    // eslint-disable-next-line @admin/no-window-alert
     const confirmed = await confirm({
       title: "¿Eliminar descuento?",
       description: "Esta acción no se puede deshacer.",
