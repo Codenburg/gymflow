@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { Control, FieldErrors } from "react-hook-form";
 
 interface EjercicioRowProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   id: string;
   name: string;
@@ -18,6 +19,7 @@ interface EjercicioRowProps {
   diaIndex: number;
   diaId: string;
   onRemove: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors?: FieldErrors<any>;
 }
 
@@ -31,6 +33,7 @@ export const EjercicioRow = memo(function EjercicioRow({
   onRemove,
   errors,
 }: EjercicioRowProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ejerciciosArrayErrors = errors as any;
   const ejercicioErrors = ejerciciosArrayErrors?.[index];
   const hasError = ejercicioErrors?.nombre;
