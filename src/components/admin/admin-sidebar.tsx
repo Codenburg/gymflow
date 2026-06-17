@@ -17,7 +17,7 @@ import {
   Clock,
   Plus,
   Menu,
-  House,
+  ExternalLink,
   Sun,
   Moon,
   LogOut,
@@ -130,7 +130,6 @@ function SidebarContent({
       {/* Logo/Title */}
       <div className="p-4 border-b border-border">
         <Link href="/admin" className="flex items-center gap-2">
-          <House className="w-5 h-5 text-foreground" />
           <span className="font-bold text-xl text-foreground uppercase">{gymName}</span>
         </Link>
       </div>
@@ -181,6 +180,13 @@ function SidebarContent({
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", dropdownOpen ? "rotate-180" : "rotate-0")} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuItem
+              onClick={() => router.push("/")}
+              className="cursor-pointer"
+            >
+              <ExternalLink className="w-5 h-5 mr-2" />
+              Ver sitio público
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
               {theme === "dark" ? (
                 <>
