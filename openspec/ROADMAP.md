@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-06-15_ | _Version: 0.20.1_
+_Last updated: 2026-06-16_ | _Version: 1.0.1_
 
 ---
 
@@ -90,6 +90,11 @@ _Last updated: 2026-06-15_ | _Version: 0.20.1_
 - [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
 - [x] **E2E test 5.2.3 isolation issue** — `tests/gym-config.spec.ts:5.2.3` falla cuando corre después de 5.2.1 en el mismo suite. **RESUELTO en v0.20.1** — `test.describe.configure({ mode: 'serial' })` + file-level `test.afterEach(resetGymConfig)` con `tests/utils/gym-reset.ts` (direct prisma access, scoped + JSDoc'd). Ver Recomendación 3.
 - [x] **`revalidatePath("/admin/descuentos")` no matchea la ruta real** en `actions/descuentos-duracion.ts:94,138,167` — la ruta es `/admin/descuentos-duracion`. Pre-existente, no introducido por este cambio. **RESUELTO en v0.20.1** (GGA hook cycle PR 2 / T11) — los 3 sites actualizados.
+
+### Lint warnings (160 remaining, 0 errors)
+- [ ] **no-unused-vars (118 warnings)** — El más grande (~258 source files). Bulk approach: agregar `argsIgnorePattern: "^_"` y `varsIgnorePattern: "^_"` a `@typescript-eslint/no-unused-vars` en eslint.config.mjs. ⚠️ algunas vars sin prefijo `_` podrían ser bugs reales (imports no usados, variables olvidadas). Hacer grep de `import.*from` sin uso después del cambio.
+- [ ] **no-hardcoded-colors (11 warnings)** — Admin plugin rule. Migrar colores CSS hardcodeados a design tokens (`primary`, `secondary`, `muted`, `border`, etc). ⚠️ algunos `hover:` / `focus:` states pueden necesitar tokens nuevos o extenderse via Tailwind config. Contexto: `openspec/ROADMAP.md` § Recomendación BONUS.
+- [ ] **no-explicit-any (24 warnings)** — Bajado de error a warning. 4 en producción (react-hook-form `Control<any>`, difícil de tipar), 20 en tests (debug scripts, dejar como están). ⚠️ si se migra a tipos más estrictos, revisar los 4 sitios de producción con prioridad.
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas
