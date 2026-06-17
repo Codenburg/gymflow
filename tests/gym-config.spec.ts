@@ -83,7 +83,6 @@ const SCHEDULE_SUBMIT = '[data-testid="submit-schedule"]';
 const DAY_TOGGLE = (code: string) => `[data-testid="toggle-${code}"]`;
 const DAY_TIME_APERTURA = (code: string) => `[data-testid="time-${code}-apertura"]`;
 const DAY_TIME_CIERRE = (code: string) => `[data-testid="time-${code}-cierre"]`;
-const DAY_CARD = (code: string) => `[data-testid="day-card-${code}"]`;
 
 const PAGE_TITLE = 'Configuración del Gimnasio';
 
@@ -374,6 +373,62 @@ test.describe('Gym Config — Admin flow', () => {
     // The page loads (no error). The Horarios heading should be absent.
     const horasHeading = page.getByRole('heading', { name: 'Horarios' });
     await expect(horasHeading).toHaveCount(0);
+  });
+
+  test('5.1.3.2 - rejects schedule with apertura >= cierre (per-day toast error)', async ({ page }) => {
+    // Mirrors the time-range validation in the feriado creation flow
+    // (`feriado-manager.tsx:54`): apertura must be strictly less than
+    // cierre. Submitting an inverted range (e.g. lunes 21:00 → 06:00)
+    // must block the form and surface a per-day toast.error. The
+    // underlying Zod schema is intentionally permissive (the form is
+    // the source of consistency — see `tests/unit/gym-field-schema.test.ts`
+    // horarioDiaSchema "form is the source of consistency" comment), so
+    // this test pins the client-side guard in place. If someone removes
+    // the onSubmit handler in WeeklyScheduleEditor, the server would
+    // happily accept lunes 21:00 → 06:00, and this test would fail.
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+
+    // Open lunes and set an inverted range. apertura > cierre means
+    // the onSubmit guard in WeeklyScheduleEditor must call
+    // e.preventDefault() and the server action is NEVER invoked.
+    const lunToggle = page.locator(DAY_TOGGLE('lun')).locator('visible=true');
+    const lunApertura = page.locator(DAY_TIME_APERTURA('lun')).locator('visible=true');
+    const lunCierre = page.locator(DAY_TIME_CIERRE('lun')).locator('visible=true');
+
+    const isChecked = await lunToggle.getAttribute('aria-checked');
+    if (isChecked !== 'true') {
+      await lunToggle.click();
+      await expect(lunToggle).toHaveAttribute('aria-checked', 'true', {
+        timeout: 5000,
+      });
+    }
+    await lunApertura.fill('21:00');
+    await lunCierre.fill('06:00');
+
+    // Submit. The onSubmit handler must call e.preventDefault() before
+    // the form action runs.
+    await page.locator(SCHEDULE_SUBMIT).locator('visible=true').click();
+
+    // The per-day error toast appears. Sonner renders
+    // `[data-sonner-toast]` and includes the message text. We assert
+    // on a stable substring of the error so a copy change to the
+    // message wording doesn't break the test, but a logic change (no
+    // toast, or a different toast) does.
+    const errorToast = page.locator('[data-sonner-toast]', {
+      hasText: 'la hora de apertura debe ser menor',
+    });
+    await expect(errorToast).toBeVisible({ timeout: 5000 });
+
+    // Stronger signal: the success toast does NOT appear. If the form
+    // had been submitted successfully, the useEffect on state.success
+    // would have fired toast.success("Horarios actualizados"). Wait
+    // briefly to let the round-trip complete, then assert absence.
+    await page.waitForTimeout(1500);
+    const successToast = page.locator('[data-sonner-toast]', {
+      hasText: 'Horarios actualizados',
+    });
+    await expect(successToast).toHaveCount(0);
   });
 
   test('5.1.4 - edit socialInstagram + socialWhatsapp → /informacion shows both buttons', async ({ page }) => {

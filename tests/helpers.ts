@@ -24,6 +24,7 @@
 
 import { expect, type Page, type Locator, type Response } from '@playwright/test';
 import { setExpiredCookie as setExpiredCookieFromSecurity } from './utils/security-helpers';
+import { resetGymNombre } from './utils/gym-reset';
 
 // ============================================
 // Constants
@@ -200,6 +201,13 @@ export const setExpiredCookie = setExpiredCookieFromSecurity;
  * continues (the 5.2.3 issue is a soft signal).
  */
 export async function resetGymConfig(): Promise<void> {
-  const { resetGymNombre } = await import('./utils/gym-reset');
+  // Static import (see top of file). The previous dynamic import
+  // (`await import('./utils/gym-reset')`) avoided loading the Prisma
+  // client at import time, but Playwright's runtime doesn't transform
+  // dynamic imports of .ts files, so every test in the file errored
+  // with "Cannot use import statement outside a module" in afterEach.
+  // Static import is safe: `gym-reset.ts` only instantiates PrismaClient
+  // when `getPrisma()` is called (lazy singleton), so loading the module
+  // doesn't open a DB connection.
   await resetGymNombre();
 }

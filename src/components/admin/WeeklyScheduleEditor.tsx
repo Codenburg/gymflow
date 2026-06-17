@@ -134,7 +134,32 @@ export function WeeklyScheduleEditor({ initial }: WeeklyScheduleEditorProps) {
         </div>
       </div>
 
-      <form action={formAction} className="space-y-4">
+      <form
+        action={formAction}
+        className="space-y-4"
+        onSubmit={(e) => {
+          // Time-range validation for each open day. Mirrors the pattern
+          // in `feriado-manager.tsx` (horaInicio >= horaFin → toast.error).
+          // The same `>=` comparison rejects equal times too, matching the
+          // feriado behavior — the user can always reopen at exactly the
+          // closing time by typing it directly into the inputs.
+          for (const { code, label } of DAYS) {
+            const day = schedule[code];
+            if (
+              day.abierto &&
+              day.apertura &&
+              day.cierre &&
+              day.apertura >= day.cierre
+            ) {
+              e.preventDefault();
+              toast.error(
+                `${label}: la hora de apertura debe ser menor que la hora de cierre`
+              );
+              return;
+            }
+          }
+        }}
+      >
         <input type="hidden" name="field" value="horarioJson" />
         <input type="hidden" name="value" value={serializedValue} />
 
