@@ -130,7 +130,11 @@ export default async function InformacionPage() {
 
           {/* Descuentos — collapsible */}
           <CollapsibleSection title="Descuentos">
-            <DurationDiscountsSection descuentos={descuentos} error={false} />
+            <DurationDiscountsSection
+              descuentos={descuentos}
+              error={false}
+              price={price}
+            />
           </CollapsibleSection>
 
           <HoursSection horario={display.horarioJson} />
