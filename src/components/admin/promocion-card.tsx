@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import type { Promocion } from "@/lib/schemas"
+import { formatPriceARS } from "@/lib/format"
 
 interface PromocionCardProps {
   promocion: Promocion
@@ -13,15 +14,6 @@ interface PromocionCardProps {
   onEdit: (p: Promocion) => void
   onDelete: (id: string) => void
   onToggle: (id: string, activo: boolean) => void
-}
-
-function formatPriceARS(value: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 export function PromocionCard({
