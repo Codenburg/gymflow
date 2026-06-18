@@ -347,11 +347,12 @@ Tracking de `fix:` commits post-1.0.0. Los `feat:` siguen criterio aparte (minor
 - 🟡 **2 fixes de severidad media** — bugs de validación, lifecycle, race conditions, UI parcialmente rota
 - 🟢 **3 fixes de severidad baja** — polish UX, copy, accesibilidad, refactors menores
 
-**Estado actual**: 1 media + 1 baja → **ningún criterio cumplido todavía**, seguimos acumulando.
+**Estado actual**: 1 media + 2 baja → criterio **baja a 1 fix de cerrarse**. Seguimos acumulando.
 
 | # | SHA | Severidad | Descripción |
 | --- | --- | --- | --- |
 | 1 | `76e160f` | 🟡 Media | `fix(admin): disable save on empty name, prevent double toast on re-mount` — 2 bugs reales (validación + lifecycle) |
 | 2 | `75ec9d1` | 🟢 Baja | `fix(admin): replace floating mobile hamburger with proper fixed header bar` — UX polish mobile, sin cambio de lógica |
+| 3 | `0628d56` | 🟢 Baja | `chore(lint): remove unused imports and dead code in admin-layout.tsx` — cleanup de código muerto (15 imports/vars/function de un refactor previo) |
 | — | ⏳ | 🟡 Media | 1 fix de media más cierra el criterio media |
-| — | ⏳ | 🟢 Baja | 2 fixes de baja más cierran el criterio baja |
+| — | ⏳ | 🟢 Baja | 1 fix de baja más cierra el criterio baja |
