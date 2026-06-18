@@ -1,15 +1,9 @@
 import { AlertCircle } from "lucide-react"
+import { formatPriceARS } from "@/lib/format"
 
 interface PriceSectionProps {
   price: number | null
   error: boolean
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-  }).format(price)
 }
 
 export function PriceSection({ price, error }: PriceSectionProps) {
@@ -38,7 +32,7 @@ export function PriceSection({ price, error }: PriceSectionProps) {
         Precio
       </h2>
       <p className="text-4xl font-bold text-[var(--foreground)]">
-        {formatPrice(price)}
+        {formatPriceARS(price)}
       </p>
       <p className="text-[var(--muted-foreground)] mt-1">Abono mensual</p>
     </section>
