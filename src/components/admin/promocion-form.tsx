@@ -18,6 +18,7 @@ import {
   type UpdatePromocionPrecioInput,
 } from "@/lib/schemas"
 import { cn } from "@/lib/utils"
+import { formatPriceARS } from "@/lib/format"
 
 interface PromocionFormProps {
   editingPromocion: Promocion | null
@@ -25,15 +26,6 @@ interface PromocionFormProps {
   onSubmitPrecio: (data: UpdatePromocionPrecioInput) => Promise<{ success: boolean; error?: string }>
   onSubmitCreate: (data: { titulo: string; descripcion: string; precio: number }) => Promise<{ success: boolean; error?: string }>
   onCancel: () => void
-}
-
-function formatPriceARS(value: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 export function PromocionForm({
