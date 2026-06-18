@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Promocion } from "@/app/(public)/informacion/page"
-
-const formatPriceARS = (n: string | number) => `$ ${Number(n).toLocaleString("es-AR")}`
+import { formatPriceARS } from "@/lib/format"
 
 interface PlansSectionProps {
   promociones: Promocion[]
