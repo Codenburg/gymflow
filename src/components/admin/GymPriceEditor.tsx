@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateGymPrice } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
+import { formatPriceARS } from "@/lib/format";
 
 interface GymPriceEditorProps {
   initialPrice: number | null;
@@ -36,13 +37,6 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
       toast.success("Precio actualizado exitosamente");
     }
   }, [isPending, state.success]);
-
-  const formatPrice = (value: number): string => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-    }).format(value);
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -100,7 +94,7 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
       ) : serverPrice !== null ? (
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-2xl font-bold text-foreground">{formatPrice(serverPrice)}</p>
+            <p className="text-2xl font-bold text-foreground">{formatPriceARS(serverPrice)}</p>
             <p className="text-muted-foreground text-sm">Abono mensual</p>
           </div>
           <button
