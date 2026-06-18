@@ -1,9 +1,13 @@
 import { getDescuentos } from '@/lib/descuentos';
+import { getGymPrice } from '@/lib/gym-price';
 import { DescuentoDuracionManager } from '@/components/admin/descuento-duracion-manager'
 import { PageHeader } from '@/components/admin/page-header'
 
 export default async function DescuentosDuracionAdminPage() {
-  const descuentos = await getDescuentos();
+  const [descuentos, gymPrice] = await Promise.all([
+    getDescuentos(),
+    getGymPrice(),
+  ]);
 
   return (
     <div className="container py-8">
@@ -11,7 +15,10 @@ export default async function DescuentosDuracionAdminPage() {
         title="Descuentos por Duración"
         description="Gestiona los descuentos según la duración de suscripción"
       />
-      <DescuentoDuracionManager initialDescuentos={descuentos} />
+      <DescuentoDuracionManager
+        initialDescuentos={descuentos}
+        initialGymPrice={gymPrice}
+      />
     </div>
   )
 }
