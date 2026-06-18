@@ -18,19 +18,22 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, username, role, gymName }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile: AdminSidebar renders its own fixed top header */}
+      {/* Desktop: AdminSidebar in flow, h-screen. Hidden on mobile. */}
+      <div className="hidden lg:flex">
+        <AdminSidebar username={username} role={role} gymName={gymName} />
+      </div>
+
+      {/* Mobile: AdminSidebar renders its own fixed top header. Hidden on desktop. */}
       <div className="lg:hidden">
         <AdminSidebar username={username} role={role} gymName={gymName} />
       </div>
 
-      {/* Desktop: sidebar h-screen, content offset */}
-      <div className="hidden lg:flex">
-        <AdminSidebar username={username} role={role} gymName={gymName} />
-        <div className="ml-64 flex-1 p-6">{children}</div>
-      </div>
-
-      {/* Mobile content */}
-      <div className="lg:hidden p-4 pt-16">{children}</div>
+      {/* Content renders ONCE; CSS controls position and padding per breakpoint.
+          Mobile: p-4 pt-16 (padding 1rem + top 4rem to clear the fixed top bar).
+          Desktop (lg+): ml-64 (16rem margin to clear the sidebar) + p-6 (1.5rem padding).
+          This avoids rendering {children} twice, which was breaking Playwright
+          strict mode (every data-testid resolved to 2 elements). */}
+      <div className="p-4 pt-16 lg:ml-64 lg:p-6">{children}</div>
     </div>
   );
 }
