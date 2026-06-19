@@ -44,6 +44,7 @@ import { DescuentoAdminPage } from './pages/DescuentoAdminPage';
 import { createPromocionFixture } from './fixtures/promocion.fixture';
 import { createDescuentoFixture } from './fixtures/descuento.fixture';
 import { setGymPrice } from './utils/gym-reset';
+import { resetDescuentos, closeDescuentosReset } from './utils/descuentos-reset';
 
 test.setTimeout(120_000);
 
@@ -83,6 +84,14 @@ test.describe('Promociones + Descuentos CRUD', () => {
   // descuento API has no DELETE route, so we use the UI.
   const createdDescuentoKeys: Array<{ meses: number; porcentaje: number }> = [];
 
+  test.beforeEach(async () => {
+    // Reset descuentos to the 4 seed values so each test starts from
+    // a known state. Avoids collisions with the seed (which has the
+    // @@unique([gymId, meses]) constraint) and between tests that
+    // pick a random `meses` value.
+    await resetDescuentos();
+  });
+
   test.afterEach(async ({ page }) => {
     // Clean up any promociones that weren't deleted by their own test.
     for (const titulo of createdPromocionTitulos.splice(0)) {
@@ -112,6 +121,12 @@ test.describe('Promociones + Descuentos CRUD', () => {
         // Best-effort.
       }
     }
+  });
+
+  test.afterAll(async () => {
+    // Disconnect the singleton Prisma client to avoid open-connection
+    // warnings on Playwright teardown.
+    await closeDescuentosReset();
   });
 
   // ============================================
@@ -212,7 +227,10 @@ test.describe('Promociones + Descuentos CRUD', () => {
   test('S2.D.1 - create descuento (happy path)', async ({ page }) => {
     await loginAsAdmin(page);
     const descuentoPage = new DescuentoAdminPage(page);
-    const fixture = createDescuentoFixture({ meses: 3, porcentaje: 15 });
+    // randomMeses: pick a `meses` not in the seed pool {3, 6, 9, 12} to
+    // avoid the @@unique([gymId, meses]) constraint after the
+    // beforeEach reset re-inserts the seed.
+    const fixture = createDescuentoFixture({ randomMeses: true, porcentaje: 15 });
 
     await descuentoPage.goto();
     await descuentoPage.expectVisible();
@@ -259,7 +277,7 @@ test.describe('Promociones + Descuentos CRUD', () => {
   test('S2.D.3 - delete descuento', async ({ page }) => {
     await loginAsAdmin(page);
     const descuentoPage = new DescuentoAdminPage(page);
-    const fixture = createDescuentoFixture({ meses: 6, porcentaje: 20 });
+    const fixture = createDescuentoFixture({ randomMeses: true, porcentaje: 20 });
 
     // Create via the UI.
     await descuentoPage.goto();
@@ -284,7 +302,7 @@ test.describe('Promociones + Descuentos CRUD', () => {
 
     await loginAsAdmin(page);
     const descuentoPage = new DescuentoAdminPage(page);
-    const fixture = createDescuentoFixture({ meses: 3, porcentaje: 15 });
+    const fixture = createDescuentoFixture({ randomMeses: true, porcentaje: 15 });
 
     await descuentoPage.goto();
     await descuentoPage.expectVisible();

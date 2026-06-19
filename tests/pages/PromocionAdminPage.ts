@@ -78,17 +78,18 @@ export class PromocionAdminPage extends BasePage {
   }
 
   /**
-   * Click the edit-mode submit button to save changes to an existing promocion.
+   * Click the submit button in EDIT mode. The edit-mode button has a
+   * separate `data-testid="promocion-submit-edit-button"` (different
+   * from the create-mode `data-testid="promocion-submit-button"`) so
+   * S2.P.2 can target the correct action — the create-mode submit
+   * would silently re-create a new promocion instead of updating.
    *
-   * Distinct from `submitCreate()` because the form's edit-mode button
-   * exposes a different testid (`promocion-submit-edit-button`) and a
-   * different label ("Guardar cambios"). Tests should assert the button
-   * text BEFORE calling this method to surface "form is in the wrong
-   * mode at click time" failures explicitly.
+   * Tests should assert the button text BEFORE calling this method
+   * (e.g., `toHaveText('Guardar cambios')`) to surface "form is in
+   * the wrong mode at click time" failures explicitly.
    */
   async submitEdit(): Promise<void> {
-    const editSubmitButton = this.page.getByTestId('promocion-submit-edit-button');
-    await editSubmitButton.click();
+    await this.page.getByTestId('promocion-submit-edit-button').click();
   }
 
   /** Click edit on a list item by titulo. */
