@@ -76,6 +76,20 @@ export class PromocionAdminPage extends BasePage {
     await this.submitButton.click();
   }
 
+  /**
+   * Click the edit-mode submit button to save changes to an existing promocion.
+   *
+   * Distinct from `submitCreate()` because the form's edit-mode button
+   * exposes a different testid (`promocion-submit-edit-button`) and a
+   * different label ("Guardar cambios"). Tests should assert the button
+   * text BEFORE calling this method to surface "form is in the wrong
+   * mode at click time" failures explicitly.
+   */
+  async submitEdit(): Promise<void> {
+    const editSubmitButton = this.page.getByTestId('promocion-submit-edit-button');
+    await editSubmitButton.click();
+  }
+
   /** Click edit on a list item by titulo. */
   async editByTitulo(titulo: string): Promise<void> {
     const item = this.listItem(titulo);

@@ -186,7 +186,7 @@ export function PromocionForm({
       <div className="flex gap-2 pt-2">
         {isEditing ? (
           <>
-            <Button type="submit" disabled={isSubmitting} data-testid="promocion-submit-button">
+            <Button type="submit" disabled={isSubmitting} data-testid="promocion-submit-edit-button">
               <Check className="w-4 h-4 mr-2" />
               {isSubmitting ? "Guardando..." : "Guardar cambios"}
             </Button>

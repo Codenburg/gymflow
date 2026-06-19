@@ -169,7 +169,15 @@ test.describe('Promociones + Descuentos CRUD', () => {
     // Change the titulo.
     const newTitulo = `${fixture.titulo}_EDITED`;
     await tituloInput.fill(newTitulo);
-    await promoPage.submitCreate();
+
+    // Confirm the form is in EDIT mode before clicking the save button
+    // (catches "form is in the wrong mode at click time" failures
+    // explicitly — the edit-mode button text is "Guardar cambios",
+    // the create-mode button text is "Crear Promoción").
+    const editSubmitButton = page.getByTestId('promocion-submit-edit-button');
+    await expect(editSubmitButton).toBeVisible({ timeout: 10_000 });
+    await expect(editSubmitButton).toHaveText('Guardar cambios');
+    await promoPage.submitEdit();
 
     // The old titulo is gone; the new one is visible.
     await expect(
