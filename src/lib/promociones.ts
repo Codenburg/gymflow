@@ -1,4 +1,4 @@
-import { cacheTag, cacheLife } from "next/cache";
+import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 
 /**
@@ -16,17 +16,20 @@ import prisma from "@/lib/prisma";
  *
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  */
+// Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
 export async function getPromociones() {
-  "use cache";
-  cacheTag("promociones");
-  cacheLife({ revalidate: 60 });
-
-  try {
-    return await prisma.promocion.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("[getPromociones] Failed to fetch promociones:", error);
-    return [];
-  }
+  return unstable_cache(
+    async () => {
+      try {
+        return await prisma.promocion.findMany({
+          orderBy: { createdAt: "desc" },
+        });
+      } catch (error) {
+        console.error("[getPromociones] Failed to fetch promociones:", error);
+        return [];
+      }
+    },
+    ["promociones"],
+    { tags: ["promociones"], revalidate: 60 }
+  )();
 }

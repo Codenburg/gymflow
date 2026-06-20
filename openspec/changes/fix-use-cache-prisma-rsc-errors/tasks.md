@@ -45,23 +45,23 @@ Reasoning: 9 source files + 3 new test files; mechanical 11-reader migration pus
 
 ## Phase 2 — `gym-config` Tag Readers (3 readers, 2 files)
 
-- [ ] 2.1 Migrate `getGymNameForServer` → `unstable_cache`
-- [ ] 2.2 Migrate `getGymDisplayForServer` → `unstable_cache`
-- [ ] 2.3 Migrate `getGymPrice` → `unstable_cache`
+- [x] 2.1 Migrate `getGymNameForServer` → `unstable_cache`
+- [x] 2.2 Migrate `getGymDisplayForServer` → `unstable_cache`
+- [x] 2.3 Migrate `getGymPrice` → `unstable_cache`
 
 ## Phase 3 — `rutinas` Tag Readers (5 readers, 2 files)
 
-- [ ] 3.1 Migrate `getRutinas` → `unstable_cache`
-- [ ] 3.2 Migrate `getCachedRutinaById` → `unstable_cache`
-- [ ] 3.3 Migrate `getStats` → `unstable_cache`
-- [ ] 3.4 Migrate `getRoutinesPaginated` → `unstable_cache`
-- [ ] 3.5 Migrate `getTrainerCounts` → `unstable_cache`
+- [x] 3.1 Migrate `getRutinas` → `unstable_cache`
+- [x] 3.2 Migrate `getCachedRutinaById` → `unstable_cache`
+- [x] 3.3 Migrate `getStats` → `unstable_cache`
+- [x] 3.4 Migrate `getRoutinesPaginated` → `unstable_cache`
+- [x] 3.5 Migrate `getTrainerCounts` → `unstable_cache`
 
 ## Phase 4 — Independent Leaves (3 readers, 3 files)
 
-- [ ] 4.1 Migrate `getPromociones` → `unstable_cache`
-- [ ] 4.2 Migrate `getFeriados` → `unstable_cache`
-- [ ] 4.3 Migrate `getDescuentos` → `unstable_cache`
+- [x] 4.1 Migrate `getPromociones` → `unstable_cache`
+- [x] 4.2 Migrate `getFeriados` → `unstable_cache`
+- [x] 4.3 Migrate `getDescuentos` → `unstable_cache`
 
 ## Phase 5 — Verification
 

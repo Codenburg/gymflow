@@ -1,4 +1,4 @@
-import { cacheTag, cacheLife } from "next/cache";
+import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 
 /**
@@ -18,17 +18,20 @@ import prisma from "@/lib/prisma";
  *
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  */
+// Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
 export async function getDescuentos() {
-  "use cache";
-  cacheTag("descuentos-duracion");
-  cacheLife({ revalidate: 60 });
-
-  try {
-    return await prisma.descuentoDuracion.findMany({
-      orderBy: { meses: "asc" },
-    });
-  } catch (error) {
-    console.error("[getDescuentos] Failed to fetch descuentos:", error);
-    return [];
-  }
+  return unstable_cache(
+    async () => {
+      try {
+        return await prisma.descuentoDuracion.findMany({
+          orderBy: { meses: "asc" },
+        });
+      } catch (error) {
+        console.error("[getDescuentos] Failed to fetch descuentos:", error);
+        return [];
+      }
+    },
+    ["descuentos-duracion"],
+    { tags: ["descuentos-duracion"], revalidate: 60 }
+  )();
 }
