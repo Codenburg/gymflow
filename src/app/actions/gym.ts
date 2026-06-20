@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -76,21 +76,24 @@ export async function getGymConfig() {
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  * Requires `cacheComponents: true` in `next.config.ts` (Slice 2).
  */
+// Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
 export async function getGymNameForServer(): Promise<string | null> {
-  "use cache";
-  cacheTag("gym-config");
-  cacheLife({ revalidate: 60 });
-
-  try {
-    const gym = await prisma.gym.findUnique({
-      where: { id: "gym" },
-      select: { nombre: true },
-    });
-    return gym?.nombre ?? null;
-  } catch (error) {
-    console.error("Error fetching cached gym name:", error);
-    return null;
-  }
+  return unstable_cache(
+    async () => {
+      try {
+        const gym = await prisma.gym.findUnique({
+          where: { id: "gym" },
+          select: { nombre: true },
+        });
+        return gym?.nombre ?? null;
+      } catch (error) {
+        console.error("Error fetching cached gym name:", error);
+        return null;
+      }
+    },
+    ["gym-name"],
+    { tags: ["gym-config"], revalidate: 60 }
+  )();
 }
 
 /**
@@ -107,30 +110,33 @@ export async function getGymNameForServer(): Promise<string | null> {
  *
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
  */
+// Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
 export async function getGymDisplayForServer() {
-  "use cache";
-  cacheTag("gym-config");
-  cacheLife({ revalidate: 60 });
-
-  try {
-    const gym = await prisma.gym.findUnique({ where: { id: "gym" } });
-    if (!gym) return null;
-    const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
-    const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
-      ? horarioJsonParsed.data
-      : null;
-    return {
-      nombre: gym.nombre,
-      horarioJson,
-      direccion: gym.direccion,
-      mapsEmbedUrl: gym.mapsEmbedUrl,
-      socialInstagram: gym.socialInstagram,
-      socialWhatsapp: gym.socialWhatsapp,
-    };
-  } catch (error) {
-    console.error("Error fetching cached gym display:", error);
-    return null;
-  }
+  return unstable_cache(
+    async () => {
+      try {
+        const gym = await prisma.gym.findUnique({ where: { id: "gym" } });
+        if (!gym) return null;
+        const horarioJsonParsed = horarioSemanalSchema.safeParse(gym.horarioJson);
+        const horarioJson: HorarioSemanal | null = horarioJsonParsed.success
+          ? horarioJsonParsed.data
+          : null;
+        return {
+          nombre: gym.nombre,
+          horarioJson,
+          direccion: gym.direccion,
+          mapsEmbedUrl: gym.mapsEmbedUrl,
+          socialInstagram: gym.socialInstagram,
+          socialWhatsapp: gym.socialWhatsapp,
+        };
+      } catch (error) {
+        console.error("Error fetching cached gym display:", error);
+        return null;
+      }
+    },
+    ["gym-display"],
+    { tags: ["gym-config"], revalidate: 60 }
+  )();
 }
 
 /**
