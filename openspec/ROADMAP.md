@@ -102,7 +102,28 @@ _Last updated: 2026-06-18_ | _Version: 1.0.0_
 - [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
 - [x] **E2E test 5.2.3 isolation issue** — `tests/gym-config.spec.ts:5.2.3` falla cuando corre después de 5.2.1 en el mismo suite. **RESUELTO en v0.20.1** — `test.describe.configure({ mode: 'serial' })` + file-level `test.afterEach(resetGymConfig)` con `tests/utils/gym-reset.ts` (direct prisma access, scoped + JSDoc'd). Ver Recomendación 3.
 - [x] **`revalidatePath("/admin/descuentos")` no matchea la ruta real** en `actions/descuentos-duracion.ts:94,138,167` — la ruta es `/admin/descuentos-duracion`. Pre-existente, no introducido por este cambio. **RESUELTO en v0.20.1** (GGA hook cycle PR 2 / T11) — los 3 sites actualizados.
-- [ ] **S2.P.2 edit promocion test failure (pre-existing bug in edit flow)** — `tests/promociones-descuentos.spec.ts:147` (`S2.P.2 - edit promocion and verify persistence`) falla: después de clickear edit, cambiar el titulo, y submitar, el titulo viejo sigue en la lista. El test usa `promoPage.submitCreate()` (línea 172) para el edit, pero el form tiene handlers distintos para create vs update. El bug fue enmascarado por el AdminLayout strict mode (resuelto en `a1b1990`). **Investigar**: ¿el form trata el submit como create en vez de update (production bug), o solo es un test que necesita un `submitEdit()` method en `PromocionAdminPage` page object? Falla también en aislamiento. Pre-existente, no introducido por el SDD `descuento-precio-final`. **Pendiente**: necesita investigación + fix (puede ser test-only o production fix en `promocion-form.tsx` / `promocion-manager.tsx`).
+- [ ] **S2.P.2 edit promocion test failure (pre-existing production bug)** — `tests/promociones-descuentos.spec.ts:147` (`S2.P.2 - edit promocion and verify persistence`) falla consistentemente en aislamiento **incluso con la test-only fix aplicada** (`submitEdit()` + `toHaveText("Guardar cambios")` + nuevo testid `promocion-submit-edit-button` en `promocion-form.tsx:189`).
+
+  **Síntoma**: el form trata el submit como CREATE en vez de UPDATE. Después de clickear edit, cambiar el titulo, y submitar via `submitEdit()`, el titulo viejo sigue en la lista y aparece uno nuevo con el titulo editado (2 items en la lista en vez de 1 reemplazado).
+
+  **Lo que probé (todo falla)**:
+  - `submitEdit()` con `data-testid="promocion-submit-edit-button"` distinto del create → sigue creando.
+  - `toHaveText("Guardar cambios")` ANTES del click (confirma que el form ESTÁ en edit mode) → assertion pasa, pero el click igual crea.
+  - Test aislado sin serial mode → mismo síntoma.
+
+  **Hipótesis más probable**: race condition entre el `useEffect` del form (que resetea valores cuando `editingPromocion?.id` cambia) y el submit. El submit puede capturar `editingPromocion` como null en su closure aunque la UI lo muestre en edit mode.
+
+  **Para retomar**:
+  1. **No es fix de test** — el test está bien diseñado (verifica mode + click + resultado). El bug está en el form/manager.
+  2. **Production fix sugerido** (out of scope por user mandate, requiere tocar `promocion-form.tsx` + `promocion-manager.tsx`):
+     - Agregar un log en `onSubmit` (línea 77 de `promocion-form.tsx`) que imprima `isEditing` y `editingPromocion?.id` al momento del submit. Confirmar si la closure está stale.
+     - Considerar forzar re-render del form via `key={editingPromocion?.id ?? 'create'}` en el `<form>` para que remonte cuando cambia el mode.
+     - O usar `useRef` para que `onSubmit` lea `editingPromocion` de un ref (no closure).
+  3. **Tests acumulados**: una vez fixeado, este test debería pasar sin más cambios. El page object (`submitEdit`) y el testid (`promocion-submit-edit-button`) ya están listos.
+
+  **Estado actual**: 1 commit parcial (test-only) en `fix-e2e-promociones-descuentos` (`c9259b1 test(e2e): fix S2.P.2 edit promocion — add edit-mode testid + submitEdit()`). Falta la parte de producción.
+
+  **Pre-existente**, no introducido por el SDD `descuento-precio-final`. Enmascarado por el AdminLayout strict mode bug (resuelto en `a1b1990`).
 
 - [x] **Admin panel responsive: polish mobile en todas las pages (pc-first → mobile-friendly)** — el admin está diseñado desktop-first y rompe la polish en mobile. **Síntoma más visible**: el `<Button variant="ghost" size="icon">` del hamburguesa en `src/components/admin/admin-sidebar.tsx:240-247` queda flotando "fantasma" arriba a la izquierda (sin posicionamiento, sin header, sin fondo) en vez de tener un header mobile dedicado. **Slice (a) RESUELTO**: el toggle ahora vive adentro de un `<header fixed top-0 inset-x-0 z-40 h-14 bg-background border-b>` con el botón (`aria-label="Abrir menú de navegación"`) + nombre del gym en uppercase. El wrapper redundante `fixed top-4 left-4 z-50` del layout fue removido. **Slice (b) — quick wins RESUELTOS** (commit `504210b`): los 4 issues de mayor impacto del mobile audit — H1+H4 (reveal hover buttons en touch, 2 files), H2 (stack feriado form, 1 file), H3 (stack descuento form, 1 file), M3 (PageHeader truncate, 1 file), M1 (submit bar stack, 2 files). **Slice (b) — cleanup legacy RESUELTO**: el flujo viejo `/admin/rutinas/[id]/dias/[diaId]` (page + API route + 5 components muertos + 2 spec files con tests zombies apuntando a URLs/APIs inexistentes) fue removido (~1005 líneas + 2 dirs vacíos). Los 3 `revalidatePath` en `actions/ejercicios.ts` que apuntaban a la URL vieja ahora apuntan a `/admin/rutinas/${id}` (la URL actual). **Slice (b) — polish PENDIENTE**: M2/M4/M5 + 5 issues low (auditoría completa en commit del audit report) — tablas → cards en mobile, pagination icon-only, batch actions stack, etc. Pendiente para próxima sesión si querés encararlo.
 
@@ -123,6 +144,25 @@ _Last updated: 2026-06-18_ | _Version: 1.0.0_
 - [x] **Hardcoded `gymId: "gym"`** en `actions/promociones.ts:96`, `descuentos-duracion.ts:91`. Identificador del singleton, no un secret. Pre-existente. **RESUELTO en v0.20.1** (E2E coverage PR 2 / T10) — `GYM_SINGLETON_ID` constant introducido en GGA hook cycle PR 1 / T1.
 - [ ] **Commit duplicado `cfb79f0`** en este mismo change (pathspec misinterpreted en `git commit -- openspec/ROADMAP.md`). Cosmético, ya compensado por `ce3d7e8`. Limpiar con `git rebase -i 010fd5e` antes del push si querés (v0.18.0 follow-up)
 - [ ] **S2.D.4 cache invalidation test issue (descuento-precio-final E2E)** — `tests/promociones-descuentos.spec.ts:277` (`S2.D.4 - descuento list item shows computed Precio final`) falla por un **deadlock de cache**: `getGymPrice()` está cacheado con `cacheTag("gym-config")`, y SOLO la server action `updateGymPrice` (invocada via el form de `GymPriceEditor`) llama `revalidateTag("gym-config")`. Prisma directo (`setGymPrice` en `tests/utils/gym-reset.ts`) y `/api/gym` PATCH (que usa `revalidatePath`) NO invalidan este tag. La UI muestra "Sin precio configurado" cuando el cache es null, y solo permite editar si hay precio → no se puede salir del estado inicial. **Workarounds posibles**: (a) modificar `setGymPrice` para invocar la server action via Playwright `page.request` con Next-Action RPC (complex); (b) aceptar el test como best-effort y validar el cálculo con unit tests + visual check; (c) modificar `GymPriceEditor` para permitir crear precio desde "Sin precio configurado" (UI complexity para test-only). Ver Engram obs #215 para análisis completo. No bloquea producción (el flow real siempre va por la server action). **Pendiente**: SDD cycle chico o fix directo — decisión de scope a tomar en proposal.
+- [ ] **S2.D.3 delete descuento + S2.D.4 cache invalidation (SASL/Prisma 7 test env issue)** — Ambos tests fallan en aislamiento y en suite con `Error: SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`. La causa raíz es que el test process (Playwright worker) no carga `.env`, entonces `process.env.DATABASE_URL` llega undefined o malformado a `pg.Pool`.
+
+  **Lo que SÍ funciona** (validado en `fix-e2e-promociones-descuentos`, 6 commits en main):
+  - S2.P.1 ✅ — create promocion (era passing antes, sigue ok).
+  - S2.P.3 ✅ — clickConfirmDelete funciona (AlertDialog handling correcto).
+  - S2.D.1 ✅ — randomMeses + reset utility funcionan (con el adapter Prisma 7 ya aplicado en `e38d13e`).
+
+  **Lo que sigue fallando** (mismo síntoma: "list item not found" en `expectInList`):
+  - **S2.D.3** (`tests/promociones-descuentos.spec.ts:258` — `delete descuento`): `await descuentoPage.fillPorcentaje(20); await descuentoPage.submitCreate();` no crea el item. Log muestra `resetDescuentos` fallando con SASL.
+  - **S2.D.4** (`tests/promociones-descuentos.spec.ts:277` — `descuento list item shows computed Precio final`): mismo síntoma + `gym-reset.ts` también falla con SASL (mismo problema de `DATABASE_URL`).
+
+  **Para retomar** (orden de investigation):
+  1. **Cargar `.env` en el test process**: `playwright.config.ts` no carga `.env` automáticamente (Next.js sí, pero Playwright es un proceso separado). Fix: agregar `import 'dotenv/config'` al `globalSetup` o usar `dotenv-cli`. Verificar que `process.env.DATABASE_URL` esté definida antes de cualquier test.
+  2. **Aplicar la misma Prisma 7 fix a `gym-reset.ts`** (línea 32-39): cambiar `new PrismaClient()` a `new PrismaClient({ adapter: new PrismaPg(new pg.Pool({ connectionString: process.env.DATABASE_URL })) })`. Mismo patrón que `descuentos-reset.ts:32-43` (commit `e38d13e`).
+  3. **Una vez SASL resuelto**, S2.D.3 + S2.D.4 deberían pasar (S2.D.1 pasa con randomMeses + reset, confirmando que el reset funciona cuando el client inicializa bien).
+
+  **S2.D.4 cache caveat** (sub-issue): aunque el SASL se arregle, S2.D.4 puede seguir fallando en cold cache por el `cacheTag("gym-config")` que solo `updateGymPrice` invalida. En suite (warm) pasa; en aislamiento (cold) puede fallar. Documentado en Engram obs #215.
+
+  **Pre-existente**, no introducido por `descuento-precio-final`. Enmascarado por el AdminLayout strict mode bug (resuelto en `a1b1990`) y por el bug de Prisma 7 client init en test env.
 
 ### Deferred (baja traffic actual)
 - [ ] Optimización de rendimiento avanzada (lazy loading, code splitting)
@@ -190,6 +230,29 @@ Los 4 sub-forms opcionales del admin (`Dirección`, `Mapa` Google Maps embed, `I
 **Severidad**: Baja-Media. Mejora UX pura, no toca datos ni server.
 
 **Slices estimados**: 1 (toca 1 archivo principal: `GymConfigManager.tsx` + los 4 `FieldConfig`; sin server action ni schema ni migración). Tests: 1 E2E nuevo en `gym-config.spec.ts`.
+
+### Expandir MESES_OPTIONS a todos los meses (post-1.0)
+
+`src/components/admin/descuento-duracion-manager.tsx:35-40` hardcodea `MESES_OPTIONS = [3, 6, 9, 12]`. Los descuentos por duración solo se pueden ofrecer para 3, 6, 9 o 12 meses. Gimnasios que quieran ofrecer descuentos para 1, 2, 4, 5, 7, 8, 10 u 11 meses no pueden. Esta feature expande las opciones a los 12 meses del año, dándole al admin más libertad para configurar su pricing.
+
+**Scope inicial (idea del usuario)**:
+- Cambiar `MESES_OPTIONS` de `[3, 6, 9, 12]` a `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]`.
+- Verificar que el form sigue validando correctamente (meses > 0, integer).
+- Verificar que la página pública `/informacion` sigue renderizando bien la sección de descuentos.
+- Actualizar el seed y los tests E2E que dependen del set específico de meses.
+
+**Pendiente**: **implementándose como parte del change `fix-e2e-promociones-descuentos`** (Q1 resolution — el test necesita meses únicos y el form solo permite 4 valores, expandir las opciones resuelve ambos). Se va a mover a ✅ Completado cuando se archive ese change.
+
+**Open questions** (a resolver en la fase de proposal — o ya resueltas si se implementa como parte de fix-e2e):
+- [x] **Orden**: ¿ascendente (1-12) o descendente (12-1)? Asumir ascendente (más natural).
+- [x] **¿"Todos los meses" como option?**: No, el descuento es per-duración. Cada mes es una opción separada.
+- [x] **¿Cambiar el UI a otra cosa?**: Mantener `<select>` por simplicidad (12 valores entran bien en un dropdown).
+- [x] **¿Actualizar el seed?**: Sí, el seed en `prisma/seed.ts` debe reflejar los 12 valores (o solo los 4 originales + dejar que el admin agregue el resto).
+- [x] **¿Afecta los tests E2E?**: Sí, los tests S2.D.1 y S2.D.4 (en `tests/promociones-descuentos.spec.ts`) usan `meses: 3` que ahora puede colisionar con más options. Resuelto via `beforeEach → resetDescuentos()` + `randomMeses` flag en el fixture.
+
+**Severidad**: Baja-Media. UX improvement, no functional impact. Le da al admin más granularidad en su pricing.
+
+**Slices estimados**: 1 (1 línea de production change + 1 test update). Trivial.
 
 ---
 
