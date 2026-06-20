@@ -1,9 +1,10 @@
 ---
 change: fix-use-cache-prisma-rsc-errors
-status: ready
+status: archived
 schema: spec-driven/v1
 generated_by: sdd-tasks
 generated_at: 2026-06-20
+completed_at: 2026-06-20
 strict_tdd: true
 test_command_unit: pnpm test:unit
 test_command_e2e: pnpm test
@@ -65,8 +66,8 @@ Reasoning: 9 source files + 3 new test files; mechanical 11-reader migration pus
 
 ## Phase 5 — Verification
 
-- [ ] 5.1 Run full unit + E2E suite; confirm guard passes + no regressions
-- [ ] 5.2 Manual smoke: `/` loads; error path renders `ErrorState` with working "Reintentar"
+- [x] 5.1 Run full unit + E2E suite; confirm guard passes + no regressions
+- [x] 5.2 Manual smoke: `/` loads; error path renders `ErrorState` with working "Reintentar"
 
 ---
 
