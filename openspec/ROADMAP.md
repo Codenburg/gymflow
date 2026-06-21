@@ -1,13 +1,13 @@
 # Roadmap
 
-_Last updated: 2026-06-18_ | _Version: 1.0.0_
+_Last updated: 2026-06-21_ | _Version: 1.0.1_
 
 ---
 
 ## ✅ Completado
 
 ### Funcionalidades
-- [x] **v1.0.2** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `73a2932` + `412e3a7`
+- [x] **v1.0.1** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `73a2932` + `412e3a7`
 - [x] **v0.6.0** — Promociones y descuentos por duración (modelo + admin CRUD)
 - [x] **v0.7.0–v0.8.0** — Sidebar admin: nav con drawer mobile + footer con user dropdown / theme toggle / logout
 - [x] **v0.10.0–v0.10.5** — Admin promociones refactor (acciones atómicas); borde izquierdo verde, jerarquía de título, badge de precio; errores de validación en español; fix jump del Select en CreateMode/EditMode
@@ -274,12 +274,13 @@ Tracking de `fix:` commits post-1.0.0. Los `feat:` siguen criterio aparte (minor
 - 🟡 **2 fixes de severidad media** — bugs de validación, lifecycle, race conditions, UI parcialmente rota
 - 🟢 **3 fixes de severidad baja** — polish UX, copy, accesibilidad, refactors menores
 
-**Estado actual**: 1 media + 2 baja → criterio **baja a 1 fix de cerrarse**. Seguimos acumulando.
+**Estado actual**: 🔴 **criterio MET** — bump `1.0.0 → 1.0.1` released 2026-06-21. Tabla reseteada para el próximo ciclo.
 
 | # | SHA | Severidad | Descripción |
 | --- | --- | --- | --- |
 | 1 | `76e160f` | 🟡 Media | `fix(admin): disable save on empty name, prevent double toast on re-mount` — 2 bugs reales (validación + lifecycle) |
 | 2 | `75ec9d1` | 🟢 Baja | `fix(admin): replace floating mobile hamburger with proper fixed header bar` — UX polish mobile, sin cambio de lógica |
 | 3 | `0628d56` | 🟢 Baja | `chore(lint): remove unused imports and dead code in admin-layout.tsx` — cleanup de código muerto (15 imports/vars/function de un refactor previo) |
-| — | ⏳ | 🟡 Media | 1 fix de media más cierra el criterio media |
-| — | ⏳ | 🟢 Baja | 1 fix de baja más cierra el criterio baja |
+| 4 | `73a2932` | 🔴 Hotfix | `fix(schemas): accept meses 1-12 in descuento duracion validation` — funcionalidad core caída (MESES_OPTIONS feature was broken in production for meses ≠ {3,6,9,12}) |
+| 5 | `412e3a7` | 🟡 Media | `fix(descuentos): compute Precio final as total upfront cost` — lógica de producto (formula now `base × (1 - pct/100) × meses`, not just monthly) |
+| — | ✅ | — | **Bump 1.0.0 → 1.0.1 released 2026-06-21** (🔴 criterio MET: 1 hotfix triggers patch bump) |

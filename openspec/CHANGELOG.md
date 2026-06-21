@@ -4,6 +4,19 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [1.0.1] - 2026-06-21
+
+### Fixed
+- **Zod schema `mesesEnum` rejected any value other than `{3, 6, 9, 12}` in `DescuentoDuracion` validation** — `src/lib/schemas.ts:312` had `z.union([z.literal(3), z.literal(6), z.literal(9), z.literal(12)])` while the admin form's `<select>` (`src/components/admin/descuento-duracion-manager.tsx:35-48`) already listed all 12 months in `MESES_OPTIONS`. The form would submit, the server action would parse `meses` to a number, and the Zod validation would reject it with a generic "invalid input" toast — breaking the feature for meses ∈ {1, 2, 4, 5, 7, 8, 10, 11}. Replaced the union with `z.number().int().min(1).max(12)`. `73a2932`.
+- **"Precio final" displayed the monthly price instead of the total upfront cost** in both admin (`src/components/admin/descuento-duracion-manager.tsx:386-390`) and public (`src/components/informacion/DurationDiscountsSection.tsx:81-83`) views. Per product intent ("el descuento por duración es pagar todos los meses de una"), the formula is now `base × (1 - pct/100) × meses` (total upfront), not `base × (1 - pct/100)` (monthly). Example: base $50.000, 15% off, 3 meses now shows `$ 127.500` (was `$ 42.500`). The E2E test `S2.D.4` was updated to compute the expected value dynamically via `formatPriceARS(50000 * 0.85 * fixture.meses)` instead of hardcoded "42.500". `412e3a7`.
+
+### Notes
+- This is a **PATCH** bump per semver (2 `fix:` commits, no new features). The 🔴 patch-bump criterion (1 hotfix = funcionalidad core caída) is met by the Zod schema fix.
+- The user-facing v1.0.0 release added the descuento-precio-final feature with the monthly formula; v1.0.1 corrects both the formula and the Zod validation.
+- Full SDD cycle: explore → propose → spec → design → tasks → apply → verify → archive (artifacts in Engram, branch `fix/bugs-precio-final-y-zod-meses`).
+
+---
+
 ## [0.20.0] - 2026-06-12
 
 ### Changed
