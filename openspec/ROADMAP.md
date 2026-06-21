@@ -86,7 +86,6 @@ _Last updated: 2026-06-21_ | _Version: 1.0.2_
 
   **Slices estimados**: 6-8 slices (rename → schema → tenant resolution → auth → cache → UI selector → branding → tests → billing opcional).
 
-- [ ] Tests E2E con cobertura completa (Playwright) — Fase 4
 - [ ] Documentación de API (MDX-based)
 
 ### Media Prioridad
