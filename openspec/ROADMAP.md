@@ -7,7 +7,7 @@ _Last updated: 2026-06-18_ | _Version: 1.0.0_
 ## ✅ Completado
 
 ### Funcionalidades
-- [x] **v1.0.2** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `TBD` + `TBD`
+- [x] **v1.0.2** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `73a2932` + `412e3a7`
 - [x] **v0.6.0** — Promociones y descuentos por duración (modelo + admin CRUD)
 - [x] **v0.7.0–v0.8.0** — Sidebar admin: nav con drawer mobile + footer con user dropdown / theme toggle / logout
 - [x] **v0.10.0–v0.10.5** — Admin promociones refactor (acciones atómicas); borde izquierdo verde, jerarquía de título, badge de precio; errores de validación en español; fix jump del Select en CreateMode/EditMode
