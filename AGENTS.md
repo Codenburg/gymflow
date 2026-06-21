@@ -103,27 +103,39 @@ When **writing collaboration comments** (PR feedback, reviews, Slack, GitHub com
 
 ### Project Maintenance
 
-**HARD RULE — `readme-guardian` sync (mandatory after every SDD cycle with `fix:` or `feat:` commits):**
+**HARD RULE — `docs-guardian` sync (mandatory after every `fix:` / `feat:` commit):**
 
-The `readme-guardian` skill (`~/skills/readme-guardian/SKILL.md`) is **mandatory** in two situations:
+The `docs-guardian` skill (`~/.config/opencode/skills/docs-guardian/SKILL.md`, v1.2) is **mandatory** in two situations:
 
-1. **After `sdd-apply` commits** — if the cycle produced any `fix:`, `feat:`, or `BREAKING CHANGE:` conventional commit, the orchestrator (or `sdd-apply` sub-agent) MUST load the skill and run a sync BEFORE `sdd-archive`. The sync updates:
-   - `package.json` version (PATCH for `fix:`, MINOR for `feat:`, MAJOR for `BREAKING CHANGE:`)
-   - `openspec/CHANGELOG.md` (prepend `[X.Y.Z] - YYYY-MM-DD` entry with Added/Changed/Fixed sections)
-   - `README.md` version badge (text plain, no badge image — see skill Política)
-   - `openspec/ROADMAP.md` §Completado entry + patch bump table (criterio 🔴/🟡/🟢)
+1. **After any `fix:` or `feat:` commit lands** — the orchestrator MUST load the skill and run a sync. The skill consults the user on non-trivial decisions (severity, §Pendiente removal, force-bump, multi-fix count, revert handling, pre-release, test failures). Updates:
+   - `package.json` version (PATCH for `fix:` criteria-met, MINOR for `feat:`, MAJOR for `BREAKING CHANGE:`; pre-release via `--pre-release <alpha|beta|rc>` always resets to `.pre.1`)
+   - `openspec/CHANGELOG.md` (prepend `[X.Y.Z] - YYYY-MM-DD` entry with 🔴/🟡 detailed bullets + 🟢 grouped + 🔄 for reverts; language auto-detected from last 5 entries, default `es`)
+   - `README.md` version badge (text plain, no badge image)
+   - `openspec/ROADMAP.md` §Completado entry + patch bump table (cleared per cycle, pending-only)
 
-2. **After `sdd-archive` completes** — the archive sub-agent MUST verify the sync was done (see sdd-archive skill §"Readme-Guardian Sync Gate"). If not, archive returns `blocked` and the orchestrator invokes the skill, re-runs archive.
+2. **After `sdd-archive` completes** — the archive sub-agent MUST verify the docs-guardian sync was done (see sdd-archive skill §"Docs-Guardian Sync Gate"). If not, archive returns `blocked` and the orchestrator invokes the skill, re-runs archive.
 
 **Triggers** (in priority order):
-- Commit message matches `fix:` or `feat:` → PATCH / MINOR bump
-- Commit body contains `BREAKING CHANGE:` → MAJOR bump
+- Commit message starts with `fix:` → accumulate in patch bump table; PATCH when criteria met (🔴 ≥ 1, 🟡 ≥ 2, 🟢 ≥ 3). Multi-fix commits decompose into N entries.
+- Commit message starts with `revert:` → document as 🔄 in CHANGELOG, do NOT enter patch bump table
+- Commit message starts with `feat:` → ASK: MINOR puro? If MINOR, ASK: pre-release?
+- Commit body contains `BREAKING CHANGE:` → MAJOR (ASK: pre-release?)
 - §Completado entry added in ROADMAP.md with `vX.Y.Z` label → confirms a release-worthy change
-- ROADMAP patch bump table meets 🔴 (1 hotfix) / 🟡 (2 media) / 🟢 (3 baja) criteria → patch bump triggered
 
-**Out of scope** (does NOT trigger the sync): `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `perf:` commits that don't introduce user-facing changes. However, these commits SHOULD still be reflected in the next CHANGELOG entry as part of the cumulative release notes.
+**Conventions enforced by the skill** (no `[x]` markers in ROADMAP — see skill core principles):
+- ROADMAP is **pending only** — completed items go to CHANGELOG (not back to ROADMAP with `[x]`)
+- The patch bump table **clears per cycle** — entries move to CHANGELOG on bump, table restarts empty
+- §Pendiente items removed by the skill ONLY after user confirms the commit matches (heuristic keyword match, tier-filtered: 🔴 only matches Alta/Media, 🟢 only matches Baja)
+- Severity classification 🔴/🟡/🟢 requires user confirmation (skill does NOT auto-classify)
+- Force-bumps (criteria not MET) require user opt-in AND add an audit note in CHANGELOG
+- Optional `--verify-tests` runs `pnpm test` before sync; ASK if tests fail
+- CHANGELOG validation: pre-sync checks whole file per Keep a Changelog 1.1.0; post-sync checks new entry format
 
-**Reference**: `~/skills/readme-guardian/SKILL.md` (8-step procedure: leer contexto → clasificar bump → versionar → CHANGELOG → README → ROADMAP → verificar → reportar).
+**Out of scope** (does NOT trigger the sync): `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `perf:` commits. These commits may be reflected in the next CHANGELOG entry as part of the cumulative release notes when a `fix:` or `feat:` triggers a bump.
+
+**Known v1.x limitations** (out of scope): race conditions between parallel SDD cycles, monorepo support, auto-detect of completed §Pendiente items without keyword match, multi-package-manager test commands, pre-release counter tracking, language override flag.
+
+**Reference**: `~/.config/opencode/skills/docs-guardian/SKILL.md` (v1.2). Supersedes `readme-guardian` (deprecated 2026-06-21).
 
 ---
 
