@@ -1,12 +1,13 @@
 # Roadmap
 
-_Last updated: 2026-06-21_ | _Version: 1.0.1_
+_Last updated: 2026-06-21_ | _Version: 1.0.2_
 
 ---
 
 ## ✅ Completado
 
 ### Funcionalidades
+- [x] **v1.0.2** — Excluir 1 mes de MESES_OPTIONS (2026-06-21) — 1 mes es semánticamente contradictorio como "descuento por duración" (sería solo la primera cuota) — `35603fd`
 - [x] **v1.0.1** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `73a2932` + `412e3a7`
 - [x] **v0.6.0** — Promociones y descuentos por duración (modelo + admin CRUD)
 - [x] **v0.7.0–v0.8.0** — Sidebar admin: nav con drawer mobile + footer con user dropdown / theme toggle / logout
@@ -211,7 +212,7 @@ Tracking de `fix:` commits post-1.0.0. Los `feat:` siguen criterio aparte (minor
 - 🟡 **2 fixes de severidad media** — bugs de validación, lifecycle, race conditions, UI parcialmente rota
 - 🟢 **3 fixes de severidad baja** — polish UX, copy, accesibilidad, refactors menores
 
-**Estado actual**: 🔴 **criterio MET** — bump `1.0.0 → 1.0.1` released 2026-06-21. Tabla reseteada para el próximo ciclo.
+**Estado actual**: 🟡 **criterio MET** — bump `1.0.1 → 1.0.2` released 2026-06-21. Tabla reseteada para el próximo ciclo.
 
 | # | SHA | Severidad | Descripción |
 | --- | --- | --- | --- |
@@ -220,4 +221,5 @@ Tracking de `fix:` commits post-1.0.0. Los `feat:` siguen criterio aparte (minor
 | 3 | `0628d56` | 🟢 Baja | `chore(lint): remove unused imports and dead code in admin-layout.tsx` — cleanup de código muerto (15 imports/vars/function de un refactor previo) |
 | 4 | `73a2932` | 🔴 Hotfix | `fix(schemas): accept meses 1-12 in descuento duracion validation` — funcionalidad core caída (MESES_OPTIONS feature was broken in production for meses ≠ {3,6,9,12}) |
 | 5 | `412e3a7` | 🟡 Media | `fix(descuentos): compute Precio final as total upfront cost` — lógica de producto (formula now `base × (1 - pct/100) × meses`, not just monthly) |
-| — | ✅ | — | **Bump 1.0.0 → 1.0.1 released 2026-06-21** (🔴 criterio MET: 1 hotfix triggers patch bump) |
+| 6 | `35603fd` | 🟡 Media | `fix(descuentos): exclude 1 mes from MESES_OPTIONS` — product rule: 1 mes es semánticamente inválido como descuento por duración |
+| — | ✅ | — | **Bump 1.0.1 → 1.0.2 released 2026-06-21** (🟡 criterio MET: 2 media fixes trigger patch bump) |

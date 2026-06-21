@@ -4,6 +4,20 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [1.0.2] - 2026-06-21
+
+### Fixed
+- **Excluded 1 mes from `MESES_OPTIONS`** — `src/components/admin/descuento-duracion-manager.tsx:35-46` removed the `{ value: 1, label: "1 mes" }` entry from the dropdown. The remaining 11 options cover 2-12 months.
+- **Tightened `mesesEnum` Zod schema** — `src/lib/schemas.ts:313` changed from `z.number().int().min(1).max(12)` to `z.number().int().min(2).max(12)`. Server-side defense-in-depth: a direct POST with `meses=1` would now be rejected with a 400, not just hidden in the UI. A 1-month "discount" is semantically contradictory — the whole point of a *descuento por duración* is to incentivize commitment to multiple months upfront. 1 month is just the first installment, not a duration-based discount.
+
+### Data
+- **Deleted orphaned descuento row** (id=53, `meses=1`, `porcentaje=1`, created 2026-06-21 00:51 during manual testing of v1.0.1) — the new product rule invalidates the row's semantic meaning. Pre-production data, no preservation needed.
+
+### Notes
+- This is a **PATCH** bump per semver (1 `fix:` commit, validation tightening). The 🟡 patch-bump criterion (2 media fixes) is now MET — counted: `412e3a7` (Precio final formula fix, v1.0.1) + `35603fd` (this fix). The 🔴 hotfix criterion was already met by v1.0.1.
+
+---
+
 ## [1.0.1] - 2026-06-21
 
 ### Fixed

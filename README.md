@@ -4,7 +4,7 @@
 
 **Plataforma de gestión para gimnasios** — rutinas, configuración, feriados, promociones y descuentos. Cara pública para usuarios, panel admin para gestión.
 
-v1.0.1
+v1.0.2
 
 ![Next.js 16](https://img.shields.io/badge/Next.js-16.1.6-000?style=flat-square&logo=next.js&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19.2.3-61DAFB?style=flat-square&logo=react&logoColor=black)
