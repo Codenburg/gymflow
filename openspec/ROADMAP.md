@@ -95,15 +95,7 @@ _Last updated: 2026-06-21_ | _Version: 1.0.1_
 - [ ] **`GGA-FOLLOWUP-5`** — E2E test execution tarda 5-8 minutos en este shell environment. Pre-starting dev server con `pnpm dev` en background funciona. (Descubierto durante Recomendación 2 del 1.0 prep.)
 - [ ] **`cleanTestData` partial** — solo `/api/feriados` tiene DELETE; otras APIs usan UI cleanup. (Descubierto durante Recomendación 3 del 1.0 prep.)
 - [ ] **3 page-object dead locators** — `FeriadoAdminPage.addButton/errorMessage/deleteByFecha`, `DescuentoAdminPage.maxMesesInput`, `TrainerAdminPage.softDeleteByDni`. Harmless, unused by specs; future cleanup. (Descubierto durante Recomendación 3 del 1.0 prep.)
-- [x] GGA-FOLLOWUP-1 (`Promise.all` en `src/app/(admin)/admin/page.tsx` sin `try/catch` o `error.tsx` boundary. Pre-existente de v0.18.0 Slice 1). **RESUELTO** en commit `8300e2d` (tech debt cleanup batch) — wrap con try/catch + ErrorState fallback.
-- [x] GGA-FOLLOWUP-7 (Prisma migration workflow documentation, Baja). **RESUELTO** en commit `8300e2d` — documentado en `CONTRIBUTING.md` §"Workflow de migraciones (no estándar)".
-- [x] GGA-FOLLOWUP-13 (Return-type inconsistency en `actions/feriados.ts` — `deleteFeriado: Promise<FormState>` vs `createFeriado`/`updateFeriado: Promise<FormState<{ id: string }>>`). **RESUELTO** en commit `8300e2d` — unificado a `Promise<FormState<{ id: string }>>`, caller type inference (no annotation).
-- [x] **Migrar `unstable_cache` → `use cache` (Next 16 Cache Components)** — habilitar `cacheComponents: true` en `next.config.ts` y reescribir TODOS los readers con `'use cache'` + `cacheTag` + `cacheLife`. **También remover los 6 `export const dynamic = "force-dynamic"`** de las admin pages. Verificar que cada server action de mutación llame `revalidateTag` además de `revalidatePath`. **COMPLETED in v0.19.0** — pero con 2 follow-ups nuevos descubiertos:
-  - `GGA-FOLLOWUP-2` (Medium): replace `(revalidateTag as any)` casts project-wide con `revalidateTag("tag", "max")` (Next 16 two-arg signature)
-  - [x] `GGA-FOLLOWUP-3` (Low): Prisma Decimal serialization en `getGymConfigForServer` para client components. **RESUELTO** commit `5f05a8e` — `getGymConfigForServer` reemplazado por `getGymNameForServer(): Promise<string | null>` (usa `select: { nombre: true }`). Bug venía de `"use cache"` cacheando el return value completo.
 - [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
-- [x] **E2E test 5.2.3 isolation issue** — `tests/gym-config.spec.ts:5.2.3` falla cuando corre después de 5.2.1 en el mismo suite. **RESUELTO en v0.20.1** — `test.describe.configure({ mode: 'serial' })` + file-level `test.afterEach(resetGymConfig)` con `tests/utils/gym-reset.ts` (direct prisma access, scoped + JSDoc'd). Ver Recomendación 3.
-- [x] **`revalidatePath("/admin/descuentos")` no matchea la ruta real** en `actions/descuentos-duracion.ts:94,138,167` — la ruta es `/admin/descuentos-duracion`. Pre-existente, no introducido por este cambio. **RESUELTO en v0.20.1** (GGA hook cycle PR 2 / T11) — los 3 sites actualizados.
 - [ ] **S2.P.2 edit promocion test failure (pre-existing production bug)** — `tests/promociones-descuentos.spec.ts:147` (`S2.P.2 - edit promocion and verify persistence`) falla consistentemente en aislamiento **incluso con la test-only fix aplicada** (`submitEdit()` + `toHaveText("Guardar cambios")` + nuevo testid `promocion-submit-edit-button` en `promocion-form.tsx:189`).
 
   **Síntoma**: el form trata el submit como CREATE en vez de UPDATE. Después de clickear edit, cambiar el titulo, y submitar via `submitEdit()`, el titulo viejo sigue en la lista y aparece uno nuevo con el titulo editado (2 items en la lista en vez de 1 reemplazado).
@@ -127,47 +119,15 @@ _Last updated: 2026-06-21_ | _Version: 1.0.1_
 
   **Pre-existente**, no introducido por el SDD `descuento-precio-final`. Enmascarado por el AdminLayout strict mode bug (resuelto en `a1b1990`).
 
-- [x] **Admin panel responsive: polish mobile en todas las pages (pc-first → mobile-friendly)** — el admin está diseñado desktop-first y rompe la polish en mobile. **Síntoma más visible**: el `<Button variant="ghost" size="icon">` del hamburguesa en `src/components/admin/admin-sidebar.tsx:240-247` queda flotando "fantasma" arriba a la izquierda (sin posicionamiento, sin header, sin fondo) en vez de tener un header mobile dedicado. **Slice (a) RESUELTO**: el toggle ahora vive adentro de un `<header fixed top-0 inset-x-0 z-40 h-14 bg-background border-b>` con el botón (`aria-label="Abrir menú de navegación"`) + nombre del gym en uppercase. El wrapper redundante `fixed top-4 left-4 z-50` del layout fue removido. **Slice (b) — quick wins RESUELTOS** (commit `504210b`): los 4 issues de mayor impacto del mobile audit — H1+H4 (reveal hover buttons en touch, 2 files), H2 (stack feriado form, 1 file), H3 (stack descuento form, 1 file), M3 (PageHeader truncate, 1 file), M1 (submit bar stack, 2 files). **Slice (b) — cleanup legacy RESUELTO**: el flujo viejo `/admin/rutinas/[id]/dias/[diaId]` (page + API route + 5 components muertos + 2 spec files con tests zombies apuntando a URLs/APIs inexistentes) fue removido (~1005 líneas + 2 dirs vacíos). Los 3 `revalidatePath` en `actions/ejercicios.ts` que apuntaban a la URL vieja ahora apuntan a `/admin/rutinas/${id}` (la URL actual). **Slice (b) — polish PENDIENTE**: M2/M4/M5 + 5 issues low (auditoría completa en commit del audit report) — tablas → cards en mobile, pagination icon-only, batch actions stack, etc. Pendiente para próxima sesión si querés encararlo.
-
-### Lint warnings (160 remaining, 0 errors)
-- [ ] **no-unused-vars (118 warnings)** — El más grande (~258 source files). Bulk approach: agregar `argsIgnorePattern: "^_"` y `varsIgnorePattern: "^_"` a `@typescript-eslint/no-unused-vars` en eslint.config.mjs. ⚠️ algunas vars sin prefijo `_` podrían ser bugs reales (imports no usados, variables olvidadas). Hacer grep de `import.*from` sin uso después del cambio.
-- [ ] **no-hardcoded-colors (11 warnings)** — Admin plugin rule. Migrar colores CSS hardcodeados a design tokens (`primary`, `secondary`, `muted`, `border`, etc). ⚠️ algunos `hover:` / `focus:` states pueden necesitar tokens nuevos o extenderse via Tailwind config. Contexto: `openspec/ROADMAP.md` § Recomendación BONUS.
-- [ ] **no-explicit-any (24 warnings)** — Bajado de error a warning. 4 en producción (react-hook-form `Control<any>`, difícil de tipar), 20 en tests (debug scripts, dejar como están). ⚠️ si se migra a tipos más estrictos, revisar los 4 sitios de producción con prioridad.
+- [ ] **Admin panel responsive — polish mobile pendiente (M2/M4/M5 + 5 issues low)** — el header mobile y los quick wins de la auditoría ya están resueltos (v1.0.0, commits `504210b` + `a1b1990` + `cd2d42c`). Pendiente: tablas → cards en mobile, pagination icon-only, batch actions stack. Audit completo en el commit del audit report.
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas
 - [ ] i18n (multi-idioma)
 - [ ] PWA support (offline PDF access)
-- [ ] **GGA pre-commit hook falsos positivos** — el hook revisa el WHOLE file (no solo el diff) y flagea código pre-existente (`console.error`, `as any` casts) que no fue cambiado. Causa `--no-verify` recurrente. Fix: que el hook revise diff-only, o agregar `.gga-ignore` para issues pre-existentes. **RESUELTO en v0.20.1** (GGA hook cycle, Recomendación 4) — wrapper script con diff-only post-filter + `.gga-ignore` escape hatch.
-- [ ] **Pre-existing TypeScript errors (13)** — en `rutina-completa-form.tsx`, `pagination.ts`, `check-*.ts`, `promocion-schemas.test.ts`, `use-feriados-notification.test.ts`, `verify-password.ts`. Project-wide, no introducidos por cambios recientes. Cleanup en change aparte. **RESUELTO en v0.20.0** (fix-pre-existing-ts-errors-remove-ignorebuilderrors cycle, 14 errors). + 3 más resueltos en tech debt batch (`tests/gga-diff-filter.test.ts`).
 - [ ] **Pre-existing lint issues (460 errors, 730 warnings)** — incluye `as any` en `revalidateTag`, `console.error` en data layer, `z.coerce.number().min(1).min(1000)` chain en `priceSchema`. Cleanup en change aparte. Parcialmente RESUELTO en tech debt batch (GGA-FOLLOWUP-2, 21 `as any` casts en `revalidateTag` removidos, queda el resto).
-- [x] **`prisma.feriado.findFirst` duplicate-pre-check outside try/catch** en `actions/feriados.ts:75-82, 155-163`. Pre-existente, fix de admin-panel cleanup. **RESUELTO en v0.20.1** (E2E coverage PR 2 / T12) — wrapped in try/catch.
-- [x] **`formData.get("id") as string` cast hides null** en `actions/feriados.ts:110,189,245`. Pre-existente, fix de admin-panel cleanup. **RESUELTO en v0.20.1** (E2E coverage PR 2 / T13) — null-guard agregado (2 sites; el 3ro no existía, ver discovery #190).
-- [x] **Hardcoded `gymId: "gym"`** en `actions/promociones.ts:96`, `descuentos-duracion.ts:91`. Identificador del singleton, no un secret. Pre-existente. **RESUELTO en v0.20.1** (E2E coverage PR 2 / T10) — `GYM_SINGLETON_ID` constant introducido en GGA hook cycle PR 1 / T1.
 - [ ] **Commit duplicado `cfb79f0`** en este mismo change (pathspec misinterpreted en `git commit -- openspec/ROADMAP.md`). Cosmético, ya compensado por `ce3d7e8`. Limpiar con `git rebase -i 010fd5e` antes del push si querés (v0.18.0 follow-up)
-- [ ] **S2.D.4 cache invalidation test issue (descuento-precio-final E2E)** — `tests/promociones-descuentos.spec.ts:277` (`S2.D.4 - descuento list item shows computed Precio final`) falla por un **deadlock de cache**: `getGymPrice()` está cacheado con `cacheTag("gym-config")`, y SOLO la server action `updateGymPrice` (invocada via el form de `GymPriceEditor`) llama `revalidateTag("gym-config")`. Prisma directo (`setGymPrice` en `tests/utils/gym-reset.ts`) y `/api/gym` PATCH (que usa `revalidatePath`) NO invalidan este tag. La UI muestra "Sin precio configurado" cuando el cache es null, y solo permite editar si hay precio → no se puede salir del estado inicial. **Workarounds posibles**: (a) modificar `setGymPrice` para invocar la server action via Playwright `page.request` con Next-Action RPC (complex); (b) aceptar el test como best-effort y validar el cálculo con unit tests + visual check; (c) modificar `GymPriceEditor` para permitir crear precio desde "Sin precio configurado" (UI complexity para test-only). Ver Engram obs #215 para análisis completo. No bloquea producción (el flow real siempre va por la server action). **Pendiente**: SDD cycle chico o fix directo — decisión de scope a tomar en proposal.
-- [ ] **S2.D.3 delete descuento + S2.D.4 cache invalidation (SASL/Prisma 7 test env issue)** — Ambos tests fallan en aislamiento y en suite con `Error: SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`. La causa raíz es que el test process (Playwright worker) no carga `.env`, entonces `process.env.DATABASE_URL` llega undefined o malformado a `pg.Pool`.
-
-  **Lo que SÍ funciona** (validado en `fix-e2e-promociones-descuentos`, 6 commits en main):
-  - S2.P.1 ✅ — create promocion (era passing antes, sigue ok).
-  - S2.P.3 ✅ — clickConfirmDelete funciona (AlertDialog handling correcto).
-  - S2.D.1 ✅ — randomMeses + reset utility funcionan (con el adapter Prisma 7 ya aplicado en `e38d13e`).
-
-  **Lo que sigue fallando** (mismo síntoma: "list item not found" en `expectInList`):
-  - **S2.D.3** (`tests/promociones-descuentos.spec.ts:258` — `delete descuento`): `await descuentoPage.fillPorcentaje(20); await descuentoPage.submitCreate();` no crea el item. Log muestra `resetDescuentos` fallando con SASL.
-  - **S2.D.4** (`tests/promociones-descuentos.spec.ts:277` — `descuento list item shows computed Precio final`): mismo síntoma + `gym-reset.ts` también falla con SASL (mismo problema de `DATABASE_URL`).
-
-  **Para retomar** (orden de investigation):
-  1. **Cargar `.env` en el test process**: `playwright.config.ts` no carga `.env` automáticamente (Next.js sí, pero Playwright es un proceso separado). Fix: agregar `import 'dotenv/config'` al `globalSetup` o usar `dotenv-cli`. Verificar que `process.env.DATABASE_URL` esté definida antes de cualquier test.
-  2. **Aplicar la misma Prisma 7 fix a `gym-reset.ts`** (línea 32-39): cambiar `new PrismaClient()` a `new PrismaClient({ adapter: new PrismaPg(new pg.Pool({ connectionString: process.env.DATABASE_URL })) })`. Mismo patrón que `descuentos-reset.ts:32-43` (commit `e38d13e`).
-  3. **Una vez SASL resuelto**, S2.D.3 + S2.D.4 deberían pasar (S2.D.1 pasa con randomMeses + reset, confirmando que el reset funciona cuando el client inicializa bien).
-
-  **S2.D.4 cache caveat** (sub-issue): aunque el SASL se arregle, S2.D.4 puede seguir fallando en cold cache por el `cacheTag("gym-config")` que solo `updateGymPrice` invalida. En suite (warm) pasa; en aislamiento (cold) puede fallar. Documentado en Engram obs #215.
-
-  **Pre-existente**, no introducido por `descuento-precio-final`. Enmascarado por el AdminLayout strict mode bug (resuelto en `a1b1990`) y por el bug de Prisma 7 client init en test env.
-
-### Deferred (baja traffic actual)
-- [ ] Optimización de rendimiento avanzada (lazy loading, code splitting)
+- [ ] **Optimización de rendimiento avanzada** (lazy loading, code splitting) — deferred desde §Deferred (1 item, merge con §Baja para reducir noise)
 
 ---
 
@@ -232,29 +192,6 @@ Los 4 sub-forms opcionales del admin (`Dirección`, `Mapa` Google Maps embed, `I
 **Severidad**: Baja-Media. Mejora UX pura, no toca datos ni server.
 
 **Slices estimados**: 1 (toca 1 archivo principal: `GymConfigManager.tsx` + los 4 `FieldConfig`; sin server action ni schema ni migración). Tests: 1 E2E nuevo en `gym-config.spec.ts`.
-
-### Expandir MESES_OPTIONS a todos los meses (post-1.0)
-
-`src/components/admin/descuento-duracion-manager.tsx:35-40` hardcodea `MESES_OPTIONS = [3, 6, 9, 12]`. Los descuentos por duración solo se pueden ofrecer para 3, 6, 9 o 12 meses. Gimnasios que quieran ofrecer descuentos para 1, 2, 4, 5, 7, 8, 10 u 11 meses no pueden. Esta feature expande las opciones a los 12 meses del año, dándole al admin más libertad para configurar su pricing.
-
-**Scope inicial (idea del usuario)**:
-- Cambiar `MESES_OPTIONS` de `[3, 6, 9, 12]` a `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]`.
-- Verificar que el form sigue validando correctamente (meses > 0, integer).
-- Verificar que la página pública `/informacion` sigue renderizando bien la sección de descuentos.
-- Actualizar el seed y los tests E2E que dependen del set específico de meses.
-
-**Pendiente**: **implementándose como parte del change `fix-e2e-promociones-descuentos`** (Q1 resolution — el test necesita meses únicos y el form solo permite 4 valores, expandir las opciones resuelve ambos). Se va a mover a ✅ Completado cuando se archive ese change.
-
-**Open questions** (a resolver en la fase de proposal — o ya resueltas si se implementa como parte de fix-e2e):
-- [x] **Orden**: ¿ascendente (1-12) o descendente (12-1)? Asumir ascendente (más natural).
-- [x] **¿"Todos los meses" como option?**: No, el descuento es per-duración. Cada mes es una opción separada.
-- [x] **¿Cambiar el UI a otra cosa?**: Mantener `<select>` por simplicidad (12 valores entran bien en un dropdown).
-- [x] **¿Actualizar el seed?**: Sí, el seed en `prisma/seed.ts` debe reflejar los 12 valores (o solo los 4 originales + dejar que el admin agregue el resto).
-- [x] **¿Afecta los tests E2E?**: Sí, los tests S2.D.1 y S2.D.4 (en `tests/promociones-descuentos.spec.ts`) usan `meses: 3` que ahora puede colisionar con más options. Resuelto via `beforeEach → resetDescuentos()` + `randomMeses` flag en el fixture.
-
-**Severidad**: Baja-Media. UX improvement, no functional impact. Le da al admin más granularidad en su pricing.
-
-**Slices estimados**: 1 (1 línea de production change + 1 test update). Trivial.
 
 ---
 
