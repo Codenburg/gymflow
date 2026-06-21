@@ -204,22 +204,16 @@ Los 4 sub-forms opcionales del admin (`Dirección`, `Mapa` Google Maps embed, `I
 
 ## 🐛 Pending fixes accumulating for next patch bump
 
-Tracking de `fix:` commits post-1.0.0. Los `feat:` siguen criterio aparte (minor bump en batches).
+Tracking de `fix:` commits. Cada fix se acumula acá hasta que se cumple un criterio de bump (abajo). Al bumpear, los entries se mueven al `openspec/CHANGELOG.md` y la tabla queda vacía (pending only). Los `feat:` siguen criterio aparte (minor bump en batches).
 
-**Criterio de bump** (cualquiera de los 3 gatilla patch bump `1.0.0` → `1.0.1`):
+**Criterio de bump** (cualquiera de los 3 gatilla patch bump `1.0.2` → `1.0.3`):
 
 - 🔴 **1 hotfix** — bug crítico de producción (data loss, security, crash, funcionalidad core caída)
 - 🟡 **2 fixes de severidad media** — bugs de validación, lifecycle, race conditions, UI parcialmente rota
 - 🟢 **3 fixes de severidad baja** — polish UX, copy, accesibilidad, refactors menores
 
-**Estado actual**: 🟡 **criterio MET** — bump `1.0.1 → 1.0.2` released 2026-06-21. Tabla reseteada para el próximo ciclo.
+**Estado actual**: Tabla vacía. Esperando el primer `fix:` del próximo ciclo. Los fixes que justificaron los bumps v1.0.1 + v1.0.2 viven en `openspec/CHANGELOG.md` (convención: ROADMAP es pending only, CHANGELOG es el audit trail).
 
 | # | SHA | Severidad | Descripción |
 | --- | --- | --- | --- |
-| 1 | `76e160f` | 🟡 Media | `fix(admin): disable save on empty name, prevent double toast on re-mount` — 2 bugs reales (validación + lifecycle) |
-| 2 | `75ec9d1` | 🟢 Baja | `fix(admin): replace floating mobile hamburger with proper fixed header bar` — UX polish mobile, sin cambio de lógica |
-| 3 | `0628d56` | 🟢 Baja | `chore(lint): remove unused imports and dead code in admin-layout.tsx` — cleanup de código muerto (15 imports/vars/function de un refactor previo) |
-| 4 | `73a2932` | 🔴 Hotfix | `fix(schemas): accept meses 1-12 in descuento duracion validation` — funcionalidad core caída (MESES_OPTIONS feature was broken in production for meses ≠ {3,6,9,12}) |
-| 5 | `412e3a7` | 🟡 Media | `fix(descuentos): compute Precio final as total upfront cost` — lógica de producto (formula now `base × (1 - pct/100) × meses`, not just monthly) |
-| 6 | `35603fd` | 🟡 Media | `fix(descuentos): exclude 1 mes from MESES_OPTIONS` — product rule: 1 mes es semánticamente inválido como descuento por duración |
-| — | ✅ | — | **Bump 1.0.1 → 1.0.2 released 2026-06-21** (🟡 criterio MET: 2 media fixes trigger patch bump) |
+| — | — | — | _Sin fixes acumulados._ |
