@@ -103,7 +103,27 @@ When **writing collaboration comments** (PR feedback, reviews, Slack, GitHub com
 
 ### Project Maintenance
 
-When **maintaining README/CHANGELOG** with semver versioning, read `~/skills/readme-guardian/SKILL.md` first.
+**HARD RULE — `readme-guardian` sync (mandatory after every SDD cycle with `fix:` or `feat:` commits):**
+
+The `readme-guardian` skill (`~/skills/readme-guardian/SKILL.md`) is **mandatory** in two situations:
+
+1. **After `sdd-apply` commits** — if the cycle produced any `fix:`, `feat:`, or `BREAKING CHANGE:` conventional commit, the orchestrator (or `sdd-apply` sub-agent) MUST load the skill and run a sync BEFORE `sdd-archive`. The sync updates:
+   - `package.json` version (PATCH for `fix:`, MINOR for `feat:`, MAJOR for `BREAKING CHANGE:`)
+   - `openspec/CHANGELOG.md` (prepend `[X.Y.Z] - YYYY-MM-DD` entry with Added/Changed/Fixed sections)
+   - `README.md` version badge (text plain, no badge image — see skill Política)
+   - `openspec/ROADMAP.md` §Completado entry + patch bump table (criterio 🔴/🟡/🟢)
+
+2. **After `sdd-archive` completes** — the archive sub-agent MUST verify the sync was done (see sdd-archive skill §"Readme-Guardian Sync Gate"). If not, archive returns `blocked` and the orchestrator invokes the skill, re-runs archive.
+
+**Triggers** (in priority order):
+- Commit message matches `fix:` or `feat:` → PATCH / MINOR bump
+- Commit body contains `BREAKING CHANGE:` → MAJOR bump
+- §Completado entry added in ROADMAP.md with `vX.Y.Z` label → confirms a release-worthy change
+- ROADMAP patch bump table meets 🔴 (1 hotfix) / 🟡 (2 media) / 🟢 (3 baja) criteria → patch bump triggered
+
+**Out of scope** (does NOT trigger the sync): `docs:`, `chore:`, `refactor:`, `test:`, `style:`, `perf:` commits that don't introduce user-facing changes. However, these commits SHOULD still be reflected in the next CHANGELOG entry as part of the cumulative release notes.
+
+**Reference**: `~/skills/readme-guardian/SKILL.md` (8-step procedure: leer contexto → clasificar bump → versionar → CHANGELOG → README → ROADMAP → verificar → reportar).
 
 ---
 
