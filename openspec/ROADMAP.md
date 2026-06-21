@@ -6,51 +6,21 @@ _Last updated: 2026-06-21_ | _Version: 1.0.2_
 
 ## ✅ Completado
 
-### Funcionalidades
-- [x] **v1.0.2** — Excluir 1 mes de MESES_OPTIONS (2026-06-21) — 1 mes es semánticamente contradictorio como "descuento por duración" (sería solo la primera cuota) — `35603fd`
-- [x] **v1.0.1** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — fix Zod schema meses 1-12 + fix Precio final a total upfront cost (base × (1 - pct/100) × meses) — `73a2932` + `412e3a7`
-- [x] **v0.6.0** — Promociones y descuentos por duración (modelo + admin CRUD)
-- [x] **v0.7.0–v0.8.0** — Sidebar admin: nav con drawer mobile + footer con user dropdown / theme toggle / logout
-- [x] **v0.10.0–v0.10.5** — Admin promociones refactor (acciones atómicas); borde izquierdo verde, jerarquía de título, badge de precio; errores de validación en español; fix jump del Select en CreateMode/EditMode
-- [x] **v0.13.0** — Sistema de roles ADMIN/TRAINER/USER; trainer CRUD con soft-delete y aislamiento de rutinas propias
+Release history resumido (1 línea por release, detalles completos en `openspec/CHANGELOG.md`). Items pre-v0.6 y tech stack están en CHANGELOG/README — no se duplican acá per la convención docs-guardian v1.2 (ROADMAP pending-only, CHANGELOG es audit trail).
+
+- [x] **v1.0.2** — Excluir 1 mes de MESES_OPTIONS (2026-06-21) — `35603fd`
+- [x] **v1.0.1** — Post-merge bugs 1 y 2 del descuento-precio-final (2026-06-21) — `73a2932` + `412e3a7`
+- [x] **v1.0.0** — Public site con `Precio final` calculado en admin y `/informacion` para descuentos por duración — `cfd2ba4` + `203c4bf` + `266f7eb`
+- [x] **v0.20.x** — Migración `unstable_cache` → `'use cache'`; fix 14 TS errors + `ignoreBuildErrors` removido; E2E coverage de flujos críticos; GGA pre-commit hook con diff-only
+- [x] **v0.18.0** — Page loading overhaul: `Skeleton` primitive + 11 page-shaped skeletons; 4 cached readers nuevos con `unstable_cache` + `revalidateTag`
+- [x] **v0.17.0** — Horario estructurado (form por día, 7 day cards Lun-Dom) + render app-controlled; Zod-validated `HorarioSemanal` + 15 unit tests
+- [x] **v0.16.0** — Configuración de gimnasio desde admin (nombre, horarios, dirección, redes, precio); fallback chain `DB → env var → "Gimnasio"`
+- [x] **v0.15.1** — Notificación feriados throttle 5min; home caching + Suspense; proxy middleware (publicPaths); webpack → Turbopack
 - [x] **v0.14.0** — Trainer manager: dialog-based UI para create/edit
-- [x] **v0.15.1** — Notificación feriados throttle 5min; home caching + Suspense; proxy middleware (publicPaths); webpack → Turbopack; eliminación de queries duplicadas de trainer counts
-- [x] **v0.16.0** — Configuración de gimnasio desde admin (nombre, horarios, dirección, redes, precio); fallback chain `DB → env var → "Gimnasio"` genérico; `unstable_cache` con `cacheTag("gym-config")` + 60s TTL; `resolveGymName` helper
-- [x] **v0.17.0** — Horario estructurado (form por día, 7 day cards Lun-Dom) + render app-controlled; Zod-validated `HorarioSemanal` + 15 unit tests; pure `formatHorario` formatter + 10 unit tests
-- [x] **v0.18.0** — Page loading overhaul: `Skeleton` primitive + 11 page-shaped skeletons + 3 `loading.tsx` route-group; `getAdminSession` con `React.cache()` dedup; 4 cached readers nuevos (`getGymPrice`, `getPromociones`, `getDescuentos`, `getFeriados`) con `unstable_cache` + `revalidateTag`
-- [x] **v0.20.x** — Migración `unstable_cache` → `'use cache'` (cacheComponents); fix 14 TS errors pre-existentes + `ignoreBuildErrors` removido; E2E coverage de flujos críticos (rutinas, feriados, promos, descuentos, trainers, auth); GGA pre-commit hook con diff-only + `.gga-ignore`
-- [x] **v1.0.0** — Public site con `Precio final` calculado en admin y `/informacion` para descuentos por duración (gym price × (1 - %)) — `cfd2ba4` + `203c4bf` + `266f7eb`
-
-### Features núcleo (v0.1–v0.5)
-- [x] Exploración de rutinas por nombre y tipo + detalle con días y ejercicios
-- [x] Login admin con DNI (Better Auth)
-- [x] CRUD de rutinas, días, ejercicios con drag-and-drop (`@dnd-kit`) y duplicado
-- [x] Edición de precio de inscripción
-- [x] Gestión de feriados (días no laborables, horarios parciales, unique date constraint)
-- [x] Tema claro/oscuro con persistencia
-- [x] Página de información del gimnasio
-- [x] Búsqueda unificada con debounce y URL como source of truth
-
-### Técnico
-- [x] Next.js 16.1.6 + React 19.2.3
-- [x] TypeScript strict mode (sin `ignoreBuildErrors`)
-- [x] Tailwind CSS v4 + shadcn/ui
-- [x] Zustand para estado global (theme)
-- [x] Zod v4 + React Hook Form para validación
-- [x] Prisma 7 + PostgreSQL 18
-- [x] Server Actions para mutaciones
-- [x] Cache invalidation con `revalidatePath`/`revalidateTag` + `'use cache'` + `cacheTag` + `cacheLife`
-- [x] Ownership audit trail en base de datos
-- [x] User soft delete
-- [x] Unit tests con Vitest
-- [x] E2E tests con Playwright
-- [x] Pre-commit hook GGA (opt-in, diff-only)
-
-### Documentación
-- [x] README.md (hero, badges, TOC, secciones agrupadas)
-- [x] PRD.md con roadmap y fases
-- [x] LICENSE (AGPL-3.0)
-- [x] Specs en `openspec/`
+- [x] **v0.13.0** — Sistema de roles ADMIN/TRAINER/USER; trainer CRUD con soft-delete
+- [x] **v0.10.0–v0.10.5** — Admin promociones refactor (acciones atómicas); errores en español; fix jump del Select
+- [x] **v0.7.0–v0.8.0** — Sidebar admin: nav con drawer mobile + footer con user dropdown / theme toggle / logout
+- [x] **v0.6.0** — Promociones y descuentos por duración (modelo + admin CRUD)
 
 ---
 
