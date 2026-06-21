@@ -17,21 +17,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
-## [1.0.0] - 2026-06-19
+## [1.0.0] - 2026-06-15
 
 The first stable release of the project, now rebranded as **gymflow** (formerly `gym-routines-manager`).
 
 ### Added
 - **Project rename to gymflow** (`3541791`, `b6bced4`) — package.json, imports, README, AGPL-3.0 license. Better branding; the product is no longer tied to "rutinas" only.
-- **`formatPriceARS` helper** (`49ec234`, with 5 component refactors: `f59907c`, `ecf1418`, `9e148d8`, `355318e`, `9cbda70`) — single source of truth for ARS currency formatting, consistent with the locked helper convention. Used by `PlansSection`, `PriceSection`, `promocion-form`, `promocion-card`, `GymPriceEditor`. Test suite in `tests/unit/format.test.ts`.
-- **Public `Precio final` column** on `/informacion` → `DurationDiscountsSection` (`203c4bf`, `4c7bc0b`) — admin can see the total upfront cost of each descuento by duration.
-- **Admin computed `Precio final`** alongside `%` in `descuento-duracion-manager.tsx` list item (`cfd2ba4`) — uses the new `data-testid="descuento-precio-final"`.
 - **E2E test coverage for critical flows** (PRs 1-4, 2026-06-13 to 2026-06-15): `rutinas.spec.ts`, `feriados-crud.spec.ts`, `promociones-descuentos.spec.ts`, `trainers.spec.ts`, `auth.spec.ts` + page objects. 245 Playwright tests total.
-- **Per-page `loading.tsx` files for 6 admin pages** with custom header skeletons (shipped in v0.18.2, consolidated here).
 - **E2E test infrastructure** (`afefa3a`): `retries: 1` in Playwright config, `pnpm test:fast` with `concurrently` + `wait-on`, `@slow` tag for filtering, page-object skeletons, `tests/helpers.ts` extraction.
-- **Admin panel responsive mobile polish** (`504210b`): reveal hover buttons on touch, stack feriado/descuento forms, PageHeader truncate, submit bar stack.
-- **`MESES_OPTIONS` expanded to all 12 months** (`dc3474f`) — UI side; server-side Zod validation follow-up landed in v1.0.1.
-- **`randomMeses` fixture + `descuentos-reset` utility** for E2E tests (`6285b98`) — random months to avoid `@@unique([gymId, meses])` collisions across tests.
 
 ### Changed
 - **Project name** in package.json: `gym-routines-manager` → `gymflow`.
@@ -41,6 +34,7 @@ The first stable release of the project, now rebranded as **gymflow** (formerly 
 - **Admin layout**: `render children once, control visibility via CSS` (`a1b1990`) — fixes pre-existing AdminLayout strict mode bug that masked other test failures.
 - **Prisma 7 adapter fix for tests** (`e38d13e`) — `descuentos-reset.ts` and `gym-reset.ts` migrated to `PrismaPg` + `new pg.Pool` pattern (matches production setup).
 - **Legacy `/admin/rutinas/[id]/dias` flow removed** (`cd2d42c`) — page, API route, 5 orphan components, 2 dead spec files. ~1005 lines + 2 dirs emptied. The 3 `revalidatePath` calls in `actions/ejercicios.ts` that pointed to the old URL now point to `/admin/rutinas/${id}`.
+- **Admin panel responsive mobile polish** (`504210b`): reveal hover buttons on touch, stack feriado/descuento forms, PageHeader truncate, submit bar stack.
 
 ### Fixed
 - **S2.P.2 edit promocion** — added `submitEdit()` helper + `data-testid="promocion-submit-edit-button"` (`c9259b1`). Production form fix (race condition between `useEffect` and submit) is documented as out-of-scope for this cycle and tracked separately.
@@ -60,6 +54,7 @@ The first stable release of the project, now rebranded as **gymflow** (formerly 
 ### Notes
 - This is a **MAJOR** version bump per semver (0.x → 1.0.0 = first stable). The 1.0.0 release marks the project's transition from "development" to "stable for first client onboarding".
 - 2 post-merge bugs were found during manual testing of the v1.0.0 release (Bug 1: Precio final formula; Bug 2: Zod schema meses). Fixed in v1.0.1.
+- The **descuento-precio-final feature** (Precio final column on /informacion, `formatPriceARS` helper, MESES_OPTIONS expansion, S2.D.4 test) was completed 2026-06-17 to 2026-06-19 AFTER the v1.0.0 release commit. The user-facing ROADMAP entry describes v1.0.0 as including the feature, but in this CHANGELOG it's tracked separately to preserve the actual release timeline. The 2 post-merge bugs (v1.0.1) were a direct result of the v1.0.0 → feature work gap.
 - Pre-existing carryover issues (documented in Engram obs #215, #190) — `S2.D.3` SASL, `S2.D.4` cache invalidation — remain partially open. Tracked in `openspec/ROADMAP.md` §Pendiente for follow-up.
 
 ---
@@ -69,19 +64,41 @@ The first stable release of the project, now rebranded as **gymflow** (formerly 
 1.0 prep tech debt batch — completes the 4 §"Sugerencias para 1.0 prep" recommendations.
 
 ### Added
-- **GGA pre-commit hook** — wrapper script (`71a628e`) with diff-only post-filter (`.gga-ignore` parser at `2646999`, output parser at `ad49f52`, tests at `0d26b0d` + `2d89462` + `36462f6`). Install via `bash scripts/install-gga-hook.sh`; uninstall via `bash scripts/uninstall-gga-hook.sh`.
+- **GGA pre-commit hook** (`71a628e`) — wrapper script for `bash scripts/ggav2.sh` with diff-only post-filter. Composed of:
+  - `.gga-ignore` parser (`2646999`): reads the project's `.gga-ignore` file at repo root, normalizes line numbers against the post-filter output.
+  - `GGA output parser` (`ad49f52`): parses `ggav2.sh` JSON output into structured `LinterIssue[]` records.
+  - `tests/scripts/gga-output-parser.test.ts` (`2d89462`): covers the parser edge cases (multi-line, unicode, edge-of-buffer).
+  - `tests/scripts/gga-ignore-helper.test.ts` (`36462f6`): covers the ignore file matching.
+  - `tests/scripts/gga-diff-filter.test.ts` (`0d26b0d`): covers the diff-only post-filter.
+  - `scripts/install-gga-hook.sh` (`8967ce9`): one-command install via `git config core.hooksPath` + symlink.
+  - `scripts/uninstall-gga-hook.sh` (`31cdd32`): clean removal.
+  - `chore(tools): seed .gga-ignore with post-cleanup line numbers` (`e031064`): initial `.gga-ignore` populated with the current 137 pre-existing warnings so the hook doesn't false-positive on day 1.
+- **`GYM_SINGLETON_ID` constant** (`1f60526`) — `src/lib/gym-constants.ts` exports the singleton id (`"gym"`) so the literal stops being hardcoded in `actions/promociones.ts` and `actions/descuentos-duracion.ts`. Carried over from the v0.20.0 tech debt review.
 
 ### Fixed
-- **GGA-FOLLOWUP-1** — `Promise.all` sin try/catch en `src/app/(admin)/admin/page.tsx:55` wrapped with try/catch + ErrorState fallback (`8300e2d`).
-- **GGA-FOLLOWUP-3** — `getGymConfigForServer` (which cached full return value, including Prisma `Decimal`) replaced by `getGymNameForServer(): Promise<string | null>` (`5f05a8e`). Uses `select: { nombre: true }` so no Decimal serialization is needed.
+- **GGA-FOLLOWUP-1** — `Promise.all` en `src/app/(admin)/admin/page.tsx:55` (que no tenía `try/catch` ni `error.tsx` boundary, pre-existente de v0.18.0 Slice 1) wrapped con try/catch + ErrorState fallback. Parte del tech debt cleanup batch (`8300e2d`).
+- **GGA-FOLLOWUP-3** — `getGymConfigForServer` (que cacheaba el return value completo, incluyendo Prisma `Decimal` para el precio) reemplazado por `getGymNameForServer(): Promise<string | null>` (`5f05a8e`). Usa `select: { nombre: true }` así no hay serialización de Decimal que pueda romper el client component.
+- **GGA-FOLLOWUP-7** — Prisma migration workflow documentado en `CONTRIBUTING.md` §"Workflow de migraciones (no estándar)" (no usar `prisma migrate dev` después de cambios manuales en prod, usar `prisma db push` + `prisma generate`).
 
 ### Docs
-- **GGA-FOLLOWUP-7** — Prisma migration workflow documented in `CONTRIBUTING.md` §"Workflow de migraciones (no estándar)".
-- **GGA-FOLLOWUP-13** — Return-type consistency: `deleteFeriado` unified to `Promise<FormState<{ id: string }>>` (was `Promise<FormState>`); caller type inference without explicit annotation.
-- **`CONTRIBUTING.md` §"GGA pre-commit hook"** — documented the new hook, `.gga-ignore` syntax, and the `GGA_DIFF_FILTER=off` kill switch.
+- **GGA-FOLLOWUP-13** — Return-type consistency en `actions/feriados.ts`: `deleteFeriado` unificado a `Promise<FormState<{ id: string }>>` (era `Promise<FormState>`); caller type inference sin anotación explícita.
+- **`CONTRIBUTING.md` §"GGA pre-commit hook"** (`3cd9ad5`) — documenta el nuevo hook, la sintaxis de `.gga-ignore`, y el `GGA_DIFF_FILTER=off` kill switch.
 
 ### Notes
-- This is a **PATCH** bump per semver (0.20.0 → 0.20.1). The 1.0 prep recommendations 1, 2, 3, and 4 are now complete (see ROADMAP §"Sugerencias para 1.0 prep" archive pointer).
+- This is a **PATCH** bump per semver (0.20.0 → 0.20.1). The 1.0 prep recomendaciones 1, 2, 3, y 4 están ahora completas (ver ROADMAP §"Sugerencias para 1.0 prep" archive pointer).
+- La expansión del v0.20.0 → v0.20.1 fue realmente grande (25+ commits sobre 2 días) porque agrupó todo el setup del GGA hook + las correcciones derivadas. Esto es lo que se hubiera llamado un v0.21.0 si el proyecto todavía estuviera en pre-1.0; el v0.20.1 refleja el model de "tech debt batch antes del 1.0".
+
+---
+
+## [0.11.1] - 2026-04-15
+
+### Fixed
+- **Trainer counts multi-select fix** — `3fd1d9e fix(home): separate where clause for trainer counts to enable multi-select on home page filters`. Pre-existente de v0.11.0, where clause unificado entre `findMany` y `groupBy` causaba que solo 1 trainer se contara cuando varios estaban seleccionados.
+
+### Notes
+- This is a **PATCH** bump per semver (0.11.0 → 0.11.1). Cambio de 1 línea, hotfix de comportamiento de UI en home.
+
+---
 
 ---
 
