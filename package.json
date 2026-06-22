@@ -1,6 +1,6 @@
 {
   "name": "gymflow",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "packageManager": "pnpm@11.2.2",
   "private": true,
   "scripts": {

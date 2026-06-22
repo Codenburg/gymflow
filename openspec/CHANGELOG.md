@@ -4,6 +4,16 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [1.0.3] - 2026-06-22
+
+### Fixed
+- **Trainers no podían acceder al panel admin** — `src/proxy.ts` solo dejaba pasar rol `ADMIN` a `/admin/*`, contradiciendo el `isAdminOrTrainer` check del layout y el design intent (trainers gestionan rutinas desde el panel). El proxy corría antes del layout y redirigía a `/`. Se aflojó el chequeo a `ADMIN` o `TRAINER`. `59c3f92`.
+
+### Notes
+- This is a **PATCH** bump per semver (1 `fix:` commit, 🔴 hotfix — funcionalidad core caída para el rol trainer). Criterio 🔴 ≥ 1 MET.
+
+---
+
 ## [1.0.2] - 2026-06-21
 
 ### Fixed
