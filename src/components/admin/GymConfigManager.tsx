@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Building2, Instagram, MapPin, MessageCircle, type LucideIcon } from "lucide-react";
+import { Building2, Camera, MapPin, MessageCircle, type LucideIcon } from "lucide-react";
 import { updateGymField } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -162,7 +162,7 @@ const SOCIAL_INSTAGRAM_CONFIG: FieldConfig = {
   field: "socialInstagram",
   title: "Instagram",
   description: "URL completa del perfil o publicación.",
-  icon: Instagram,
+  icon: Camera,
   inputLabel: "URL de Instagram",
   inputKind: "url",
   maxLength: 500,

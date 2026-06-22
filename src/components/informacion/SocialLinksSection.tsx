@@ -1,4 +1,4 @@
-import { Instagram, MessageCircle } from "lucide-react"
+import { Camera, MessageCircle } from "lucide-react"
 
 interface SocialLinksSectionProps {
   /**
@@ -39,7 +39,7 @@ export function SocialLinksSection({
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium gap-1.5 px-2.5 h-8 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
-            <Instagram className="w-4 h-4" />
+            <Camera className="w-4 h-4" />
             Instagram
           </a>
         )}

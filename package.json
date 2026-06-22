@@ -32,7 +32,7 @@
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.21.0",
     "next": "16.2.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",
@@ -59,7 +59,7 @@
     "bcryptjs": "^3.0.3",
     "concurrently": "^9.2.3",
     "dotenv": "^16.6.1",
-    "eslint": "^9.39.4",
+    "eslint": "^10.5.0",
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
     "pg": "^8.22.0",
@@ -67,8 +67,9 @@
     "shadcn": "^4.11.0",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0",
     "vitest": "^4.1.9",
-    "wait-on": "^8.0.5"
+    "wait-on": "^9.0.10"
   }
 }

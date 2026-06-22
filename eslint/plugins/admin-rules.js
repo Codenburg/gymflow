@@ -190,7 +190,7 @@ const rules = {
       function checkNode(node) {
         if (isGlobalsCss) return;
 
-        const code = "value" in node && typeof node.value === "string" ? node.value : context.getSourceCode().getText(node);
+        const code = "value" in node && typeof node.value === "string" ? node.value : context.sourceCode.getText(node);
         let match;
 
         while ((match = VAR_PATTERN.exec(code)) !== null) {
