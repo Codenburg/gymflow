@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { Controller, useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext, type ArrayPath, type Path } from "react-hook-form";
 import { ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
@@ -10,20 +10,16 @@ import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/tag-input";
 import { EjercicioRow } from "./ejercicio-row";
 import { cn } from "@/lib/utils";
-import type { Control, FieldErrors } from "react-hook-form";
+import type { RutinaFormData } from "./rutina-completa-form";
 
 interface DiaSectionProps {
   field: { id: string };
   baseName: string;
   diaIndex: number;
   dayNumber: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
   isExpanded: boolean;
   onToggle: () => void;
   onRemove: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errors?: FieldErrors<any>;
   /** Callback to register this day's ejercicios move function with the parent form */
   onRegisterEjerciciosMove?: (moveFn: (from: number, to: number) => void) => void;
 }
@@ -33,15 +29,13 @@ function DiaSectionComponent({
   baseName,
   diaIndex,
   dayNumber,
-  control,
   isExpanded,
   onToggle,
   onRemove,
-  errors,
   onRegisterEjerciciosMove,
 }: DiaSectionProps) {
-  const diasErrors = errors?.dias as any;
-  const diaErrors = diasErrors?.[diaIndex];
+  const { control, formState: { errors } } = useFormContext<RutinaFormData>();
+  const diaErrors = errors.dias?.[diaIndex];
 
   // useSortable for the entire day
   const {
@@ -72,7 +66,7 @@ function DiaSectionComponent({
     move: moveEjercicio,
   } = useFieldArray({
     control,
-    name: `${baseName}.ejercicios`,
+    name: `${baseName}.ejercicios` as ArrayPath<RutinaFormData>,
     shouldUnregister: false,
   });
 
@@ -176,11 +170,11 @@ function DiaSectionComponent({
         <div className="space-y-2">
           <label className="text-muted-foreground text-sm font-medium block">Músculos enfocados</label>
           <Controller
-            name={`${baseName}.musculosEnfocados`}
+            name={`${baseName}.musculosEnfocados` as Path<RutinaFormData>}
             control={control}
             render={({ field }) => (
               <TagInput
-                value={Array.isArray(field.value) ? field.value : []}
+                value={Array.isArray(field.value) ? (field.value as string[]) : []}
                 onChange={field.onChange}
                 placeholder="Agregar músculo..."
               />
@@ -205,13 +199,11 @@ function DiaSectionComponent({
                 <EjercicioRow
                   key={ejercicioField.id}
                   id={ejercicioField.id}
-                  control={control}
                   name={`${baseName}.ejercicios.${index}`}
                   index={index}
                   diaIndex={diaIndex}
                   diaId={field.id}
                   onRemove={() => removeEjercicio(index)}
-                  errors={diaErrors?.ejercicios}
                 />
               ))}
             </div>

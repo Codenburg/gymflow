@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
-import type { Control } from "react-hook-form";
+import { useForm, useFieldArray, Controller, FormProvider } from "react-hook-form";
 import { usePersistedForm } from "@/hooks/use-persisted-form";
 import { createRutinaCompleta } from "@/app/actions/rutinas";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,9 @@ const defaultValues: Omit<RutinaCompletaInput, "creador"> & { dias: typeof defau
 };
 
 type RutinaFormData = typeof defaultValues;
+
+// Shared type for child components (DiaSection, EjercicioRow) to use with useFormContext
+export type { RutinaFormData };
 
 export function RutinaCompletaForm() {
   const router = useRouter();
@@ -457,10 +459,11 @@ export function RutinaCompletaForm() {
       autoScroll={autoScroll}
       {...wrappedHandlers}
     >
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white dark:bg-[#121212] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a]"
-      >
+      <FormProvider {...form}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white dark:bg-[#121212] rounded-2xl border border-[#e5e7eb] dark:border-[#2a2a2a]"
+        >
         {/* Error Message */}
         {errors.root && (
           <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
@@ -575,9 +578,6 @@ export function RutinaCompletaForm() {
                     baseName={baseName}
                     diaIndex={index}
                     dayNumber={index + 1}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    control={control as Control<any>}
-                    errors={errors as any}
                     isExpanded={expandedDayIds.has(field.id)}
                     onToggle={() => toggleDay(field.id)}
                     onRemove={() => removeDay(field.id, index)}
@@ -641,7 +641,8 @@ export function RutinaCompletaForm() {
           </div>
         </div>
         {Dialog}
-      </form>
+        </form>
+      </FormProvider>
 
       {/* DragOverlay - rendered outside form via portal */}
       <DragOverlay>{renderDragOverlay()}</DragOverlay>

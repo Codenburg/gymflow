@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Controller, type Control } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { parseInitialFormat, combineToFormat } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
@@ -10,28 +10,28 @@ interface SeriesRepsInputProps {
   name: string;
   value?: string;
   onChange?: (value: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control?: Control<any>;
   className?: string;
 }
 
 /**
  * Split input for series × reps format (e.g., "4x12").
- * 
+ *
  * Renders two numeric inputs with a "×" separator.
  * Maintains a hidden field with the combined "4x12" format for form submission.
- * 
+ *
  * Usage:
- * - With react-hook-form (ejercicio-row): pass `control` prop
+ * - With react-hook-form (ejercicio-row): reads control from useFormContext
  * - With regular forms (ejercicio-form): pass `name` and `onChange` props
  */
 export function SeriesRepsInput({
   name,
   value,
   onChange,
-  control,
   className,
 }: SeriesRepsInputProps) {
+  // Try to read control from form context (RHF mode). Will be undefined if used outside FormProvider.
+  const formContext = useFormContext();
+  const control = formContext?.control;
   // Parse initial value into series/reps components
   const parsed = parseInitialFormat(value);
   const [series, setSeries] = useState(parsed.series);
@@ -66,7 +66,7 @@ export function SeriesRepsInput({
   if (control) {
     return (
       <Controller
-        name={name}
+        name={name as never}
         control={control}
         render={({ field }) => (
           <div className={cn("flex items-center gap-1", className)}>

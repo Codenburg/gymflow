@@ -1,41 +1,34 @@
 "use client";
 
 import { memo } from "react";
-import { Controller } from "react-hook-form";
+import { Controller, useFormContext, type Path } from "react-hook-form";
 import { GripVertical, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SeriesRepsInput } from "@/components/ui/series-reps-input";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import type { Control, FieldErrors } from "react-hook-form";
+import type { RutinaFormData } from "./rutina-completa-form";
 
 interface EjercicioRowProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
   id: string;
   name: string;
   index: number;
   diaIndex: number;
   diaId: string;
   onRemove: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errors?: FieldErrors<any>;
 }
 
 export const EjercicioRow = memo(function EjercicioRow({
-  control,
   id,
   name,
   index,
   diaIndex,
   diaId,
   onRemove,
-  errors,
 }: EjercicioRowProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ejerciciosArrayErrors = errors as any;
-  const ejercicioErrors = ejerciciosArrayErrors?.[index];
+  const { control, formState: { errors } } = useFormContext<RutinaFormData>();
+  const ejercicioErrors = errors.dias?.[diaIndex]?.ejercicios?.[index];
   const hasError = ejercicioErrors?.nombre;
   const hasFormatoError = ejercicioErrors?.formato;
 
@@ -92,13 +85,13 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* Nombre */}
       <div className="flex-1 min-w-0">
         <Controller
-          name={`${name}.nombre`}
+          name={`${name}.nombre` as Path<RutinaFormData>}
           control={control}
           rules={{ required: "El nombre del ejercicio es requerido" }}
           render={({ field }) => (
             <Input
               data-testid={`ejercicio-nombre-${index}`}
-              value={field.value ?? ""}
+              value={(field.value as string) ?? ""}
               onChange={field.onChange}
               onBlur={field.onBlur}
               name={field.name}
@@ -119,8 +112,7 @@ export const EjercicioRow = memo(function EjercicioRow({
       {/* SeriesRepsInput */}
       <div className="shrink-0">
         <SeriesRepsInput
-          name={`${name}.formato`}
-          control={control}
+          name={`${name}.formato` as Path<RutinaFormData>}
           value={undefined}
         />
         {hasFormatoError && (
