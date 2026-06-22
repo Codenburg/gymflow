@@ -72,6 +72,14 @@
       "sessions": 7,
       "memories": 14,
       "prompts": 10
+    },
+    {
+      "id": "0482fcb9",
+      "created_by": "luffy",
+      "created_at": "2026-06-22T19:08:56Z",
+      "sessions": 12,
+      "memories": 40,
+      "prompts": 76
     }
   ]
 }
