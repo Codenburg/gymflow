@@ -27,6 +27,8 @@
  * disconnected on `closeGymReset()` for graceful teardown.
  */
 
+import 'dotenv/config';
+
 import { PrismaClient } from '../../generated/client';
 
 let prismaSingleton: PrismaClient | null = null;
