@@ -196,10 +196,18 @@ test.describe('Promociones + Descuentos CRUD', () => {
     await promoPage.submitEdit();
 
     // The old titulo is gone; the new one is visible.
+    // NOTE: filter({ hasText }) is a substring match (Playwright default),
+    // and `newTitulo = fixture.titulo + "_EDITED"` always contains
+    // `fixture.titulo` as a substring, so the bare filter would match the
+    // new item and fail with "Received: 1" even when the edit succeeded.
+    // Use a regex with anchors for exact match.
+    const escapedOldTitulo = fixture.titulo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     await expect(
-      page.locator('[data-testid="promocion-list-item"]').filter({ hasText: fixture.titulo })
-    ).toHaveCount(0, { timeout: 15_000 });
-    await promoPage.expectInList(newTitulo);
+      page.locator('[data-testid="promocion-list-item"]').filter({
+        hasText: new RegExp(`^${escapedOldTitulo}$`),
+      })
+    ).toHaveCount(0, { timeout: 15_000 })
+    await promoPage.expectInList(newTitulo)
 
     // Update the cleanup tracker.
     const idx = createdPromocionTitulos.indexOf(fixture.titulo);
