@@ -51,28 +51,6 @@ _Last updated: 2026-06-22_ | _Version: 1.0.3_
 - [ ] **`cleanTestData` partial** — solo `/api/feriados` tiene DELETE; otras APIs usan UI cleanup. (Descubierto durante Recomendación 3 del 1.0 prep.)
 - [ ] **3 page-object dead locators** — `FeriadoAdminPage.addButton/errorMessage/deleteByFecha`, `DescuentoAdminPage.maxMesesInput`, `TrainerAdminPage.softDeleteByDni`. Harmless, unused by specs; future cleanup. (Descubierto durante Recomendación 3 del 1.0 prep.)
 - [ ] **Git index corruption recurrente** — `git fsck` reporta missing blobs en `openspec/changes/<new>/*` después de cada cambio nuevo. Workaround actual: `git update-index --force-remove` + re-add. Root cause probable en `.engram/config.json` o interacción con GGA hook. Investigar y resolver de raíz (v0.17.0 follow-up)
-- [ ] **S2.P.2 edit promocion test failure (pre-existing production bug)** — `tests/promociones-descuentos.spec.ts:147` (`S2.P.2 - edit promocion and verify persistence`) falla consistentemente en aislamiento **incluso con la test-only fix aplicada** (`submitEdit()` + `toHaveText("Guardar cambios")` + nuevo testid `promocion-submit-edit-button` en `promocion-form.tsx:189`).
-
-  **Síntoma**: el form trata el submit como CREATE en vez de UPDATE. Después de clickear edit, cambiar el titulo, y submitar via `submitEdit()`, el titulo viejo sigue en la lista y aparece uno nuevo con el titulo editado (2 items en la lista en vez de 1 reemplazado).
-
-  **Lo que probé (todo falla)**:
-  - `submitEdit()` con `data-testid="promocion-submit-edit-button"` distinto del create → sigue creando.
-  - `toHaveText("Guardar cambios")` ANTES del click (confirma que el form ESTÁ en edit mode) → assertion pasa, pero el click igual crea.
-  - Test aislado sin serial mode → mismo síntoma.
-
-  **Hipótesis más probable**: race condition entre el `useEffect` del form (que resetea valores cuando `editingPromocion?.id` cambia) y el submit. El submit puede capturar `editingPromocion` como null en su closure aunque la UI lo muestre en edit mode.
-
-  **Para retomar**:
-  1. **No es fix de test** — el test está bien diseñado (verifica mode + click + resultado). El bug está en el form/manager.
-  2. **Production fix sugerido** (out of scope por user mandate, requiere tocar `promocion-form.tsx` + `promocion-manager.tsx`):
-     - Agregar un log en `onSubmit` (línea 77 de `promocion-form.tsx`) que imprima `isEditing` y `editingPromocion?.id` al momento del submit. Confirmar si la closure está stale.
-     - Considerar forzar re-render del form via `key={editingPromocion?.id ?? 'create'}` en el `<form>` para que remonte cuando cambia el mode.
-     - O usar `useRef` para que `onSubmit` lea `editingPromocion` de un ref (no closure).
-  3. **Tests acumulados**: una vez fixeado, este test debería pasar sin más cambios. El page object (`submitEdit`) y el testid (`promocion-submit-edit-button`) ya están listos.
-
-  **Estado actual**: 1 commit parcial (test-only) en `fix-e2e-promociones-descuentos` (`c9259b1 test(e2e): fix S2.P.2 edit promocion — add edit-mode testid + submitEdit()`). Falta la parte de producción.
-
-  **Pre-existente**, no introducido por el SDD `descuento-precio-final`. Enmascarado por el AdminLayout strict mode bug (resuelto en `a1b1990`).
 
 - [ ] **Admin panel responsive — polish mobile pendiente (M2/M4/M5 + 5 issues low)** — el header mobile y los quick wins de la auditoría ya están resueltos (v1.0.0, commits `504210b` + `a1b1990` + `cd2d42c`). Pendiente: tablas → cards en mobile, pagination icon-only, batch actions stack. Audit completo en el commit del audit report.
 
