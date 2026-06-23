@@ -14,7 +14,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "db:seed": "pnpm dlx tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "knip": "knip"
   },
   "prisma": {
     "seed": "pnpm dlx tsx prisma/seed.ts"
@@ -62,6 +63,7 @@
     "eslint": "^10.5.0",
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
+    "knip": "^6.18.0",
     "pg": "^8.22.0",
     "prisma": "^7.8.0",
     "shadcn": "^4.11.0",
