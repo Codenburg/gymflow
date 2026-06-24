@@ -705,3 +705,359 @@ test.describe('Gym Config — Auth gate', () => {
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// ============================================
+// sdd/clear-gym-fields — Phase F: E2E tests for the Vaciar flow.
+// ============================================
+//
+// Covers T-016 through T-018 (9 new tests, all under
+// test.describe.configure({ mode: 'serial' })):
+//
+//   T-016: 4 clear→null→public tests (one per clearable field):
+//     - 16.1 direccion
+//     - 16.2 mapa (mapsEmbedUrl)
+//     - 16.3 instagram
+//     - 16.4 whatsapp
+//   T-017: 3 tests:
+//     - 17.1 undo within 5s restores value
+//     - 17.2 TRAINER blocked from /admin/config (redirect to /)
+//     - 17.3 toast-wrapper integration: save renders centralized
+//          bg-success toast
+//   T-018: 2 tests:
+//     - 18.1 AddressSection iframe-only (direccion cleared, mapa set)
+//     - 18.2 clear-failure-keeps-value (mock 500, input preserved)
+//
+// Timing semantics (D3): the input visually keeps the old value for
+// the 5s undo window. router.refresh() fires inside the toast's
+// onAutoDismiss callback. We wait >5s before navigating to the
+// public page so the RSC re-fetch lands with the null value.
+
+test.describe('Gym Config — Clear to null', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  // 4× clear→null→public — one per clearable field.
+  // Pattern: set value → click Vaciar → assert toast → wait 5.2s
+  // for delayed refresh → navigate to /informacion → assert element
+  // hidden.
+  const clearCases: Array<{
+    field: string;
+    formSel: string;
+    clearTestId: string;
+    publicCheck: (page: Page) => Promise<void>;
+  }> = [
+    {
+      field: 'direccion',
+      formSel: DIRECCION_FORM,
+      clearTestId: 'clear-direccion',
+      publicCheck: async (page: Page) => {
+        const addressText = page.locator(
+          'section:has(h2:has-text("Dirección")) p',
+        );
+        await expect(addressText).toHaveCount(0, { timeout: 10000 });
+      },
+    },
+    {
+      field: 'mapsEmbedUrl',
+      formSel: MAPS_FORM,
+      clearTestId: 'clear-mapa',
+      publicCheck: async (page: Page) => {
+        const iframe = page.locator(
+          'section:has(h2:has-text("Dirección")) iframe',
+        );
+        await expect(iframe).toHaveCount(0, { timeout: 10000 });
+      },
+    },
+    {
+      field: 'socialInstagram',
+      formSel: INSTAGRAM_FORM,
+      clearTestId: 'clear-instagram',
+      publicCheck: async (page: Page) => {
+        const instagramLink = page.locator(
+          `a[href^="https://www.instagram.com/"]`,
+        );
+        await expect(instagramLink).toHaveCount(0, { timeout: 10000 });
+      },
+    },
+    {
+      field: 'socialWhatsapp',
+      formSel: WHATSAPP_FORM,
+      clearTestId: 'clear-whatsapp',
+      publicCheck: async (page: Page) => {
+        const whatsappLink = page.locator(`a[href^="https://wa.me/"]`);
+        await expect(whatsappLink).toHaveCount(0, { timeout: 10000 });
+      },
+    },
+  ];
+
+  for (const { field, formSel, clearTestId, publicCheck } of clearCases) {
+    test(`clear→null→public for ${field}`, async ({ page }) => {
+      await loginAsAdmin(page);
+      await page.goto('/admin/config');
+      await expect(
+        page.getByRole('heading', { name: PAGE_TITLE }),
+      ).toBeVisible({ timeout: 10000 });
+
+      // 1. Set a known value via the existing saveField flow.
+      const value =
+        field === 'direccion'
+          ? NEW_DIRECCION
+          : field === 'mapsEmbedUrl'
+            ? NEW_MAPS_URL
+            : field === 'socialInstagram'
+              ? NEW_INSTAGRAM
+              : NEW_WHATSAPP;
+      const fieldInput = page.locator(`${formSel} input[name="value"]`);
+      const submit = page.locator(`${formSel} button[type="submit"]`);
+      await fieldInput.clear();
+      await fieldInput.fill(value);
+      await submit.click();
+      await expect(fieldInput).toHaveValue(value, { timeout: 15000 });
+      await page.waitForTimeout(1000); // settle success toast
+
+      // 2. Click Vaciar — the Trash2 button has data-testid per design #1.
+      const clearBtn = page.locator(`[data-testid="${clearTestId}"]`);
+      await expect(clearBtn).toBeVisible();
+      await expect(clearBtn).toBeEnabled();
+      await clearBtn.click();
+
+      // 3. The undoable toast appears with the field-specific Spanish
+      //    message + progress bar + Deshacer button.
+      const toast = page.locator('[data-sonner-toast]').filter({
+        hasText: /eliminado/i,
+      });
+      await expect(toast).toBeVisible({ timeout: 5000 });
+      // The progress bar element (the description slot child).
+      await expect(
+        page.locator('[data-testid="undo-toast-progress"]'),
+      ).toBeVisible();
+      // The Deshacer action button.
+      await expect(
+        toast.getByRole('button', { name: /deshacer/i }),
+      ).toBeVisible();
+
+      // 4. Wait for the 5s undo window to expire + 100ms refresh
+      //    delay (D3). The input visually still shows the old value
+      //    during the window — verify that.
+      await expect(fieldInput).toHaveValue(value, { timeout: 4000 });
+      // After 5.2s the delayed router.refresh() fires; the input
+      // re-mounts empty (uncontrolled key={displayedValue} re-mounts
+      // when initial null lands).
+      await expect(fieldInput).toHaveValue('', { timeout: 12000 });
+
+      // 5. Navigate to /informacion — the corresponding public element
+      //    is hidden.
+      await page.goto('/informacion', { waitUntil: 'load' });
+      await publicCheck(page);
+    });
+  }
+
+  // T-017.1: undo within 5s restores value (no refresh fires).
+  test('undo within 5s restores value (Deshacer click)', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+    await expect(
+      page.getByRole('heading', { name: PAGE_TITLE }),
+    ).toBeVisible({ timeout: 10000 });
+
+    // Set a known direccion value first.
+    const value = `Av. Undo Test ${RUN_ID}`;
+    const fieldInput = page.locator(
+      `${DIRECCION_FORM} input[name="value"]`,
+    );
+    const submit = page.locator(`${DIRECCION_FORM} button[type="submit"]`);
+    await fieldInput.clear();
+    await fieldInput.fill(value);
+    await submit.click();
+    await expect(fieldInput).toHaveValue(value, { timeout: 15000 });
+    await page.waitForTimeout(1000);
+
+    // Click Vaciar.
+    const clearBtn = page.locator('[data-testid="clear-direccion"]');
+    await clearBtn.click();
+
+    // Toast appears.
+    const toast = page.locator('[data-sonner-toast]').filter({
+      hasText: /eliminado/i,
+    });
+    await expect(toast).toBeVisible({ timeout: 5000 });
+
+    // Click Deshacer IMMEDIATELY (well within the 5s window).
+    await toast.getByRole('button', { name: /deshacer/i }).click();
+
+    // Toast dismisses.
+    await expect(toast).toBeHidden({ timeout: 5000 });
+
+    // Undo re-fires updateGymField — input shows the restored value.
+    await expect(fieldInput).toHaveValue(value, { timeout: 15000 });
+
+    // Wait past the original 5s window to confirm no delayed refresh
+    // fires (the value stays put, not blanked).
+    await page.waitForTimeout(5500);
+    await expect(fieldInput).toHaveValue(value);
+
+    // Public /informacion still shows the address.
+    await page.goto('/informacion', { waitUntil: 'load' });
+    await expect(
+      page.locator('section:has(h2:has-text("Dirección")) p'),
+    ).toHaveText(value, { timeout: 10000 });
+  });
+
+  // T-017.2: TRAINER blocked from /admin/config (redirects to /).
+  test('TRAINER blocked from /admin/config redirects to /', async ({
+    page,
+  }) => {
+    // Log in as the seeded TRAINER (Leo, DNI 22222222 per prisma/seed.ts).
+    await page.goto('/admin/login');
+    await page.waitForSelector('input[id="dni"]', { timeout: 15000 });
+    await page.getByLabel('DNI').fill('22222222');
+    await page.getByLabel('Contraseña').fill('leo123');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('/admin', { timeout: 30000 });
+    await expect(
+      page.getByRole('heading', { name: /Panel de Administraci/i }),
+    ).toBeVisible({ timeout: 15000 });
+
+    // Navigate to /admin/config — should redirect to / (NOT /admin/rutinas).
+    await page.goto('/admin/config');
+    await page.waitForURL('/', { timeout: 10000 });
+
+    // The page must not render the config heading.
+    const content = await page.content();
+    expect(content).not.toContain('Configuración del Gimnasio');
+  });
+
+  // T-017.3: toast-wrapper integration — a save renders the centralized
+  // toast with the bg-success class (proves the migration didn't break).
+  test('save renders toast with centralized bg-success classes', async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+    await expect(
+      page.getByRole('heading', { name: PAGE_TITLE }),
+    ).toBeVisible({ timeout: 10000 });
+
+    // Trigger a save — the existing "Configuración actualizada" toast
+    // must come from src/lib/toast.ts:showSuccess, which applies the
+    // `group-[.toaster]:bg-success` Tailwind token.
+    const fieldInput = page.locator(
+      `${DIRECCION_FORM} input[name="value"]`,
+    );
+    const submit = page.locator(`${DIRECCION_FORM} button[type="submit"]`);
+    await fieldInput.clear();
+    await fieldInput.fill(`Bg-success test ${RUN_ID}`);
+    await submit.click();
+
+    const toast = page.locator('[data-sonner-toast]', {
+      hasText: /Configuraci.* actualizada/i,
+    });
+    await expect(toast).toBeVisible({ timeout: 10000 });
+
+    // The classNames.toast from src/lib/toast.ts applies
+    // `group-[.toaster]:bg-success`. This proves the wrapper is in
+    // the chain (not a raw sonner.success call).
+    const toastEl = toast.first();
+    const classAttr = (await toastEl.getAttribute('class')) ?? '';
+    expect(classAttr).toMatch(/bg-success/);
+  });
+
+  // T-018.1: AddressSection iframe-only — clear direccion leaving
+  // mapsEmbedUrl set, /informacion shows iframe without text.
+  test('AddressSection shows iframe without text when direccion is null', async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+    await expect(
+      page.getByRole('heading', { name: PAGE_TITLE }),
+    ).toBeVisible({ timeout: 10000 });
+
+    // Set BOTH direccion AND mapsEmbedUrl first.
+    const dirInput = page.locator(
+      `${DIRECCION_FORM} input[name="value"]`,
+    );
+    const dirSubmit = page.locator(`${DIRECCION_FORM} button[type="submit"]`);
+    await dirInput.clear();
+    await dirInput.fill(NEW_DIRECCION);
+    await dirSubmit.click();
+    await expect(dirInput).toHaveValue(NEW_DIRECCION, { timeout: 15000 });
+
+    const mapInput = page.locator(`${MAPS_FORM} input[name="value"]`);
+    const mapSubmit = page.locator(`${MAPS_FORM} button[type="submit"]`);
+    await mapInput.clear();
+    await mapInput.fill(NEW_MAPS_URL);
+    await mapSubmit.click();
+    await expect(mapInput).toHaveValue(NEW_MAPS_URL, { timeout: 15000 });
+    await page.waitForTimeout(1000);
+
+    // Now clear ONLY direccion (leave mapsEmbedUrl intact).
+    await page.locator('[data-testid="clear-direccion"]').click();
+    // Wait for the 5s toast window to expire + 100ms delayed refresh.
+    await page.waitForTimeout(5500);
+
+    // /informacion renders the AddressSection: iframe visible, NO <p>.
+    await page.goto('/informacion', { waitUntil: 'load' });
+    const section = page.locator(
+      'section:has(h2:has-text("Dirección"))',
+    );
+    await expect(section).toBeVisible({ timeout: 10000 });
+    // iframe is rendered (the mapsEmbedUrl is still set).
+    await expect(section.locator('iframe')).toBeVisible();
+    // the <p> with the address text is NOT rendered (decoupled check).
+    await expect(section.locator('p')).toHaveCount(0);
+  });
+
+  // T-018.2: clear-failure-keeps-value (REQ-7).
+  test('clear-failure preserves input value (REQ-7)', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/config');
+    await expect(
+      page.getByRole('heading', { name: PAGE_TITLE }),
+    ).toBeVisible({ timeout: 10000 });
+
+    // Set a known direccion value.
+    const value = `Av. REQ-7 test ${RUN_ID}`;
+    const fieldInput = page.locator(
+      `${DIRECCION_FORM} input[name="value"]`,
+    );
+    const submit = page.locator(`${DIRECCION_FORM} button[type="submit"]`);
+    await fieldInput.clear();
+    await fieldInput.fill(value);
+    await submit.click();
+    await expect(fieldInput).toHaveValue(value, { timeout: 15000 });
+    await page.waitForTimeout(1000);
+
+    // Intercept the next server action POST and respond with 500.
+    // The clearGymDisplayField server action returns a failure result
+    // even on HTTP 500 (the server wraps thrown errors as
+    // { success: false, message }). The client's catch path shows
+    // showError() and preserves the input value (REQ-7).
+    await page.route('**/admin/config', (route) => {
+      if (route.request().method() === 'POST') {
+        return route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'simulated DB failure' }),
+        });
+      }
+      return route.continue();
+    });
+
+    // Click Vaciar.
+    const clearBtn = page.locator('[data-testid="clear-direccion"]');
+    await clearBtn.click();
+
+    // The error toast appears (destructive variant).
+    const errorToast = page
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: /Error al eliminar/i });
+    await expect(errorToast).toBeVisible({ timeout: 10000 });
+
+    // REQ-7: input value is PRESERVED (not blanked).
+    await expect(fieldInput).toHaveValue(value, { timeout: 5000 });
+
+    // Vaciar re-enables because the field is non-empty (isClearPending
+    // auto-resets to false on transition completion).
+    await expect(clearBtn).toBeEnabled({ timeout: 5000 });
+  });
+});
