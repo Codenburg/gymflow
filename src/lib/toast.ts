@@ -116,12 +116,17 @@ export type UndoableToastOptions = {
  *     with inline `style` setting the `--undo-duration` CSS variable.
  *     The keyframe `undoBar` (defined in `src/app/globals.css`) consumes
  *     that variable.
- *   - Sonner's `onDismiss` fires on EVERY dismiss path — auto-close,
- *     manual close, AND action.onClick. To distinguish "user clicked
- *     Deshacer" from "toast was closed normally", we flip a
- *     `wasUndone` flag inside `action.onClick` BEFORE calling
- *     `sonnerToast.dismiss(id)`. By the time `onDismiss` runs, the
- *     flag is set, and `onAutoDismiss` is skipped.
+ *   - Sonner 2.0.7 splits dismissal callbacks by path:
+ *       - `onAutoClose`: fires on `duration` timer expiry.
+ *       - `onDismiss`: fires ONLY on programmatic `dismiss(id)` /
+ *         close-button / swipe-out (NOT on auto-close).
+ *     We use BOTH, gated by the `wasUndone` flag set inside
+ *     `action.onClick`. The flag flips BEFORE `sonnerToast.dismiss(id)`
+ *     so by the time `onDismiss` runs for the undo path, the guard
+ *     skips `onAutoDismiss`.
+ *   - DEVNOTE: in earlier sonner versions, `onDismiss` covered all
+ *     paths, but 2.0.x narrowed its scope. The dual-callback pattern
+ *     is the documented migration for this version.
  *
  * Returns the toast id so callers can dismiss externally (e.g. on
  * navigation away).
@@ -155,7 +160,17 @@ export function showUndoableToast({
       style: { ["--undo-duration" as string]: `${durationMs}ms` },
       "data-testid": "undo-toast-progress",
     }),
+    onAutoClose: () => {
+      // 5s timer expiry path. wasUndone guard is defensive — the
+      // auto-close timer should never fire if the user already
+      // undid, but cancel any pending refresh just in case.
+      if (!wasUndone) {
+        onAutoDismiss?.();
+      }
+    },
     onDismiss: () => {
+      // Programmatic dismiss / close button / swipe-out. Covers the
+      // manual close-button path (semantically: "commit the change").
       if (!wasUndone) {
         onAutoDismiss?.();
       }

@@ -249,10 +249,7 @@ function useGymFieldForm(field: GymField, initialValue: string | null): UseGymFi
   // even after edits in another tab. The discriminant on `field` plus
   // the `isStringValue` runtime guard narrow the `unknown` payload to
   // `string` without a `as` cast at the call site.
-  const displayedValue =
-    state.success && state.data?.field === field && isStringValue(state.data.value)
-      ? state.data.value
-      : initialValue ?? "";
+  const displayedValue = initialValue ?? "";
 
   const fieldError = state.errors?.[field]?.[0] ?? null;
   const generalError =
