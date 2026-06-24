@@ -14,7 +14,7 @@ import { DiaSection } from "./dia-section";
 import { useConfirm } from "@/hooks/use-confirm";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ClientOnly } from "@/components/client-only";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import type { FormState } from "@/lib/schemas";
 import type { RutinaCompletaInput } from "@/lib/schemas";
 
@@ -387,10 +387,10 @@ export function RutinaCompletaForm() {
         form.clear(); // Clear persisted draft
         router.push("/admin");
         setTimeout(() => {
-          toast.success("¡Rutina creada exitosamente!");
+          showSuccess("¡Rutina creada exitosamente!");
         }, 100);
       } else {
-        toast.error(result.message || "Error al crear la rutina");
+        showError(result.message || "Error al crear la rutina");
       }
     },
     [confirm, convertToFormData, router, form]

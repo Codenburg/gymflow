@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   createDescuentoDuracion,
   updateDescuentoDuracion,
@@ -97,19 +97,19 @@ export function DescuentoDuracionManager({
 
       if (result.success && result.data) {
         setDescuentos((prev) => [...prev, result.data!].sort((a, b) => a.meses - b.meses));
-        toast.success("Descuento creado exitosamente");
+        showSuccess("Descuento creado exitosamente");
         resetForm();
         setIsAdding(false);
       } else if (result.errors?.meses) {
         // P2002 unique constraint error - handled by server
-        toast.error(result.errors.meses[0]);
+        showError(result.errors.meses[0]);
       } else if (result.errors?._form) {
-        toast.error(result.errors._form[0]);
+        showError(result.errors._form[0]);
       } else {
-        toast.error(result.message || "Error al crear el descuento");
+        showError(result.message || "Error al crear el descuento");
       }
     } catch {
-      toast.error("Error al crear el descuento");
+      showError("Error al crear el descuento");
     } finally {
       setIsAdding(false);
     }
@@ -145,18 +145,18 @@ export function DescuentoDuracionManager({
         setDescuentos((prev) =>
           prev.map((d) => (d.id === id ? result.data! : d))
         );
-        toast.success("Descuento actualizado exitosamente");
+        showSuccess("Descuento actualizado exitosamente");
         resetForm();
         setEditingId(null);
       } else if (result.errors?.meses) {
-        toast.error(result.errors.meses[0]);
+        showError(result.errors.meses[0]);
       } else if (result.errors?._form) {
-        toast.error(result.errors._form[0]);
+        showError(result.errors._form[0]);
       } else {
-        toast.error(result.message || "Error al actualizar el descuento");
+        showError(result.message || "Error al actualizar el descuento");
       }
     } catch {
-      toast.error("Error al actualizar el descuento");
+      showError("Error al actualizar el descuento");
     }
   };
 
@@ -175,12 +175,12 @@ export function DescuentoDuracionManager({
 
       if (result.success) {
         setDescuentos((prev) => prev.filter((d) => d.id !== id));
-        toast.success("Descuento eliminado exitosamente");
+        showSuccess("Descuento eliminado exitosamente");
       } else {
-        toast.error(result.message || "Error al eliminar el descuento");
+        showError(result.message || "Error al eliminar el descuento");
       }
     } catch {
-      toast.error("Error al eliminar el descuento");
+      showError("Error al eliminar el descuento");
     }
   };
 

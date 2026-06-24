@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Building2, Camera, MapPin, MessageCircle, type LucideIcon } from "lucide-react";
 import { updateGymField } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
@@ -289,10 +289,10 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
   useEffect(() => {
     if (wasPendingRef.current && !isPending) {
       if (state.success) {
-        toast.success("Configuración actualizada");
+        showSuccess("Configuración actualizada");
         router.refresh();
       } else if (state.message) {
-        toast.error(state.message);
+        showError(state.message);
       }
     }
     wasPendingRef.current = isPending;

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { Clock } from "lucide-react";
 import { updateGymField } from "@/app/actions/gym";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -107,10 +107,10 @@ export function WeeklyScheduleEditor({ initial }: WeeklyScheduleEditorProps) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setSchedule(saved as HorarioSemanal);
         }
-        toast.success("Horarios actualizados");
+        showSuccess("Horarios actualizados");
         router.refresh();
       } else if (state.message) {
-        toast.error(state.message);
+        showError(state.message);
       }
     }
     wasPendingRef.current = isPending;
@@ -164,7 +164,7 @@ export function WeeklyScheduleEditor({ initial }: WeeklyScheduleEditorProps) {
               day.apertura >= day.cierre
             ) {
               e.preventDefault();
-              toast.error(
+              showError(
                 `${label}: la hora de apertura debe ser menor que la hora de cierre`
               );
               return;

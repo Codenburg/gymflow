@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { AdminTable } from "@/components/admin/admin-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,13 +52,13 @@ function TableDuplicateButton({ rutinaId }: { rutinaId: string }) {
       formData.append("id", rutinaId);
       const result = await duplicateRutina({ success: false }, formData);
       if (result.success) {
-        toast.success("Rutina duplicada");
+        showSuccess("Rutina duplicada");
       } else {
-        toast.error(result.message || "Error al duplicar la rutina");
+        showError(result.message || "Error al duplicar la rutina");
       }
     } catch (error) {
       console.error("Error duplicating:", error);
-      toast.error("Error al duplicar la rutina");
+      showError("Error al duplicar la rutina");
     } finally {
       setIsDuplicating(false);
     }
@@ -106,13 +106,13 @@ function TableDeleteButton({ rutinaId }: { rutinaId: string }) {
       formData.append("id", rutinaId);
       const result = await deleteRutina({ success: false }, formData);
       if (result.success) {
-        toast.success("Rutina eliminada");
+        showSuccess("Rutina eliminada");
       } else {
-        toast.error(result.message || "Error al eliminar la rutina");
+        showError(result.message || "Error al eliminar la rutina");
       }
     } catch (error) {
       console.error("Error deleting:", error);
-      toast.error("Error al eliminar la rutina");
+      showError("Error al eliminar la rutina");
     } finally {
       setIsDeleting(false);
     }
@@ -302,14 +302,14 @@ export function RutinasListClient({ rutinas }: RutinasListClientProps) {
       const result = await deleteRutinas({ success: false }, formData);
 
       if (result.success) {
-        toast.success(`${selectedIds.length} rutina${selectedIds.length > 1 ? "s" : ""} eliminada${selectedIds.length > 1 ? "s" : ""}`);
+        showSuccess(`${selectedIds.length} rutina${selectedIds.length > 1 ? "s" : ""} eliminada${selectedIds.length > 1 ? "s" : ""}`);
         setRowSelection({}); // Limpiar selección local
       } else {
-        toast.error(result.message || "Error al eliminar rutinas");
+        showError(result.message || "Error al eliminar rutinas");
       }
     } catch (error) {
       console.error("Error batch delete:", error);
-      toast.error("Error al eliminar rutinas");
+      showError("Error al eliminar rutinas");
     }
   };
 

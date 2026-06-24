@@ -6,7 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Eye, EyeOff, X } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -81,12 +81,12 @@ export function TrainerDialog({
           result.errors?.password?.[0] ||
           result.message ||
           "Error al crear el entrenador"
-        toast.error(errorMsg)
+        showError(errorMsg)
         return
       }
 
       if (result.data) {
-        toast.success("Entrenador creado exitosamente")
+        showSuccess("Entrenador creado exitosamente")
         onSuccess?.({
           id: result.data.id,
           username: result.data.username,
@@ -97,7 +97,7 @@ export function TrainerDialog({
 
       onOpenChange(false)
     } catch {
-      toast.error("Error inesperado")
+      showError("Error inesperado")
     }
   }
 
@@ -113,11 +113,11 @@ export function TrainerDialog({
       const result = await updateTrainer(trainer.id, updateData)
 
       if (!result.success) {
-        toast.error(result.message)
+        showError(result.message)
         return
       }
 
-      toast.success("Entrenador actualizado exitosamente")
+      showSuccess("Entrenador actualizado exitosamente")
       onSuccess?.({
         ...trainer,
         name: data.name || trainer.name,
@@ -125,7 +125,7 @@ export function TrainerDialog({
 
       onOpenChange(false)
     } catch {
-      toast.error("Error inesperado")
+      showError("Error inesperado")
     }
   }
 

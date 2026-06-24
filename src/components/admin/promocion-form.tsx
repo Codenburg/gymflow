@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, X } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -84,7 +84,7 @@ export function PromocionForm({
       })
 
       if (!contentResult.success) {
-        toast.error(contentResult.error || "Error al actualizar")
+        showError(contentResult.error || "Error al actualizar")
         return
       }
 
@@ -96,12 +96,12 @@ export function PromocionForm({
         })
 
         if (!precioResult.success) {
-          toast.error(precioResult.error || "Error al actualizar el precio")
+          showError(precioResult.error || "Error al actualizar el precio")
           return
         }
       }
 
-      toast.success("Promoción actualizada exitosamente")
+      showSuccess("Promoción actualizada exitosamente")
       onCancel()
     } else {
       // Create new promocion
@@ -112,11 +112,11 @@ export function PromocionForm({
       })
 
       if (!result.success) {
-        toast.error(result.error || "Error al crear la promoción")
+        showError(result.error || "Error al crear la promoción")
         return
       }
 
-      toast.success("Promoción creada exitosamente")
+      showSuccess("Promoción creada exitosamente")
       reset()
     }
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { TrainerDialog, type Trainer } from "@/components/admin/trainer-dialog";
 import { AdminCard } from "@/components/admin/admin-card";
@@ -57,9 +57,9 @@ export function TrainerManager({ initialTrainers }: TrainerManagerProps) {
 
     if (result.success) {
       setTrainers((prev) => prev.filter((t) => t.id !== id));
-      toast.success("Entrenador eliminado exitosamente");
+      showSuccess("Entrenador eliminado exitosamente");
     } else {
-      toast.error(result.message);
+      showError(result.message);
     }
   };
 

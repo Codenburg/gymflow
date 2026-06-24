@@ -139,10 +139,14 @@ describe("clearGymDisplayField — auth + validation guards", () => {
     });
 
     // Force-cast to satisfy TS — the runtime guard is what we're testing.
-    const result = await clearGymDisplayField("notARealField" as unknown as "direccion");
+    const result = await clearGymDisplayField(
+      "notARealField" as unknown as Parameters<typeof clearGymDisplayField>[0],
+    );
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe("Campo no vaciable");
+    if (!result.success) {
+      expect(result.message).toBe("Campo no vaciable");
+    }
     expect(mockGymUpdate).not.toHaveBeenCalled();
   });
 
@@ -154,7 +158,9 @@ describe("clearGymDisplayField — auth + validation guards", () => {
     const result = await clearGymDisplayField("direccion");
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe("No tienes permisos de administrador");
+    if (!result.success) {
+      expect(result.message).toBe("No tienes permisos de administrador");
+    }
     expect(mockGymUpdate).not.toHaveBeenCalled();
   });
 });
@@ -173,7 +179,9 @@ describe("clearGymDisplayField — error handling", () => {
     const result = await clearGymDisplayField("direccion");
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe("Error al eliminar el campo");
+    if (!result.success) {
+      expect(result.message).toBe("Error al eliminar el campo");
+    }
     expect(mockGymUpdate).toHaveBeenCalledTimes(1);
   });
 });

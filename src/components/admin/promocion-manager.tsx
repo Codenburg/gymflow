@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast";
 import {
   createPromocion,
   deletePromocion,
@@ -105,12 +105,12 @@ export function PromocionManager({ initialPromociones }: PromocionManagerProps) 
         if (editingPromocionId === id) {
           setEditingPromocionId(null)
         }
-        toast.success("Promoción eliminada exitosamente")
+        showSuccess("Promoción eliminada exitosamente")
       } else {
-        toast.error(result.errors?._form?.[0] || "Error al eliminar la promoción")
+        showError(result.errors?._form?.[0] || "Error al eliminar la promoción")
       }
     } catch {
-      toast.error("Error al eliminar la promoción")
+      showError("Error al eliminar la promoción")
     }
   }
 

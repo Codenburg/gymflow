@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { createFeriado, deleteFeriado } from "@/app/actions/feriados";
 import { getToday } from "@/lib/dates";
 import type { FormState } from "@/lib/schemas";
@@ -41,7 +41,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
 
     // Validate date is not in the past
     if (selectedDate < getToday()) {
-      toast.error("No se pueden seleccionar fechas pasadas");
+      showError("No se pueden seleccionar fechas pasadas");
       return;
     }
 
@@ -52,7 +52,7 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
         return;
       }
       if (horaInicio >= horaFin) {
-        toast.error("La hora de inicio debe ser menor que la hora de fin");
+        showError("La hora de inicio debe ser menor que la hora de fin");
         return;
       }
     }
@@ -82,19 +82,19 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
           hora_fin: isFullDay ? null : horaFin,
         };
         setFeriados((prev) => [...prev, newFeriado].sort((a, b) => a.fecha.localeCompare(b.fecha)));
-        toast.success("Feriado agregado exitosamente");
+        showSuccess("Feriado agregado exitosamente");
         setSelectedDate("");
         setIsFullDay(true);
         setHoraInicio("");
         setHoraFin("");
       } else if (result.statusCode === 409) {
         // Duplicate holiday error
-        toast.error("Ya existe un feriado para esta fecha");
+        showError("Ya existe un feriado para esta fecha");
       } else {
-        toast.error(result.message || "Error al guardar");
+        showError(result.message || "Error al guardar");
       }
     } catch (err) {
-      toast.error("Error al agregar feriados");
+      showError("Error al agregar feriados");
       console.error(err);
     } finally {
       setIsAdding(false);
@@ -119,12 +119,12 @@ export function FeriadoManager({ initialFeriados }: FeriadoManagerProps) {
 
       if (result.success) {
         setFeriados((prev) => prev.filter((f) => f.id !== id));
-        toast.success("Feriado eliminado exitosamente");
+        showSuccess("Feriado eliminado exitosamente");
       } else {
-        toast.error(result.message || "Error al eliminar feriado");
+        showError(result.message || "Error al eliminar feriado");
       }
     } catch (err) {
-      toast.error("Error al eliminar feriados");
+      showError("Error al eliminar feriados");
       console.error(err);
     }
   };

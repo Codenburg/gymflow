@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { updateGymPrice } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 import { formatPriceARS } from "@/lib/format";
@@ -34,7 +34,7 @@ export function GymPriceEditor({ initialPrice }: GymPriceEditorProps) {
     if (!isPending && state.success) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsEditing(false);
-      toast.success("Precio actualizado exitosamente");
+      showSuccess("Precio actualizado exitosamente");
     }
   }, [isPending, state.success]);
 

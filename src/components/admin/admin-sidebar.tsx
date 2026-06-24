@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -121,7 +121,7 @@ function SidebarContent({
         router.refresh(),
       ]);
     } catch {
-      toast.error("Error al cerrar sesión");
+      showError("Error al cerrar sesión");
     }
   };
 
