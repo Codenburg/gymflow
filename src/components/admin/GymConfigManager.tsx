@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { showSuccess, showError } from "@/lib/toast";
+import { showSuccess, showError, showUndoableToast } from "@/lib/toast";
 import {
   Building2,
   Camera,
@@ -18,7 +18,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import { updateGymField } from "@/app/actions/gym";
+import { updateGymField, clearGymDisplayField, type ClearableGymField } from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 import { AdminCard } from "@/components/admin/admin-card";
 import { AdminFormField } from "@/components/admin/admin-form-field";
@@ -334,6 +334,100 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
           ? "clear-whatsapp"
           : `clear-${config.field}`;
 
+  // ============================================================
+  // Vaciar flow — handleClear + undo mechanism (T-011)
+  // ============================================================
+  //
+  // D5: undo re-fires `updateGymField` via a hidden form. We pre-fill
+  //     the hidden `<input name="value">` with the captured previous
+  //     value at undo-click time, then call `requestSubmit()`.
+  // D3: delayed `router.refresh()` — the input visually keeps the old
+  //     value during the 5s undo window (no key change). Refresh
+  //     fires inside `onAutoDismiss` (NOT immediately on server success).
+  // D13: `onAutoDismiss` fires when the toast closes WITHOUT undo
+  //      (5s expiry OR manual close). Closure-scoped `wasUndone`
+  //      flag in showUndoableToast handles the distinction.
+  // REQ-7: on server error, the input value is preserved (uncontrolled
+  //        key={displayedValue} is not mutated), isClearPending auto-
+  //        resets to false on transition completion, and a destructive
+  //        toast appears via showError.
+  const previousValueRef = useRef<string>("");
+  const undoFormRef = useRef<HTMLFormElement>(null);
+  const undoInputRef = useRef<HTMLInputElement>(null);
+
+  // Field name → Spanish toast label (D7 design decision #7).
+  // The success message identifies WHICH field was cleared.
+  const clearToastLabel =
+    config.field === "mapsEmbedUrl"
+      ? "Mapa"
+      : config.field === "socialInstagram"
+        ? "Instagram"
+        : config.field === "socialWhatsapp"
+          ? "WhatsApp"
+          : config.title;
+
+  const handleClear = () => {
+    // Capture BEFORE the async action — once `clearGymDisplayField`
+    // returns success, the DB is already null and `displayedValue`
+    // would not change until the delayed refresh fires.
+    previousValueRef.current = displayedValue ?? "";
+
+    startClearTransition(async () => {
+      try {
+        // The Vaciar button is only rendered when `config.clearable`
+        // is true (D7 literal-union guard), so by construction
+        // config.field IS a ClearableGymField here. The cast is
+        // safe — runtime check happens via the conditional render
+        // in the JSX (`{config.clearable && (...)}`).
+        const result = await clearGymDisplayField(
+          config.field as ClearableGymField,
+        );
+        if (result.success) {
+          // Closure-scoped timer — captured by the onUndo callback so
+          // undo can clearTimeout it, AND by the onAutoDismiss callback
+          // so the delayed refresh can be scheduled.
+          let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+          showUndoableToast({
+            message: `${clearToastLabel} eliminado`,
+            durationMs: 5000,
+            onUndo: () => {
+              // Cancel the pending refresh (D3) — undo means the
+              // user wants the value back, NO router.refresh.
+              if (refreshTimer) {
+                clearTimeout(refreshTimer);
+                refreshTimer = null;
+              }
+              // D5: re-fire updateGymField with the captured value
+              // via the hidden form. The visible form stays untouched.
+              if (undoInputRef.current && undoFormRef.current) {
+                undoInputRef.current.value = previousValueRef.current;
+                undoFormRef.current.requestSubmit();
+              }
+            },
+            onAutoDismiss: () => {
+              // 5s expiry OR manual close — D3 delayed refresh.
+              // The 100ms defers past sonner's exit animation so the
+              // toast DOM fully unmounts before RSC re-fetch lands.
+              refreshTimer = setTimeout(() => router.refresh(), 100);
+            },
+          });
+          // NO router.refresh() here — D3 (delayed refresh).
+        } else {
+          // Server returned failure (auth/validation). Show error
+          // toast. Input value is preserved because we never
+          // mutated `displayedValue` — uncontrolled key unchanged.
+          showError(result.message || `Error al eliminar ${clearToastLabel}`);
+        }
+      } catch {
+        // REQ-7: server action threw (network, DB). Preserve value,
+        // show destructive toast. isClearPending auto-resets on
+        // transition completion, so Vaciar re-enables automatically.
+        showError(`Error al eliminar ${clearToastLabel}`);
+      }
+    });
+  };
+
   // Only fire the toast on the pending → done transition. The previous
   // pattern (chequear `state.success` en cada render) leaked toasts across
   // router.refresh / re-mount / cache revalidation — every sub-form that
@@ -400,12 +494,7 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
             {config.clearable && (
               <button
                 type="button"
-                onClick={() => {
-                  // T-011 wires the actual handleClear flow. For T-009
-                  // (button shell), this is a no-op — clicking does
-                  // nothing until T-011 adds the action.
-                  startClearTransition(() => {});
-                }}
+                onClick={handleClear}
                 disabled={isBusy || isClearableEmpty}
                 title="Vaciar campo"
                 data-testid={clearTestId}
@@ -429,6 +518,15 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
               )}
             </button>
           </div>
+        </form>
+
+        {/* Hidden undo form (D5) — re-fires updateGymField with the
+            captured previous value when the user clicks "Deshacer"
+            inside the undo toast. Isolated from the visible form so
+            undo does not retrigger the visible input's useActionState. */}
+        <form ref={undoFormRef} action={formAction} className="hidden">
+          <input type="hidden" name="field" value={config.field} />
+          <input ref={undoInputRef} type="hidden" name="value" defaultValue="" />
         </form>
       </AdminCard>
     </>
