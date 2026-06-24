@@ -100,6 +100,17 @@ interface FieldConfig {
    * where empty is not a valid persisted state (e.g. gym name).
    */
   requiredValue?: boolean;
+  /**
+   * When `true`, the sub-form renders a "Vaciar" (Trash2) button next
+   * to "Guardar". Clicking it calls `clearGymDisplayField` and shows a
+   * 5s undoable toast with a progress bar.
+   *
+   * Defaults to `false` (literal-union per design D7 — forces explicit
+   * opt-in, prevents accidental clear on `nombre` / `horarioJson`).
+   * Only the 4 nullable display fields (`direccion`, `mapsEmbedUrl`,
+   * `socialInstagram`, `socialWhatsapp`) set this to `true`.
+   */
+  clearable?: false | true;
 }
 
 const IDENTITY_CONFIG: FieldConfig = {
