@@ -367,10 +367,23 @@ export async function clearGymDisplayField(
       where: { id: "gym" },
       data: { [field]: null },
     });
+    // Invalidate the cached reader so the next read sees fresh data.
+    // We only call revalidateTag — NOT revalidatePath.
+    //
+    // Why no revalidatePath: in Next.js 16, calling revalidatePath
+    // from a server action auto-refreshes the CURRENT route
+    // synchronously (verified empirically — the admin input re-mounts
+    // empty within ~200ms after the server action returns, even
+    // though our client never calls router.refresh()). That defeats
+    // the D3 "delayed refresh" semantics: the user must see the OLD
+    // value during the 5s undo window.
+    //
+    // revalidateTag on its own does NOT trigger a route re-fetch —
+    // it only invalidates the tagged caches. The next router.refresh()
+    // (fired by the showUndoableToast onAutoDismiss callback after
+    // the 5s window) re-fetches the RSC payload, and the now-
+    // invalidated cache returns the fresh null value.
     revalidateTag("gym-config", "max");
-    revalidatePath("/");
-    revalidatePath("/informacion");
-    revalidatePath("/admin/config");
     return { success: true };
   } catch (err) {
     console.error("[clearGymDisplayField] failed", err);

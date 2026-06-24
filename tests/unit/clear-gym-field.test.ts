@@ -195,16 +195,17 @@ describe("clearGymDisplayField — cache invalidation", () => {
     mockGymUpdate.mockResolvedValue({});
   });
 
-  it("fires revalidateTag('gym-config', 'max') and 3 revalidatePath calls on success", async () => {
+  it("fires revalidateTag('gym-config', 'max') on success", async () => {
     const result = await clearGymDisplayField("direccion");
 
     expect(result.success).toBe(true);
     expect(mockRevalidateTag).toHaveBeenCalledWith("gym-config", "max");
-    expect(mockRevalidatePath).toHaveBeenCalledTimes(3);
-    // The 3 paths must include the 3 documented destinations per
-    // design #289 §5: /, /informacion, /admin/config.
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/informacion");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/config");
+    // Intentionally NOT calling revalidatePath from the server action:
+    // Next.js 16 auto-revalidates the current route synchronously when
+    // revalidatePath is called from a server action, which defeats
+    // the D3 "delayed refresh" semantics (input would blank before
+    // the 5s undo window expires). The delayed router.refresh() in
+    // showUndoableToast's onAutoDismiss callback handles the eventual
+    // re-fetch after the undo window expires.
   });
 });
