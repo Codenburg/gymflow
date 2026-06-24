@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-06-24_ | _Version: 1.0.3_
+_Last updated: 2026-06-24_ | _Version: 1.1.0_
 
 > Per docs-guardian v1.2 convention: ROADMAP is **pending-only**. Completed releases live in [`openspec/CHANGELOG.md`](./CHANGELOG.md) as the audit trail (not duplicated here).
 
@@ -37,8 +37,6 @@ _Last updated: 2026-06-24_ | _Version: 1.0.3_
   **Severidad**: Alta. Es el path a producto comercial — sin esto, el proyecto se queda en single-tenant para un solo cliente. Alineado con el deseo del usuario de ofrecer el producto a varios gyms.
 
   **Slices estimados**: 6-8 slices (rename → schema → tenant resolution → auth → cache → UI selector → branding → tests → billing opcional).
-
-- [ ] **Vaciar campos opcionales de gym config** — los 4 sub-forms opcionales del admin (`Dirección`, `Mapa`, `Instagram`, `WhatsApp`) aceptan string vacío en server pero la UI no expone atajo. Agrega botón "Vaciar" al lado de "Guardar X". UX: ícono `Trash2`, `text-muted-foreground hover:text-destructive`, `disabled` cuando ya vacío, sin dialog de confirmación (el "Guardar" posterior ES la confirmación), tooltip `title="Vaciar campo"`. Pendiente: SDD cycle `/sdd-new clear-gym-fields`. (Movido desde §Features post-1.0 por el user 2026-06-21 — promovido a **Alta Prioridad**.)
 
 - [ ] Documentación de API (MDX-based)
 

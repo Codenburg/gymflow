@@ -4,6 +4,28 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [1.1.0] - 2026-06-24
+
+### Added
+- **Botón "Vaciar" por sub-form para los 4 campos opcionales del gimnasio** — `src/components/admin/GymConfigManager.tsx` agrega un botón Trash2 (`title="Vaciar campo"`, `text-muted-foreground hover:text-destructive hover:bg-destructive/10`) al lado de "Guardar X" en los 4 sub-forms opcionales: `direccion`, `mapsEmbedUrl`, `socialInstagram`, `socialWhatsapp`. `IDENTITY_CONFIG` (nombre) sigue sin botón — R2 mitigation via literal-union `clearable?: false | true` + structural test en `tests/unit/field-config-clearable.test.ts`. Per-field testids: `clear-direccion`, `clear-mapa`, `clear-instagram`, `clear-whatsapp`. Botón es `type="button"` + `onClick` + `useTransition` (vive dentro del mismo `<form>` para layout pero NO lo submitea — D1).
+- **Nueva server action `clearGymDisplayField` en `src/app/actions/gym.ts`** — escribe `null` directo via `prisma.gym.update({ where: { id: 'gym' }, data: { [field]: null } })`, ADMIN-only via el patrón `verifyAdmin(headers)` que ya usa `updateGymField` (líneas 245-247). Bypassea `gymFieldSchema` (que rechaza empty/null con `min(1)` / `url()`) — el botón Vaciar explícitamente QUIERE escribir null, ese es el punto. On success: `revalidateTag('gym-config', 'max')` + `revalidatePath('/')` + `revalidatePath('/informacion')` + `revalidatePath('/admin/config')`. Devuelve `{ success, message }` para que el cliente pueda detectar failure sin throw.
+- **Toast undoable con barra de progreso 5s** — `src/lib/toast.ts` exporta `showUndoableToast({ message, onUndo, durationMs, onAutoDismiss })` que renderiza un toast sonner con botón "Deshacer" + un `<div className="undo-progress-bar" data-testid="undo-toast-progress">` en el slot `description`. La animación usa el keyframe `undoBar` (definido en `src/app/globals.css`) que consume la CSS variable `--undo-duration` para soportar duraciones custom. La distinción undo/auto-dismiss usa un flag `wasUndone` closure-scoped + los callbacks `onAutoClose` (timer expiry) y `onDismiss` (manual close / programmatic) de sonner 2.0.7.
+- **Wrappers centralizados de toast en `src/lib/toast.ts`** — reemplaza los 67 call sites directos a `sonner` en 14 archivos admin + 1 auth con `showSuccess` / `showError` / `showInfo` del nuevo módulo (T-006 + T-007). El `<Toaster>` en `src/app/layout.tsx:96` ahora pasa `toastOptions={{ unstyled: true }}` para que los wrappers tengan control total del styling via Tailwind tokens (`bg-success`, `bg-destructive`, etc., definidos en `src/app/globals.css` como CSS vars). Migración mecánica: import swap + 1:1 rename `toast.success(...)` → `showSuccess(...)`.
+- **`/admin/config` ahora es ADMIN-only** — `src/app/(admin)/admin/config/page.tsx:30` cambia el redirect target de `/admin/rutinas` (legado del patrón de trainers) a `/` (REQ-4.1). TRAINER user que navega a `/admin/config` ahora aterriza en la home pública. Los otros admin pages (`/admin/rutinas`, `/admin/trainers`, etc.) siguen siendo ADMIN+TRAINER via el layout parent.
+- **`AddressSection` renderiza texto y mapa independientemente** — `src/components/informacion/AddressSection.tsx` cambia el null-check de `!direccion || !mapsEmbedUrl` (que ocultaba TODO si cualquiera era null) a `!direccion && !mapsEmbedUrl` (que solo oculta si AMBOS son null). Ahora se puede tener iframe sin dirección (REQ-5.1), dirección sin iframe (REQ-5.2), o ambos (default). Esto es prerequisito para que el botón Vaciar de `direccion` no rompa la visualización pública del mapa.
+
+### Changed
+- **Pending-state UI unificado** — `src/components/admin/GymConfigManager.tsx` introduce `const isBusy = isPending || isClearPending` (D9) para que input + Guardar + Vaciar se deshabiliten juntos durante cualquier acción en vuelo. El input ahora se deshabilita con `isBusy` (antes solo con `isPending`). Esto da feedback visual consistente al admin que ambos botones están ocupados.
+- **`FieldConfig` extendido con `clearable?: false | true`** — literal-union (D7) en lugar de `boolean` para forzar opt-in explícito. El default es `false`; los 4 configs opcionales setean `true`. El structural test `tests/unit/field-config-clearable.test.ts` documenta el whitelist de 4 y blacklist de 2 (`nombre` + `horarioJson`) para que futuros devs tengan una guía clara al agregar campos.
+
+### Notes
+- This is a **MINOR** bump per semver (new user-facing feature: clear→null + undo). Criterio 🔴 + 🟢 ≥ 1 NOT met (no `fix:` commits in this change), pero `feat:` commits siempre justifican MINOR.
+- No `BREAKING CHANGE:` — el comportamiento de Guardar (save flow) es backward-compatible: el form sigue funcionando exactamente igual para usuarios que nunca tocan el botón Vaciar.
+- Full SDD cycle: explore → propose → spec → design → tasks → apply (artifacts in Engram, branch `feat: clear-gym-fields`, single PR, 800-line budget per user preflight D2).
+- DevNote: la implementación de sonner 2.0.7 separa los dismissal callbacks (`onAutoClose` vs `onDismiss`) — distinto a lo que asumía el design original (D13). El wrapper cubre ambos paths con un flag `wasUndone` para evitar doble-fire.
+
+---
+
 ## [1.0.3] - 2026-06-22
 
 ### Fixed
