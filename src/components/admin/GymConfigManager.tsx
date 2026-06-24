@@ -150,6 +150,7 @@ const DIRECCION_CONFIG: FieldConfig = {
   maxLength: 200,
   placeholder: "Ej: Av. Siempre Viva 742, CABA",
   saveLabel: "Guardar dirección",
+  clearable: true,
 };
 
 const MAPS_EMBED_URL_CONFIG: FieldConfig = {
@@ -169,6 +170,7 @@ const MAPS_EMBED_URL_CONFIG: FieldConfig = {
     description:
       "Dirección y enlace de Google Maps. Cada campo se guarda por separado.",
   },
+  clearable: true,
 };
 
 /**
@@ -194,6 +196,7 @@ const SOCIAL_INSTAGRAM_CONFIG: FieldConfig = {
   placeholder: "https://www.instagram.com/tu_gimnasio",
   saveLabel: "Guardar Instagram",
   sectionHeader: SOCIAL_SECTION_HEADER,
+  clearable: true,
 };
 
 const SOCIAL_WHATSAPP_CONFIG: FieldConfig = {
@@ -206,6 +209,7 @@ const SOCIAL_WHATSAPP_CONFIG: FieldConfig = {
   maxLength: 500,
   placeholder: "https://wa.me/5491112345678",
   saveLabel: "Guardar WhatsApp",
+  clearable: true,
 };
 
 // ============================================================
