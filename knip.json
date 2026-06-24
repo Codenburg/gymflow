@@ -5,5 +5,8 @@
   ],
   "ignoreBinaries": [
     "gga"
+  ],
+  "ignoreDependencies": [
+    "@prisma/client-runtime-utils"
   ]
 }
