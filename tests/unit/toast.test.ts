@@ -40,6 +40,7 @@ const mockSuccess = vi.fn();
 const mockError = vi.fn();
 const mockInfo = vi.fn();
 const mockDismiss = vi.fn();
+const mockCustom = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -47,6 +48,7 @@ vi.mock("sonner", () => ({
     error: (...args: unknown[]) => mockError(...args),
     info: (...args: unknown[]) => mockInfo(...args),
     dismiss: (...args: unknown[]) => mockDismiss(...args),
+    custom: (...args: unknown[]) => mockCustom(...args),
   },
 }));
 
@@ -69,32 +71,27 @@ describe("showUndoableToast — API contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock implementation: returns a stable id.
-    mockSuccess.mockReturnValue("toast-1");
+    mockCustom.mockReturnValue("toast-1");
     mockDismiss.mockReturnValue(undefined);
   });
 
-  it("renders toast with unstyled:true + Deshacer action + 5000ms duration", () => {
+  it("renders toast via toast.custom with a render component + 5000ms duration", () => {
     const onUndo = vi.fn();
     showUndoableToast({ message: "Dirección eliminada", onUndo });
 
-    expect(mockSuccess).toHaveBeenCalledTimes(1);
-    const [message, opts] = mockSuccess.mock.calls[0] as [
-      string,
+    expect(mockCustom).toHaveBeenCalledTimes(1);
+    const [renderFn, opts] = mockCustom.mock.calls[0] as [
+      unknown,
       Record<string, unknown>,
     ];
 
-    expect(message).toBe("Dirección eliminada");
-    expect(opts.unstyled).toBe(true);
+    expect(typeof renderFn).toBe("function");
     expect(opts.duration).toBe(5000);
-
-    // The action label is "Deshacer" (Spanish, matches the rest of the app)
-    const action = opts.action as { label: string; onClick: () => void };
-    expect(action.label).toBe("Deshacer");
-    expect(typeof action.onClick).toBe("function");
+    expect(opts.id).toBe("gym-undo");
   });
 
   it("returns the toast id (string | number) for external dismissal", () => {
-    mockSuccess.mockReturnValue(42);
+    mockCustom.mockReturnValue(42);
     const id = showUndoableToast({ message: "test", onUndo: vi.fn() });
     expect(id).toBe(42);
   });
@@ -109,11 +106,16 @@ describe("showUndoableToast — API contract", () => {
       onAutoDismiss,
     });
 
-    const opts = mockSuccess.mock.calls[0][1] as Record<string, unknown>;
-    const action = opts.action as { onClick: () => void };
-
-    // Simulate user clicking Deshacer.
-    action.onClick();
+    // 4th polish: showUndoableToast now uses toast.custom with a
+    // <ToastWithProgress> component. The component receives onUndo +
+    // onComplete as props. Verifying the undo path: invoke the
+    // component's onUndo prop, which should dismiss + fire onUndo,
+    // and NOT fire onAutoDismiss.
+    const renderFn = mockCustom.mock.calls[0][0] as (
+      t: string,
+    ) => { props: { onUndo: () => void; onComplete?: () => void } };
+    const element = renderFn("toast-1");
+    element.props.onUndo();
 
     expect(mockDismiss).toHaveBeenCalledWith("toast-1");
     expect(onUndo).toHaveBeenCalledTimes(1);
@@ -130,11 +132,15 @@ describe("showUndoableToast — API contract", () => {
       onAutoDismiss,
     });
 
-    const opts = mockSuccess.mock.calls[0][1] as Record<string, unknown>;
-    const onDismiss = opts.onDismiss as () => void;
-
-    // Simulate sonner's auto-close path (5s timer expiry).
-    onDismiss();
+    // 4th polish: the auto-close path is driven by ToastWithProgress
+    // calling `onComplete` when its RAF progress hits 100. Verifying
+    // via the component's onComplete prop, which the wrapper passes
+    // through to onAutoDismiss.
+    const renderFn = mockCustom.mock.calls[0][0] as (
+      t: string,
+    ) => { props: { onUndo: () => void; onComplete?: () => void } };
+    const element = renderFn("toast-1");
+    element.props.onComplete?.();
 
     expect(onAutoDismiss).toHaveBeenCalledTimes(1);
     expect(onUndo).not.toHaveBeenCalled();
@@ -147,8 +153,8 @@ describe("showUndoableToast — API contract", () => {
     showUndoableToast({ message: "first", onUndo: vi.fn() });
     showUndoableToast({ message: "second", onUndo: vi.fn() });
 
-    const firstOpts = mockSuccess.mock.calls[0][1] as Record<string, unknown>;
-    const secondOpts = mockSuccess.mock.calls[1][1] as Record<string, unknown>;
+    const firstOpts = mockCustom.mock.calls[0][1] as Record<string, unknown>;
+    const secondOpts = mockCustom.mock.calls[1][1] as Record<string, unknown>;
 
     expect(firstOpts.id).toBe("gym-undo");
     expect(secondOpts.id).toBe("gym-undo");
@@ -161,7 +167,7 @@ describe("showUndoableToast — API contract", () => {
       id: "custom-undo-id",
     });
 
-    const opts = mockSuccess.mock.calls[0][1] as Record<string, unknown>;
+    const opts = mockCustom.mock.calls[0][1] as Record<string, unknown>;
     expect(opts.id).toBe("custom-undo-id");
   });
 });

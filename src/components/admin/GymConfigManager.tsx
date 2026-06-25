@@ -397,11 +397,13 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
           showUndoableToast({
             message: `${clearToastLabel} eliminado`,
             durationMs: 5000,
+            // Shared id with the save toast below — both gym-config
+            // toasts REPLACE each other instead of stacking when fired
+            // in quick succession (e.g. Guardar then Vaciar).
+            id: "gym-config",
             onUndo: () => {
               // D5: re-fire updateGymField with the captured value
               // via the hidden form. The visible form stays untouched.
-              // No timer to clear anymore (Fix 3 removed the delayed
-              // refresh; refresh fires once on server success).
               if (undoInputRef.current && undoFormRef.current) {
                 undoInputRef.current.value = previousValueRef.current;
                 undoFormRef.current.requestSubmit();
@@ -435,10 +437,17 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
   useEffect(() => {
     if (wasPendingRef.current && !isPending) {
       if (state.success) {
-        showSuccess("Configuración actualizada");
+        // Shared id with the undo toast (showUndoableToast call above)
+        // — both gym-config toasts REPLACE each other instead of stacking.
+        // router.refresh() BEFORE showSuccess: Next.js 16 re-fetches the
+        // RSC payload on router.refresh(), which reconciles the React tree
+        // and drops any toast added to sonner's store between the call and
+        // the commit. Calling refresh() FIRST lets the reconciliation
+        // complete, then the toast is added when the tree is stable.
         router.refresh();
+        showSuccess("Configuración actualizada", { id: "gym-config" });
       } else if (state.message) {
-        showError(state.message);
+        showError(state.message, { id: "gym-config" });
       }
     }
     wasPendingRef.current = isPending;

@@ -29,7 +29,9 @@
  */
 
 import type { CSSProperties } from "react";
+import { createElement } from "react";
 import { toast as sonnerToast } from "sonner";
+import { ToastWithProgress, TOAST_WIDTH } from "@/components/ui/ToastWithProgress";
 
 /**
  * Tailwind class tokens applied to every toast card.
@@ -83,8 +85,8 @@ const TOAST_CLASSES = {
     "relative",
     // Layout — flex row, icon / content / action, vertical-aligned to top
     "flex items-start gap-3",
-    // Spacing — sonner default 16px padding, 356px width, 64px min-height
-    "p-4 w-[356px] min-h-[64px]",
+    // Spacing — sonner default 16px padding, shared TOAST_WIDTH, 64px min-height
+    `p-4 ${TOAST_WIDTH} min-h-[64px]`,
     // Visual — 8px radius, 1px border, lg shadow
     "rounded-lg border shadow-lg",
     // Neutral colors (overridden by variant classes below)
@@ -275,53 +277,32 @@ export function showUndoableToast({
   durationMs = 5000,
   id = "gym-undo",
   onAutoDismiss,
-}: UndoableToastOptions): string | number {
-  // Closure-scoped flag. Survives across the synchronous
-  // dismiss → onDismiss sequence inside the same task.
-  let wasUndone = false;
-
-  // Inline CSS variable on the toast card carries the animation
-  // duration. `CSSProperties` cast is required because TS doesn't
-  // know about custom properties as keys.
-  const style: CSSProperties = {
-    "--undo-duration": `${durationMs}ms`,
-  } as CSSProperties;
-
-  const toastId = sonnerToast.success(message, {
-    unstyled: true,
-    duration: durationMs,
-    id,
-    style,
-    classNames: {
-      ...BASE_CLASSNAMES,
-      // `.toast-with-undo` installs the progress-bar pseudo-element
-      // and its `clip-path` keyframe (see globals.css).
-      toast: `${TOAST_CLASSES.base} ${TOAST_CLASSES.success} toast-with-undo`,
+}: UndoableToastOptions): string | number {  // Render via `toast.custom()` with our own React component that owns
+  // the progress bar via requestAnimationFrame. CSS-based approaches
+  // (::before + width, box-shadow inset, linear-gradient background) all
+  // failed to render reliably given `unstyled: true` + Tailwind layer
+  // order + sonner 2.0.7's DOM. JS-driven progress sidesteps all that.
+  //
+  // `onAutoDismiss` is fired from inside the component when the bar
+  // fills to 100% (i.e. sonner's `duration` expires naturally). The
+  // undo path bypasses this — the component calls `onUndo` and dismisses
+  // the toast directly, so `onAutoDismiss` never fires on undo.
+  const toastId = sonnerToast.custom(
+    (t) =>
+      createElement(ToastWithProgress, {
+        message,
+        duration: durationMs,
+        onUndo: () => {
+          sonnerToast.dismiss(t);
+          void onUndo();
+        },
+        onComplete: onAutoDismiss,
+      }),
+    {
+      id,
+      duration: durationMs,
     },
-    action: {
-      label: "Deshacer",
-      onClick: () => {
-        wasUndone = true;
-        sonnerToast.dismiss(toastId);
-        void onUndo();
-      },
-    },
-    onAutoClose: () => {
-      // 5s timer expiry path. wasUndone guard is defensive — the
-      // auto-close timer should never fire if the user already
-      // undid, but cancel any pending refresh just in case.
-      if (!wasUndone) {
-        onAutoDismiss?.();
-      }
-    },
-    onDismiss: () => {
-      // Programmatic dismiss / close button / swipe-out. Covers the
-      // manual close-button path (semantically: "commit the change").
-      if (!wasUndone) {
-        onAutoDismiss?.();
-      }
-    },
-  });
+  );
 
   return toastId;
 }
