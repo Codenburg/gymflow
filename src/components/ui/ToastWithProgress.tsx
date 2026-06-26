@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 
 /**
@@ -30,9 +30,25 @@ type ToastWithProgressProps = {
  * to render reliably given `unstyled: true` + Tailwind layer order +
  * sonner 2.0.7's DOM structure. JS-driven progress sidesteps all that.
  *
- * Pauses on hover (matches sonner's default pause-on-hover for the
- * dismiss timer) so the bar stays in sync with the toast's actual
- * remaining time.
+ * Pause-on-hover matches sonner's default behaviour: when the user
+ * hovers the toast, sonner pauses its dismiss timer AND we pause the
+ * progress bar. On mouseleave, both resume from the same accumulated
+ * time so the bar reaches 100% in the exact same instant the toast
+ * disappears.
+ *
+ * Implementation: `accumulatedMs` is the monotonic time the bar has
+ * spent visible (excluding pauses); `resumeStart` is the
+ * `performance.now()` timestamp of the most recent resume, or null
+ * when paused. Total elapsed = accumulatedMs + (resumeStart
+ *   ? now - resumeStart : 0).
+ *
+ * TODO(verify-e2e): a future E2E test for this pause/resume behavior
+ * should use `dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}))`
+ * on the toast element rather than `page.mouse.move()`. Playwright's
+ * `mouse.move` does not reliably dispatch React's `onMouseEnter` on
+ * components rendered inside sonner's portal — the handler fires
+ * intermittently in test runs. `dispatchEvent` is consistent.
+ * The fix itself was validated manually with a real mouse.
  */
 export function ToastWithProgress({
   message,
@@ -41,31 +57,72 @@ export function ToastWithProgress({
   onComplete,
 }: ToastWithProgressProps) {
   const [progress, setProgress] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const accumulatedMsRef = useRef(0);
+  const resumeStartRef = useRef<number | null>(performance.now());
+  const rafRef = useRef<number | null>(null);
+  // Keep onComplete stable across renders without retriggering the effect.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (isHovered) return;
-    const start = performance.now();
-    let raf = 0;
     const tick = (now: number) => {
-      const elapsed = now - start;
+      if (resumeStartRef.current === null) return; // paused
+      const elapsed =
+        accumulatedMsRef.current + (now - (resumeStartRef.current ?? now));
       const pct = Math.min(100, (elapsed / duration) * 100);
       setProgress(pct);
       if (pct < 100) {
-        raf = requestAnimationFrame(tick);
+        rafRef.current = requestAnimationFrame(tick);
       } else {
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [duration, isHovered, onComplete]);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+    // Intentionally NO `isHovered` here. Pause/resume is handled by the
+    // event handlers below, which mutate refs without re-mounting the
+    // effect (which is what caused the bar to reset to 0 on every
+    // hover-out in the previous implementation).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration]);
+
+  // Pause on mouseenter — bank the in-flight time and stop the RAF.
+  const handleMouseEnter = () => {
+    if (resumeStartRef.current === null) return;
+    accumulatedMsRef.current += performance.now() - resumeStartRef.current;
+    resumeStartRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
+  // Resume on mouseleave — start a fresh RAF from the accumulated time.
+  const handleMouseLeave = () => {
+    if (resumeStartRef.current !== null) return; // already running
+    resumeStartRef.current = performance.now();
+    const tick = (now: number) => {
+      if (resumeStartRef.current === null) return;
+      const elapsed =
+        accumulatedMsRef.current + (now - resumeStartRef.current);
+      const pct = Math.min(100, (elapsed / duration) * 100);
+      setProgress(pct);
+      if (pct < 100) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        onCompleteRef.current?.();
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  };
 
   return (
     <div
       className={`${TOAST_WIDTH} min-h-[64px] flex items-center justify-center gap-2 px-4 py-3 pr-20 rounded-lg border shadow-lg !bg-success !text-success-foreground !border-success/20 relative overflow-hidden`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <CheckCircle2 className="shrink-0 w-5 h-5" />
       <span className="leading-tight text-center text-sm font-semibold max-w-full">
