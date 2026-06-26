@@ -253,8 +253,11 @@ function useGymFieldForm(field: GymField, initialValue: string | null): UseGymFi
   const displayedValue = initialValue ?? "";
 
   const fieldError = state.errors?.[field]?.[0] ?? null;
+  // Show inline general message only for validation errors (when
+  // state.errors exists). Server errors are surfaced via toast
+  // (showError in the useEffect) only — no duplicate inline message.
   const generalError =
-    !fieldError && !state.success ? state.message ?? null : null;
+    state.errors && !fieldError && !state.success ? state.message ?? null : null;
 
   return { state, formAction, isPending, displayedValue, fieldError, generalError };
 }
@@ -462,7 +465,12 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
         // complete, then the toast is added when the tree is stable.
         router.refresh();
         showSuccess("Configuración actualizada", { id: "gym-config" });
-      } else if (state.message) {
+      } else if (state.message && !state.errors) {
+        // Only show toast for server errors (auth fail, DB fail, etc).
+        // Validation errors (Zod safeParse fails) set state.errors AND
+        // state.message — the fieldError derived from state.errors already
+        // shows the specific message inline, so the toast would be a
+        // redundant "Error de validación" duplicate.
         showError(state.message, { id: "gym-config" });
       }
     }
