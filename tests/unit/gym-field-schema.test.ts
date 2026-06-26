@@ -100,7 +100,7 @@ describe("gymFieldSchema — empty nombre rejected", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("El nombre no puede estar vacío");
+      expect(messages[0]).toContain("Ey, falta el nombre del gimnasio");
     }
   });
 
@@ -126,7 +126,7 @@ describe("gymFieldSchema — non-URL rejected for URL fields", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("URL de mapa inválida");
+      expect(messages[0]).toContain("Ey, el link de Maps no es válido");
     }
   });
 
@@ -138,7 +138,7 @@ describe("gymFieldSchema — non-URL rejected for URL fields", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("URL de Instagram inválida");
+      expect(messages[0]).toContain("Ey, el link de Instagram no es válido");
     }
   });
 
@@ -150,7 +150,7 @@ describe("gymFieldSchema — non-URL rejected for URL fields", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("URL de WhatsApp inválida");
+      expect(messages[0]).toContain("Ey, el link de WhatsApp no es válido");
     }
   });
 
@@ -172,7 +172,7 @@ describe("gymFieldSchema — length caps", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("El nombre no puede superar 80 caracteres");
+      expect(messages[0]).toContain("El nombre no puede superar los 80 caracteres");
     }
   });
 

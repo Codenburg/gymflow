@@ -252,7 +252,14 @@ function useGymFieldForm(field: GymField, initialValue: string | null): UseGymFi
   // `string` without a `as` cast at the call site.
   const displayedValue = initialValue ?? "";
 
-  const fieldError = state.errors?.[field]?.[0] ?? null;
+  // fieldError reads from state.errors. Zod groups errors by their schema
+  // path (the validation lives on the `value` field of the discriminated
+  // union, not on `field`), so we read the first error across all keys
+  // rather than assuming a specific path. The message is already
+  // field-specific in the schema (see gymFieldSchema in src/lib/schemas.ts).
+  const fieldError = state.errors
+    ? Object.values(state.errors).flat()[0] ?? null
+    : null;
   // Show inline general message only for validation errors (when
   // state.errors exists). Server errors are surfaced via toast
   // (showError in the useEffect) only — no duplicate inline message.
@@ -516,7 +523,7 @@ function FieldSubForm({ config, initialValue }: FieldSubFormProps) {
           {input}
 
           {generalError && (
-            <p className="text-destructive text-sm" role="alert">
+            <p className="text-destructive text-sm mt-1" role="alert">
               {generalError}
             </p>
           )}

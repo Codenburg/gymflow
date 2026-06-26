@@ -426,8 +426,8 @@ export const gymFieldSchema = z.discriminatedUnion("field", [
     value: z
       .string()
       .trim()
-      .min(1, { error: "El nombre no puede estar vacío" })
-      .max(80, { error: "El nombre no puede superar 80 caracteres" }),
+      .min(1, { error: "Ey, falta el nombre del gimnasio" })
+      .max(80, { error: "El nombre no puede superar los 80 caracteres" }),
   }),
   z.object({
     field: z.literal("horarioJson"),
@@ -453,23 +453,23 @@ export const gymFieldSchema = z.discriminatedUnion("field", [
     value: z
       .string()
       .trim()
-      .min(1, { error: "La dirección no puede estar vacía" })
-      .max(200, { error: "La dirección no puede superar 200 caracteres" }),
+      .min(1, { error: "Ey, falta la dirección del gimnasio" })
+      .max(200, { error: "La dirección es muy larga — dejala en 200 caracteres o menos" }),
   }),
   z.object({
     field: z.literal("mapsEmbedUrl"),
     value: z
       .string()
       .trim()
-      .url({ error: "URL de mapa inválida" })
-      .max(2000, { error: "La URL de mapa es demasiado larga" }),
+      .url({ error: "Ey, el link de Maps no es válido — tiene que empezar con https://" })
+      .max(2000, { error: "La URL de Maps es demasiado larga" }),
   }),
   z.object({
     field: z.literal("socialInstagram"),
     value: z
       .string()
       .trim()
-      .url({ error: "URL de Instagram inválida" })
+      .url({ error: "Ey, el link de Instagram no es válido — tiene que empezar con https://" })
       .max(500, { error: "La URL de Instagram es demasiado larga" }),
   }),
   z.object({
@@ -477,7 +477,7 @@ export const gymFieldSchema = z.discriminatedUnion("field", [
     value: z
       .string()
       .trim()
-      .url({ error: "URL de WhatsApp inválida" })
+      .url({ error: "Ey, el link de WhatsApp no es válido — tiene que empezar con https://" })
       .max(500, { error: "La URL de WhatsApp es demasiado larga" }),
   }),
 ]);

@@ -1,3 +1,5 @@
+import { AlertCircle } from "lucide-react";
+
 const variantStyles = {
   default: {
     wrapper: 'space-y-2',
@@ -32,7 +34,15 @@ export function AdminFormField({
       <label className="text-foreground text-sm font-medium">{label}</label>
       {variant === 'with-description' && description && <p className={styles.description}>{description}</p>}
       {children}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && (
+        <p
+          className="text-destructive text-xs flex items-center gap-1.5 mt-1"
+          role="alert"
+        >
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>{error}</span>
+        </p>
+      )}
     </div>
   );
 }
