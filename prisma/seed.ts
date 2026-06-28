@@ -1,8 +1,9 @@
-import { PrismaClient, Prisma, Role } from '../generated/client';
+import { PrismaClient, Prisma } from '../generated/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
+import { GYM_SINGLETON_ID } from '@/lib/gym-constants';
 
 const databaseUrl = process.env.DATABASE_URL || '';
 
@@ -56,6 +57,17 @@ async function main() {
     await tx.session.deleteMany();
     await tx.account.deleteMany();
     await tx.user.deleteMany();
+
+    // Create singleton Organization for multi-tenant migration (step 1 placeholder)
+    await tx.organization.upsert({
+      where: { id: GYM_SINGLETON_ID },
+      update: {},
+      create: {
+        id: GYM_SINGLETON_ID,
+        name: 'GymFlow Default',
+        slug: 'gymflow-default',
+      },
+    });
 
     // Create/update singleton Gym config
     // The default 'nombre' is a friendly placeholder ("Mi Gimnasio") so the
@@ -170,7 +182,7 @@ async function main() {
           email: null,
           dni: admin.dni,
           emailVerified: false,
-          role: Role.ADMIN,
+          isSuperAdmin: false,
           banned: false,
         },
       });
@@ -198,6 +210,7 @@ async function main() {
             tipo: template.tipo,
             descripcion: template.descripcion,
             creadorId: user.id,
+            organizationId: GYM_SINGLETON_ID,
           },
         });
 
@@ -207,6 +220,7 @@ async function main() {
             rutinaId: rutina.id,
             fromUserId: null,
             toUserId: user.id,
+            organizationId: GYM_SINGLETON_ID,
           },
         });
 
@@ -273,7 +287,7 @@ async function main() {
           email: null,
           dni: trainer.dni,
           emailVerified: false,
-          role: Role.TRAINER,
+          isSuperAdmin: false,
           banned: false,
         },
       });
@@ -301,6 +315,7 @@ async function main() {
             tipo: template.tipo,
             descripcion: template.descripcion,
             creadorId: user.id,
+            organizationId: GYM_SINGLETON_ID,
           },
         });
 
@@ -309,6 +324,7 @@ async function main() {
             rutinaId: rutina.id,
             fromUserId: null,
             toUserId: user.id,
+            organizationId: GYM_SINGLETON_ID,
           },
         });
 

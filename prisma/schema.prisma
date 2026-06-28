@@ -10,11 +10,149 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  ADMIN
-  TRAINER
-  USER
+// ======================
+// Multi-Tenant Organization (Better Auth Plugin)
+// ======================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  members             Member[]
+  invitations         Invitation[]
+  gym                 Gym?
+  rutinas             Rutina[]
+  ownershipTransfers  OwnershipTransfer[]
 }
+
+model Member {
+  id             String   @id @default(cuid())
+  userId         String   @db.Uuid
+  organizationId String
+  role           String   @default("member")
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Invitation {
+  id             String   @id @default(cuid())
+  email          String
+  inviterId      String   @db.Uuid
+  organizationId String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  inviter      User         @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+// ======================
+// Better Auth Core Models
+// ======================
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String
+  dni           String    @unique
+  // Username para login con DNI (requerido por username plugin)
+  username      String?   @unique
+  // Email opcional
+  email         String?   @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  // Flag para super-admin del SaaS (solo Tomás). NO es un rol organizacional.
+  isSuperAdmin  Boolean   @default(false)
+  banned        Boolean   @default(false)
+  // Soft delete timestamp - if set, user is considered deleted
+  // All queries must filter: where: { deletedAt: null }
+  deletedAt     DateTime? @db.Timestamp
+
+  // Index for soft-delete query performance
+  @@index([deletedAt])
+
+  sessions        Session[]
+  accounts        Account[]
+  // Routines created by this user
+  rutinas         Rutina[]
+  // Ownership transfers where user was the source
+  transfersFrom   OwnershipTransfer[] @relation("FromUser")
+  // Ownership transfers where user was the target
+  transfersTo     OwnershipTransfer[] @relation("ToUser")
+  // Organization membership
+  members         Member[]
+  // Invitations sent by this user
+  invitationsSent Invitation[]        @relation("Inviter")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @db.Uuid
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Multi-tenant: active organization for this session
+  activeOrganizationId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                String    @id @default(uuid())
+  userId            String    @db.Uuid
+  accountId         String
+  providerId        String
+  providerType      String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, providerType, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, value])
+}
+
+// ======================
+// Business Domain Models
+// ======================
 
 model Rutina {
   id          String   @id @default(uuid())
@@ -23,20 +161,25 @@ model Rutina {
   descripcion String?
   // Required FK to User.id - every routine must have a creator
   creadorId   String   @db.Uuid
+  // Multi-tenant: organization that owns this routine
+  organizationId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   dias        Dia[]
 
   // Relation to User (creator) - RESTRICT: deletion blocked if user has rutinas
   // Transfer ownership before deleting a user with rutinas
-  creadorUser User     @relation(fields: [creadorId], references: [id], onDelete: Restrict)
+  creadorUser User          @relation(fields: [creadorId], references: [id], onDelete: Restrict)
+  // Relation to Organization (tenant)
+  org         Organization  @relation(fields: [organizationId], references: [id])
 
   // Ownership transfer history for this rutina
   ownershipTransfers OwnershipTransfer[]
 
-  // Unique constraint: same user cannot have two routines with the same name
-  @@unique([creadorId, nombre])
+  // Unique constraint: same user cannot have two routines with the same name within an org
+  @@unique([organizationId, creadorId, nombre])
   @@index([creadorId])
+  @@index([organizationId])
 }
 
 model Dia {
@@ -67,88 +210,6 @@ model Ejercicio {
 }
 
 // ======================
-// Better Auth Models
-// ======================
-
-model User {
-  id             String    @id @default(uuid()) @db.Uuid
-  name           String
-  dni            String    @unique
-  // Username para login con DNI (requerido por username plugin)
-  username       String?   @unique
-  // Email opcional
-  email          String?   @unique
-  emailVerified  Boolean   @default(false)
-  image          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  role           Role      @default(USER)
-  banned         Boolean   @default(false)
-  // Soft delete timestamp - if set, user is considered deleted
-  // All queries must filter: where: { deletedAt: null }
-  deletedAt      DateTime? @db.Timestamp
-
-  // Index for soft-delete query performance
-  @@index([deletedAt])
-
-  sessions       Session[]
-  accounts       Account[]
-  // Routines created by this user
-  rutinas        Rutina[]
-  // Ownership transfers where user was the source
-  transfersFrom  OwnershipTransfer[] @relation("FromUser")
-  // Ownership transfers where user was the target
-  transfersTo    OwnershipTransfer[] @relation("ToUser")
-}
-
-model Session {
-  id        String   @id @default(uuid())
-  userId    String   @db.Uuid
-  expiresAt DateTime
-  token     String   @unique
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Account {
-  id                String  @id @default(uuid())
-  userId            String  @db.Uuid
-  accountId         String
-  providerId        String
-  providerType      String
-  accessToken       String?
-  refreshToken      String?
-  idToken           String?
-  accessTokenExpiresAt DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope             String?
-  password          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([providerId, providerType, accountId])
-  @@index([userId])
-}
-
-model Verification {
-  id         String   @id @default(uuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-
-  @@unique([identifier, value])
-}
-
-// ======================
 // Ownership Transfer Audit
 // ======================
 
@@ -158,23 +219,28 @@ model OwnershipTransfer {
   // null fromUserId means initial creation (not a transfer)
   fromUserId String? @db.Uuid
   toUserId  String   @db.Uuid
+  // Multi-tenant: denormalized for audit query efficiency
+  organizationId String
   createdAt DateTime @default(now())
 
-  rutina    Rutina @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
-  fromUser  User?   @relation("FromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
-  toUser    User   @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  rutina    Rutina       @relation(fields: [rutinaId], references: [id], onDelete: Cascade)
+  fromUser  User?        @relation("FromUser", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser    User         @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  org       Organization @relation(fields: [organizationId], references: [id])
 
   @@index([rutinaId])
   @@index([fromUserId])
   @@index([toUserId])
+  @@index([organizationId])
 }
 
 // ======================
-// Singleton Gym Config Model
+// Gym Config Model (1:1 with Organization)
 // ======================
 
 model Gym {
-  id              String   @id @default("gym")
+  id              String   @id // FK to Organization.id (1:1)
+
   price           Decimal  @db.Decimal(10, 2)
 
   // Display fields (admin-managed, all nullable, additive)
@@ -191,13 +257,17 @@ model Gym {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  feriados        Feriado[]
-  promociones     Promocion[]
-  descuentosDuracion DescuentoDuracion[]
+
+  // 1:1 relation with Organization (the tenant)
+  org Organization @relation(fields: [id], references: [id])
+
+  feriados            Feriado[]
+  promociones         Promocion[]
+  descuentosDuracion  DescuentoDuracion[]
 }
 
 // ======================
-// Information Page Models
+// Information Page Models (scoped to Gym = Organization)
 // ======================
 
 model Feriado {
@@ -207,7 +277,7 @@ model Feriado {
   hora_inicio String?
   hora_fin    String?
   createdAt   DateTime  @default(now())
-  gymId       String    @default("gym")
+  gymId       String    @default("gym") // FK to Gym.id (= Organization.id) — TODO: remove default in step 3
   gym         Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
   @@unique([gymId, fecha])

@@ -26,7 +26,7 @@ async function verifyAdmin(headers: Headers): Promise<{ authorized: boolean; mes
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if (session.user.role !== "ADMIN") {
+    if ((session.user as any).role !== "ADMIN") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
@@ -119,6 +119,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: {
         ...parsed.data,
         fecha: normalizedFecha, // Keep as string
+        gymId: "gym", // Placeholder until org plugin takeover (step 2)
       },
     });
 

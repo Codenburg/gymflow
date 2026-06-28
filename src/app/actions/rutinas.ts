@@ -26,7 +26,7 @@ async function verifyAdminOrTrainer(headers: Headers): Promise<{ authorized: boo
       return { authorized: false, message: "Debes iniciar sesión" };
     }
     const user = session.user;
-    if (user.role !== "ADMIN" && user.role !== "TRAINER") {
+    if ((user as any).role !== "ADMIN" && (user as any).role !== "TRAINER") {
       return { authorized: false, message: "No tienes permisos de administrador o entrenador" };
     }
     return { authorized: true, session };
@@ -45,7 +45,7 @@ async function verifyAdmin(headers: Headers): Promise<{ authorized: boolean; mes
       return { authorized: false, message: "Debes iniciar sesión" };
     }
     const user = session.user;
-    if (user.role !== "ADMIN") {
+    if ((user as any).role !== "ADMIN") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
@@ -92,6 +92,8 @@ export async function createRutina(
           ...parsed.data,
           // Required FK to User.id
           creadorId: creadorId,
+          // Multi-tenant org from session
+          organizationId: session.session.activeOrganizationId!,
         },
       });
 
@@ -101,6 +103,8 @@ export async function createRutina(
           rutinaId: newRutina.id,
           fromUserId: null,
           toUserId: creadorId,
+          // Denormalized org for audit query efficiency
+          organizationId: session.session.activeOrganizationId!,
         },
       });
 
@@ -156,7 +160,7 @@ export async function updateRutina(
   }
 
   // TRAINER ownership check: can only update own rutinas
-  if (session.user.role === "TRAINER") {
+  if ((session.user as any).role === "TRAINER") {
     const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
     if (!existing) {
       return { success: false, message: "Rutina no encontrada" };
@@ -255,7 +259,7 @@ export async function duplicateRutina(
     }
 
     // TRAINER ownership check: can only duplicate own rutinas
-    if (session.user.role === "TRAINER" && original.creadorId !== session.user.id) {
+    if ((session.user as any).role === "TRAINER" && original.creadorId !== session.user.id) {
       return { success: false, message: "No tienes permiso para duplicar esta rutina" };
     }
 
@@ -270,6 +274,8 @@ export async function duplicateRutina(
           descripcion: original.descripcion,
           // Required FK to User.id - keep original creador
           creadorId: original.creadorId,
+          // Same org as the original routine
+          organizationId: original.organizationId,
         },
       });
 
@@ -345,7 +351,7 @@ export async function deleteRutina(
   }
 
   // TRAINER ownership check: can only delete own rutinas
-  if (session.user.role === "TRAINER") {
+  if ((session.user as any).role === "TRAINER") {
     const existing = await prisma.rutina.findUnique({ where: { id: parsed.data } });
     if (!existing) {
       return { success: false, message: "Rutina no encontrada" };
@@ -589,6 +595,8 @@ export async function createRutinaCompleta(
           descripcion: data.descripcion,
           // Required FK to User.id
           creadorId: creadorId,
+          // Multi-tenant org from session
+          organizationId: session.session.activeOrganizationId!,
         },
       });
 
@@ -598,6 +606,8 @@ export async function createRutinaCompleta(
           rutinaId: createdRutina.id,
           fromUserId: null,
           toUserId: creadorId,
+          // Denormalized org for audit query efficiency
+          organizationId: session.session.activeOrganizationId!,
         },
       });
 
@@ -682,7 +692,7 @@ export async function updateRutinaCompleta(
   }
 
   // TRAINER ownership check: can only update own rutinas
-  if (session.user.role === "TRAINER") {
+  if ((session.user as any).role === "TRAINER") {
     const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
     if (!existing) {
       return { success: false, message: "Rutina no encontrada" };

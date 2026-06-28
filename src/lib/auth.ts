@@ -1,9 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { username } from "better-auth/plugins";
+import { username, organization } from "better-auth/plugins";
 import bcrypt from "bcrypt";
 import prisma from "./prisma";
-import type { Role } from "../../generated/client";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -26,20 +25,23 @@ export const auth = betterAuth({
       },
     },
   },
-  // Plugin de username para iniciar sesión con DNI
+  // Plugins: username + organization (multi-tenant)
   plugins: [
     username(),
+    organization({
+      // Only super-admins (isSuperAdmin) can create organizations
+      allowUserToCreateOrganization: async (user) => {
+        return (user as any)?.isSuperAdmin === true;
+      },
+    }),
   ],
+  user: {
+    // isSuperAdmin is already defined in the Prisma schema @default(false)
+    // No additional fields needed — Better Auth infers all User columns
+    // from the Prisma model via the adapter.
+  },
   // Disable public sign-up - only admins can create users via internal APIs
   disabledPaths: ["/sign-up/email"],
-  user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        defaultValue: "USER",
-      },
-    },
-  },
   trustedOrigins: [
     process.env.BETTER_AUTH_URL || "http://localhost:3000",
   ],
@@ -52,34 +54,28 @@ export const auth = betterAuth({
 export type Session = typeof auth.$Infer.Session;
 export type User = typeof auth.$Infer.Session.user;
 
-// Session user type with role
-export interface SessionUser {
-  id: string;
-  name: string;
-  email: string | null;
-  emailVerified: boolean;
-  image: string | null;
-  role: Role;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// ============================================================
+//  LEGACY ROLE HELPERS — will be rewritten in Step 3
+//  These check user.role via `as any` because the `role` column
+//  has been REMOVED from the DB schema. They always return false
+//  at runtime (fail-closed), which is acceptable temporarily.
+//  In Step 3 they become async and use Member.role instead.
+// ============================================================
 
-// Role helper functions
 export function isAdmin(session: Session | null): boolean {
-  return session?.user?.role === "ADMIN";
+  return (session?.user as any)?.role === "ADMIN";
 }
 
 export function isTrainer(session: Session | null): boolean {
-  return session?.user?.role === "TRAINER";
+  return (session?.user as any)?.role === "TRAINER";
 }
 
 export function isAdminOrTrainer(session: Session | null): boolean {
-  const role = session?.user?.role;
-  return role === "ADMIN" || role === "TRAINER";
+  return (session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "TRAINER";
 }
 
-export function hasRole(session: Session | null, role: Role): boolean {
-  return session?.user?.role === role;
+export function hasRole(session: Session | null, role: string): boolean {
+  return (session?.user as any)?.role === role;
 }
 
 export function verifyAdmin(session: Session | null): void {

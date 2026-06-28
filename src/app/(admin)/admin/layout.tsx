@@ -63,7 +63,7 @@ export default async function AdminLayout({
   return (
     <AdminLayoutComponent
       username={session.user.name || "Admin"}
-      role={session.user.role}
+      role={(session.user as any).role}
       gymName={gymName}
     >
       {children}

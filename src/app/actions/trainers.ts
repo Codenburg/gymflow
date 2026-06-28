@@ -8,7 +8,6 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { type FormState } from "@/lib/schemas";
 import { createTrainerSchema, updateTrainerSchema, type CreateTrainerInput, type UpdateTrainerInput } from "@/lib/schemas/trainers";
-import type { Role } from "../../../generated/client";
 
 /**
  * Helper function to verify admin access
@@ -21,7 +20,7 @@ async function verifyAdmin(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if (session.user.role !== "ADMIN") {
+    if ((session.user as any).role !== "ADMIN") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
@@ -41,7 +40,7 @@ async function verifyAdminOrTrainer(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    const role = session.user.role;
+    const role = (session.user as any).role;
     if (role !== "ADMIN" && role !== "TRAINER") {
       return { authorized: false, message: "No tienes permisos de administrador o entrenador" };
     }
@@ -76,7 +75,7 @@ export async function getTrainers(): Promise<
   try {
     const trainers = await prisma.user.findMany({
       where: {
-        role: "TRAINER" as Role,
+        role: "TRAINER",
         deletedAt: null,
       },
       select: {
@@ -149,7 +148,7 @@ export async function createTrainer(
         username,
         dni: username, // DNI is stored in dni field as well
         name,
-        role: "TRAINER" as Role,
+        role: "TRAINER",
       },
     });
 
@@ -203,7 +202,7 @@ export async function updateTrainer(
 
   // Find trainer and verify role
   const trainer = await prisma.user.findFirst({
-    where: { id, role: "TRAINER" as Role, deletedAt: null },
+    where: { id,         role: "TRAINER", deletedAt: null },
   });
 
   if (!trainer) {
@@ -266,7 +265,7 @@ export async function deleteTrainer(
 
   // Find trainer and verify role
   const trainer = await prisma.user.findFirst({
-    where: { id, role: "TRAINER" as Role, deletedAt: null },
+    where: { id,         role: "TRAINER", deletedAt: null },
   });
 
   if (!trainer) {
@@ -278,7 +277,7 @@ export async function deleteTrainer(
     await prisma.user.update({
       where: { id },
       data: {
-        role: "USER" as Role,
+        role: "USER",
         deletedAt: new Date(),
       },
     });

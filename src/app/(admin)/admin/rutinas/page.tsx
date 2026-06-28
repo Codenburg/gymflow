@@ -13,7 +13,7 @@ export default async function AdminRutinasPage() {
   const session = await getAdminSession();
 
   // ADMIN: get all rutinas. TRAINER: get only their own rutinas.
-  const ownerId = session?.user.role === "TRAINER" ? session.user.id : undefined;
+  const ownerId = (session?.user as any)?.role === "TRAINER" ? session!.user.id : undefined;
   const rutinas = await getRutinas(ownerId);
 
   return (

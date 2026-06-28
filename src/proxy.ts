@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
 
-      const role = session.user?.role;
+      const role = (session.user as any)?.role;
       if (role !== "ADMIN" && role !== "TRAINER") {
         return NextResponse.redirect(new URL("/", request.url));
       }

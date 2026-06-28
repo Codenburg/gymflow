@@ -24,7 +24,7 @@ async function verifyAdmin(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if (session.user.role !== "ADMIN") {
+    if ((session.user as any).role !== "ADMIN") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
