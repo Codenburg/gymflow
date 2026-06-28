@@ -124,7 +124,7 @@ export function ToastWithProgress({
         <button
           type="button"
           onClick={onUndo}
-          className="absolute top-2 right-2 text-sm font-medium hover:underline"
+          className="absolute top-1/2 right-3 -translate-y-1/2 text-sm font-medium hover:underline"
         >
           Deshacer
         </button>
