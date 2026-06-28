@@ -88,6 +88,22 @@
       "sessions": 4,
       "memories": 3,
       "prompts": 11
+    },
+    {
+      "id": "55e89b39",
+      "created_by": "luffy",
+      "created_at": "2026-06-28T16:29:39Z",
+      "sessions": 8,
+      "memories": 24,
+      "prompts": 101
+    },
+    {
+      "id": "fba5eaca",
+      "created_by": "luffy",
+      "created_at": "2026-06-28T16:30:13Z",
+      "sessions": 0,
+      "memories": 1,
+      "prompts": 0
     }
   ]
 }
