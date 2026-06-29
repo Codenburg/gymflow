@@ -50,12 +50,14 @@ vi.mock("next/cache", () => ({
 }));
 
 const mockGetSession = vi.fn();
+const mockIsAdmin = vi.fn();
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
     },
   },
+  isAdmin: (...args: unknown[]) => mockIsAdmin(...args),
 }));
 
 const mockGymUpdate = vi.fn();
@@ -83,8 +85,10 @@ describe("clearGymDisplayField — ADMIN + valid field", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({
-      user: { id: "admin-1", role: "ADMIN" },
+      session: { activeOrganizationId: "gym" },
+      user: { id: "admin-1" },
     });
+    mockIsAdmin.mockResolvedValue(true);
     mockGymUpdate.mockResolvedValue({});
   });
 
@@ -137,8 +141,10 @@ describe("clearGymDisplayField — auth + validation guards", () => {
 
   it("rejects an invalid field discriminant (no prisma call)", async () => {
     mockGetSession.mockResolvedValue({
-      user: { id: "admin-1", role: "ADMIN" },
+      session: { activeOrganizationId: "gym" },
+      user: { id: "admin-1" },
     });
+    mockIsAdmin.mockResolvedValue(true);
 
     // Force-cast to satisfy TS — the runtime guard is what we're testing.
     const result = await clearGymDisplayField(
@@ -153,9 +159,7 @@ describe("clearGymDisplayField — auth + validation guards", () => {
   });
 
   it("rejects a non-ADMIN session (no prisma call)", async () => {
-    mockGetSession.mockResolvedValue({
-      user: { id: "trainer-1", role: "TRAINER" },
-    });
+    mockIsAdmin.mockResolvedValue(false);
 
     const result = await clearGymDisplayField("direccion");
 
@@ -171,8 +175,10 @@ describe("clearGymDisplayField — error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({
-      user: { id: "admin-1", role: "ADMIN" },
+      session: { activeOrganizationId: "gym" },
+      user: { id: "admin-1" },
     });
+    mockIsAdmin.mockResolvedValue(true);
   });
 
   it("returns failure when prisma throws", async () => {
@@ -192,8 +198,10 @@ describe("clearGymDisplayField — cache invalidation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({
-      user: { id: "admin-1", role: "ADMIN" },
+      session: { activeOrganizationId: "gym" },
+      user: { id: "admin-1" },
     });
+    mockIsAdmin.mockResolvedValue(true);
     mockGymUpdate.mockResolvedValue({});
   });
 

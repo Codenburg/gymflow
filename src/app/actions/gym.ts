@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag, unstable_cache, updateTag } from "next/c
 import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth";
 import {
   type FormState,
   type GymField,
@@ -24,7 +24,7 @@ async function verifyAdmin(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if ((session.user as any).role !== "ADMIN") {
+    if (!(await isAdmin(headersList))) {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };

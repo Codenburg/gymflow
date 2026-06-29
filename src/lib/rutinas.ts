@@ -71,11 +71,16 @@ export interface Trainer {
 
 /**
  * Fetch simple list of rutinas for admin/trainer dashboard.
- * Optionally filters by ownerId (creadorId) for trainer-specific views.
+ * Always scopes by active organization and optionally filters by ownerId
+ * (creadorId) for trainer-specific views.
  * Does NOT include filtering logic - simple query for list view.
  */
-async function fetchRutinasListFromDb(ownerId?: string): Promise<Rutina[]> {
-  const where = ownerId ? { creadorId: ownerId } : {};
+async function fetchRutinasListFromDb(organizationId?: string, ownerId?: string): Promise<Rutina[]> {
+  if (!organizationId) {
+    return [];
+  }
+
+  const where = ownerId ? { organizationId, creadorId: ownerId } : { organizationId };
   const rutinas = await prisma.rutina.findMany({
     where,
     select: {
@@ -122,21 +127,22 @@ async function fetchRutinasListFromDb(ownerId?: string): Promise<Rutina[]> {
  * Get cached rutinas for admin/trainer dashboard.
  * This is the SINGLE source of truth for reading rutinas.
  *
+ * @param organizationId - Active organization id. Missing org fails closed.
  * @param ownerId - Optional filter by creadorId (for trainer view).
- *                   ADMIN: omit ownerId to get all rutinas.
- *                   TRAINER: provide session.user.id to get only their rutinas.
+ *                   ADMIN: omit ownerId to get all org rutinas.
+ *                   TRAINER: provide session.user.id to get only their org rutinas.
  *
  * Migrated to Next.js 16 `use cache` + `cacheTag` + `cacheLife`.
- * `ownerId` is part of the function signature so it becomes part of
- * the auto-generated cache key (different ownerId = different cache entry).
+ * `organizationId` and `ownerId` are part of the function signature so they
+ * become part of the auto-generated cache key (different org/owner = different cache entry).
  */
 // Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
-export async function getRutinas(ownerId?: string) {
+export async function getRutinas(organizationId?: string, ownerId?: string) {
   return unstable_cache(
-    async (oid: string | undefined) => fetchRutinasListFromDb(oid),
+    async (orgId: string | undefined, oid: string | undefined) => fetchRutinasListFromDb(orgId, oid),
     ["rutinas-list"],
     { tags: [RUTINAS_CACHE_TAG], revalidate: 60 }
-  )(ownerId);
+  )(organizationId, ownerId);
 }
 
 // Cache tag for manual revalidation
@@ -210,12 +216,97 @@ async function fetchRutinaById(id: string): Promise<RutinaDetail | null> {
   }
 }
 
+async function fetchRutinaByIdForOrg(
+  id: string,
+  organizationId?: string,
+  ownerId?: string
+): Promise<RutinaDetail | null> {
+  if (!organizationId) {
+    return null;
+  }
+
+  const rutina = await prisma.rutina.findFirst({
+    where: ownerId ? { id, organizationId, creadorId: ownerId } : { id, organizationId },
+    select: {
+      id: true,
+      nombre: true,
+      tipo: true,
+      descripcion: true,
+      creadorId: true,
+      creadorUser: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      createdAt: true,
+      updatedAt: true,
+      dias: {
+        select: {
+          id: true,
+          musculosEnfocados: true,
+          ejercicios: {
+            select: {
+              id: true,
+              nombre: true,
+              series: true,
+              repes: true,
+            },
+            orderBy: { orden: "asc" },
+          },
+        },
+        orderBy: { orden: "asc" },
+      },
+    },
+  });
+
+  if (!rutina) {
+    return null;
+  }
+
+  return {
+    id: rutina.id,
+    nombre: rutina.nombre,
+    tipo: rutina.tipo,
+    descripcion: rutina.descripcion,
+    creadorId: rutina.creadorId,
+    creadorUser: rutina.creadorUser,
+    createdAt: rutina.createdAt,
+    updatedAt: rutina.updatedAt,
+    dias: rutina.dias.map((dia) => ({
+      id: dia.id,
+      musculosEnfocados: dia.musculosEnfocados,
+      orden: 0,
+      ejercicios: dia.ejercicios.map((ej) => ({
+        id: ej.id,
+        nombre: ej.nombre,
+        series: ej.series,
+        repes: ej.repes,
+        orden: 0,
+      })),
+    })),
+  };
+}
+
 export async function getCachedRutinaById(id: string): Promise<RutinaDetail | null> {
   return unstable_cache(
     async (rutinaId: string) => fetchRutinaById(rutinaId),
     ["rutina-by-id"],
     { tags: [RUTINAS_CACHE_TAG], revalidate: 60 }
   )(id);
+}
+
+export async function getCachedRutinaByIdForOrg(
+  id: string,
+  organizationId?: string,
+  ownerId?: string
+): Promise<RutinaDetail | null> {
+  return unstable_cache(
+    async (rutinaId: string, orgId: string | undefined, oid: string | undefined) =>
+      fetchRutinaByIdForOrg(rutinaId, orgId, oid),
+    ["rutina-by-id-for-org"],
+    { tags: [RUTINAS_CACHE_TAG], revalidate: 60 }
+  )(id, organizationId, ownerId);
 }
 
 /**
@@ -245,18 +336,20 @@ export interface RutinasStats {
  * dependency on a shared tag with the other rutinas readers.
  */
 // Migrated from `use cache` to `unstable_cache` — see openspec/changes/fix-use-cache-prisma-rsc-errors/.
-export async function getStats(): Promise<RutinasStats> {
+export async function getStats(organizationId: string, ownerId?: string): Promise<RutinasStats> {
   return unstable_cache(
-    async () => {
+    async (orgId: string, oid: string | undefined) => {
+      const rutinaWhere = oid ? { organizationId: orgId, creadorId: oid } : { organizationId: orgId };
+
       const [rutinasCount, diasCount, ejerciciosCount] = await Promise.all([
-        prisma.rutina.count(),
-        prisma.dia.count(),
-        prisma.ejercicio.count(),
+        prisma.rutina.count({ where: rutinaWhere }),
+        prisma.dia.count({ where: { rutina: rutinaWhere } }),
+        prisma.ejercicio.count({ where: { dia: { rutina: rutinaWhere } } }),
       ]);
 
       return { rutinasCount, diasCount, ejerciciosCount };
     },
     ["rutinas-stats"],
     { tags: [RUTINAS_CACHE_TAG], revalidate: 60 }
-  )();
+  )(organizationId, ownerId);
 }

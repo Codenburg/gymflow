@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { getCachedRutinaById } from "@/lib/rutinas";
+import { getActiveMemberAuthContext } from "@/lib/auth";
+import { getCachedRutinaByIdForOrg } from "@/lib/rutinas";
 import { RutinaEditForm } from "@/components/admin/rutina-edit-form";
 import { DeleteRutinaPageButton } from "@/components/admin/delete-rutina-page-button";
 import { PageHeader } from "@/components/admin/page-header";
@@ -18,7 +20,13 @@ interface EditRutinaPageProps {
 
 export default async function EditRutinaPage({ params }: EditRutinaPageProps) {
   const { id } = await params;
-  const rutina = await getCachedRutinaById(id);
+  const authContext = await getActiveMemberAuthContext(await headers());
+  if (!authContext || (authContext.role !== "admin" && authContext.role !== "trainer")) {
+    notFound();
+  }
+
+  const ownerId = authContext.role === "trainer" ? authContext.session.user.id : undefined;
+  const rutina = await getCachedRutinaByIdForOrg(id, authContext.activeOrganizationId, ownerId);
 
   if (!rutina) {
     notFound();

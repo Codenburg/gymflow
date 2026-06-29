@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { getActiveMemberAuthContext } from "@/lib/auth";
 import { getRutinas, getStats } from "@/lib/rutinas";
 import { getGymPrice } from "@/lib/gym-price";
 import { GymPriceEditor } from "@/components/admin/GymPriceEditor";
@@ -20,11 +23,17 @@ import { FileText, Calendar, TrendingUp } from "lucide-react";
  * Resolves GGA-FOLLOWUP-1 (Promise.all without error boundary).
  */
 export default async function AdminDashboardPage() {
+  const authContext = await getActiveMemberAuthContext(await headers());
+  if (!authContext || (authContext.role !== "admin" && authContext.role !== "trainer")) {
+    notFound();
+  }
+
+  const ownerId = authContext.role === "trainer" ? authContext.session.user.id : undefined;
   let stats, rutinas, gymPrice;
   try {
     [stats, rutinas, gymPrice] = await Promise.all([
-      getStats(),
-      getRutinas(),
+      getStats(authContext.activeOrganizationId, ownerId),
+      getRutinas(authContext.activeOrganizationId, ownerId),
       getGymPrice(),
     ]);
   } catch (error) {

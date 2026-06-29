@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, isAdminOrTrainer } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -33,8 +33,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
 
-      const role = (session.user as any)?.role;
-      if (role !== "ADMIN" && role !== "TRAINER") {
+      if (!(await isAdminOrTrainer(request.headers))) {
         return NextResponse.redirect(new URL("/", request.url));
       }
 

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { isAdmin } from "@/lib/auth";
 import { getAdminSession } from "@/lib/admin-session";
 import { getGymDisplayForServer } from "@/app/actions/gym";
@@ -27,7 +28,7 @@ export default async function AdminConfigPage() {
   const session = await getAdminSession();
 
   // Admin-only guard — TRAINER is redirected to "/" (sdd/clear-gym-fields).
-  if (!isAdmin(session)) {
+  if (!(await isAdmin(await headers()))) {
     redirect("/");
   }
 

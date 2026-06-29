@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { isAdmin } from "@/lib/auth";
 import { getAdminSession } from "@/lib/admin-session";
 import { getTrainers } from "@/app/actions/trainers";
@@ -10,7 +11,7 @@ export default async function TrainersAdminPage() {
   // per request via React.cache(), so it dedupes with the layout's
   // auth.api.getSession call within the same render pass.
   const session = await getAdminSession();
-  if (!isAdmin(session)) redirect("/admin/rutinas");
+  if (!(await isAdmin(await headers()))) redirect("/admin/rutinas");
 
   const trainers = await getTrainers();
 

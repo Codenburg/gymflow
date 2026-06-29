@@ -15,7 +15,7 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth, isAdminOrTrainer } from "@/lib/auth";
+import { auth, isAdminOrTrainer, getActiveMemberRole } from "@/lib/auth";
 import { AdminLayout as AdminLayoutComponent } from "@/components/admin/admin-layout";
 import { getGymNameForServer } from "@/app/actions/gym";
 import { resolveGymName } from "@/lib/gym-display";
@@ -40,7 +40,7 @@ export default async function AdminLayout({
 
   // Verificar rol: solo ADMIN o TRAINER pueden acceder al panel de admin
   // Trainers necesitan acceso para gestionar sus rutinas
-  if (!isAdminOrTrainer(session)) {
+  if (!(await isAdminOrTrainer(headersList))) {
     // No es admin ni trainer → redirect al home
     redirect("/");
   }
@@ -57,13 +57,18 @@ export default async function AdminLayout({
     gymName = resolveGymName(null);
   }
 
+  // Resolve Member.role for the client-side sidebar nav filter.
+  // By this point isAdminOrTrainer has confirmed a valid role exists,
+  // but be defensive in case DB state changed mid-request.
+  const memberRole = await getActiveMemberRole(headersList);
+
   // Sesión válida y tiene rol permitido → renderizar con el layout de admin
   // El AdminLayoutComponent es un Client Component para el dropdown, etc.
   // Pero ya está validado que el usuario tiene permisos
   return (
     <AdminLayoutComponent
       username={session.user.name || "Admin"}
-      role={(session.user as any).role}
+      role={memberRole ?? undefined}
       gymName={gymName}
     >
       {children}

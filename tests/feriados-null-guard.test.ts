@@ -28,12 +28,14 @@ vi.mock("next/cache", () => ({
 }))
 
 const mockGetSession = vi.fn()
+const mockIsAdmin = vi.fn()
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
     },
   },
+  isAdmin: (...args: unknown[]) => mockIsAdmin(...args),
 }))
 
 vi.mock("@/lib/prisma", () => ({
@@ -55,8 +57,10 @@ describe("feriados actions - null-guard on formData.get(id)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({
-      user: { id: "admin-1", role: "ADMIN" },
+      session: { activeOrganizationId: "gym" },
+      user: { id: "admin-1" },
     })
+    mockIsAdmin.mockResolvedValue(true)
   })
 
   it("updateFeriado returns 'ID de feriado requerido' when the id field is missing", async () => {

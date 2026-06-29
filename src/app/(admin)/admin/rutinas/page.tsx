@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { getAdminSession } from "@/lib/admin-session";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { getActiveMemberAuthContext } from "@/lib/auth";
 import { getRutinas } from "@/lib/rutinas";
 import { RutinasListClient } from "@/components/admin/rutinas-list-client";
 import { PageHeader } from "@/components/admin/page-header";
@@ -7,14 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 export default async function AdminRutinasPage() {
-  // Parent layout already validated the session; this call is memoized
-  // per request via React.cache(), so it dedupes with the layout's
-  // auth.api.getSession call within the same render pass.
-  const session = await getAdminSession();
+  const authContext = await getActiveMemberAuthContext(await headers());
+  if (!authContext || (authContext.role !== "admin" && authContext.role !== "trainer")) {
+    notFound();
+  }
 
-  // ADMIN: get all rutinas. TRAINER: get only their own rutinas.
-  const ownerId = (session?.user as any)?.role === "TRAINER" ? session!.user.id : undefined;
-  const rutinas = await getRutinas(ownerId);
+  // ADMIN: get all active-org rutinas. TRAINER: get only their own active-org rutinas.
+  const ownerId = authContext.role === "trainer" ? authContext.session.user.id : undefined;
+  const rutinas = await getRutinas(authContext.activeOrganizationId, ownerId);
 
   return (
     <div className="space-y-6">

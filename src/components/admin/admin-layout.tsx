@@ -5,7 +5,12 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 interface AdminLayoutProps {
   children: React.ReactNode;
   username: string;
-  role: string;
+  /**
+   * Current user's role in the active organization (e.g. "admin", "trainer").
+   * May be null/undefined in defensive states (e.g. session disappeared
+   * mid-request) — the sidebar handles null as "show default nav".
+   */
+  role: string | null | undefined;
   /**
    * Gym name resolved by the Server layout via the
    * `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain. Forwarded to the
@@ -16,16 +21,18 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, username, role, gymName }: AdminLayoutProps) {
+  // AdminSidebar's `role` prop is `string | undefined` — drop null if present.
+  const sidebarRole = role ?? undefined;
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop: AdminSidebar in flow, h-screen. Hidden on mobile. */}
       <div className="hidden lg:flex">
-        <AdminSidebar username={username} role={role} gymName={gymName} />
+        <AdminSidebar username={username} role={sidebarRole} gymName={gymName} />
       </div>
 
       {/* Mobile: AdminSidebar renders its own fixed top header. Hidden on desktop. */}
       <div className="lg:hidden">
-        <AdminSidebar username={username} role={role} gymName={gymName} />
+        <AdminSidebar username={username} role={sidebarRole} gymName={gymName} />
       </div>
 
       {/* Content renders ONCE; CSS controls position and padding per breakpoint.

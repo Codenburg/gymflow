@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "../../../../generated/client";
@@ -103,7 +103,7 @@ async function verifyAdmin(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if ((session.user as any).role !== "ADMIN") {
+    if (!(await isAdmin(headers))) {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };

@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, isAdmin, isAdminOrTrainer } from "@/lib/auth";
 import { type FormState } from "@/lib/schemas";
 import { createTrainerSchema, updateTrainerSchema, type CreateTrainerInput, type UpdateTrainerInput } from "@/lib/schemas/trainers";
 
@@ -20,7 +20,7 @@ async function verifyAdmin(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    if ((session.user as any).role !== "ADMIN") {
+    if (!(await isAdmin(headersList))) {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
     return { authorized: true };
@@ -40,8 +40,7 @@ async function verifyAdminOrTrainer(
     if (!session) {
       return { authorized: false, message: "Debes iniciar sesión" };
     }
-    const role = (session.user as any).role;
-    if (role !== "ADMIN" && role !== "TRAINER") {
+    if (!(await isAdminOrTrainer(headersList))) {
       return { authorized: false, message: "No tienes permisos de administrador o entrenador" };
     }
     return { authorized: true };

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getActiveMemberAuthContext, type ActiveMemberAuthContext } from "@/lib/auth";
 import { revalidateRutinasCache } from "@/lib/rutinas";
 import {
   rutinaSchema,
@@ -19,17 +19,22 @@ import type { RutinaCompletaInput } from "@/lib/schemas";
 /**
  * Helper function to verify admin or trainer access
  */
-async function verifyAdminOrTrainer(headers: Headers): Promise<{ authorized: boolean; message?: string; session?: Awaited<ReturnType<typeof auth.api.getSession>> }> {
+type AuthCheck =
+  | { authorized: true; session: ActiveMemberAuthContext["session"]; role: "admin" | "trainer"; activeOrganizationId: string }
+  | { authorized: false; message: string };
+
+async function verifyAdminOrTrainer(headers: Headers): Promise<AuthCheck> {
   try {
-    const session = await auth.api.getSession({ headers });
-    if (!session) {
-      return { authorized: false, message: "Debes iniciar sesión" };
-    }
-    const user = session.user;
-    if ((user as any).role !== "ADMIN" && (user as any).role !== "TRAINER") {
+    const authContext = await getActiveMemberAuthContext(headers);
+    if (!authContext || (authContext.role !== "admin" && authContext.role !== "trainer")) {
       return { authorized: false, message: "No tienes permisos de administrador o entrenador" };
     }
-    return { authorized: true, session };
+    return {
+      authorized: true,
+      session: authContext.session,
+      role: authContext.role,
+      activeOrganizationId: authContext.activeOrganizationId,
+    };
   } catch {
     return { authorized: false, message: "Error de autenticación" };
   }
@@ -38,17 +43,16 @@ async function verifyAdminOrTrainer(headers: Headers): Promise<{ authorized: boo
 /**
  * Helper function to verify admin access
  */
-async function verifyAdmin(headers: Headers): Promise<{ authorized: boolean; message?: string }> {
+async function verifyAdmin(headers: Headers): Promise<
+  | { authorized: true; activeOrganizationId: string }
+  | { authorized: false; message: string }
+> {
   try {
-    const session = await auth.api.getSession({ headers });
-    if (!session) {
-      return { authorized: false, message: "Debes iniciar sesión" };
-    }
-    const user = session.user;
-    if ((user as any).role !== "ADMIN") {
+    const authContext = await getActiveMemberAuthContext(headers);
+    if (!authContext || authContext.role !== "admin") {
       return { authorized: false, message: "No tienes permisos de administrador" };
     }
-    return { authorized: true };
+    return { authorized: true, activeOrganizationId: authContext.activeOrganizationId };
   } catch {
     return { authorized: false, message: "Error de autenticación" };
   }
@@ -67,6 +71,7 @@ export async function createRutina(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId } = authCheck;
   if (!session.user.id) {
     return { success: false, message: "Error: ID de usuario no encontrado" };
   }
@@ -93,7 +98,7 @@ export async function createRutina(
           // Required FK to User.id
           creadorId: creadorId,
           // Multi-tenant org from session
-          organizationId: session.session.activeOrganizationId!,
+          organizationId: activeOrganizationId,
         },
       });
 
@@ -104,7 +109,7 @@ export async function createRutina(
           fromUserId: null,
           toUserId: creadorId,
           // Denormalized org for audit query efficiency
-          organizationId: session.session.activeOrganizationId!,
+          organizationId: activeOrganizationId,
         },
       });
 
@@ -147,6 +152,7 @@ export async function updateRutina(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId, role } = authCheck;
 
   const id = formData.get("id") as string;
 
@@ -159,15 +165,13 @@ export async function updateRutina(
     };
   }
 
-  // TRAINER ownership check: can only update own rutinas
-  if ((session.user as any).role === "TRAINER") {
-    const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
-    if (!existing) {
-      return { success: false, message: "Rutina no encontrada" };
-    }
-    if (existing.creadorId !== session.user.id) {
-      return { success: false, message: "No tienes permiso para modificar esta rutina" };
-    }
+  const rutinaWhere = role === "trainer"
+    ? { id: idParsed.data, organizationId: activeOrganizationId, creadorId: session.user.id }
+    : { id: idParsed.data, organizationId: activeOrganizationId };
+
+  const existing = await prisma.rutina.findFirst({ where: rutinaWhere, select: { id: true } });
+  if (!existing) {
+    return { success: false, message: "Rutina no encontrada" };
   }
 
   // Validate form data
@@ -188,17 +192,20 @@ export async function updateRutina(
     // modify nombre, tipo, descripcion. Ownership transfers are handled
     // exclusively by transferRutinasOwnership()
 
-    const rutina = await prisma.rutina.update({
-      where: { id: idParsed.data },
+    const result = await prisma.rutina.updateMany({
+      where: rutinaWhere,
       data: parsed.data,
     });
+    if (result.count === 0) {
+      return { success: false, message: "Rutina no encontrada" };
+    }
 
     // Invalidate rutinas cache so homepage reflects changes immediately
     await revalidateRutinasCache();
 
     return {
       success: true,
-      data: { id: rutina.id },
+      data: { id: existing.id },
       message: "Rutina actualizada exitosamente",
     };
   } catch (error) {
@@ -225,6 +232,7 @@ export async function duplicateRutina(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId, role } = authCheck;
 
   const id = formData.get("id") as string;
 
@@ -239,8 +247,10 @@ export async function duplicateRutina(
 
   try {
     // Fetch the original rutina with all related data
-    const original = await prisma.rutina.findUnique({
-      where: { id: parsed.data },
+    const original = await prisma.rutina.findFirst({
+      where: role === "trainer"
+        ? { id: parsed.data, organizationId: activeOrganizationId, creadorId: session.user.id }
+        : { id: parsed.data, organizationId: activeOrganizationId },
       include: {
         dias: {
           include: {
@@ -256,11 +266,6 @@ export async function duplicateRutina(
         success: false,
         message: "Rutina no encontrada",
       };
-    }
-
-    // TRAINER ownership check: can only duplicate own rutinas
-    if ((session.user as any).role === "TRAINER" && original.creadorId !== session.user.id) {
-      return { success: false, message: "No tienes permiso para duplicar esta rutina" };
     }
 
     // Duplicate within a transaction
@@ -338,6 +343,7 @@ export async function deleteRutina(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId, role } = authCheck;
 
   const id = formData.get("id") as string;
 
@@ -350,20 +356,21 @@ export async function deleteRutina(
     };
   }
 
-  // TRAINER ownership check: can only delete own rutinas
-  if ((session.user as any).role === "TRAINER") {
-    const existing = await prisma.rutina.findUnique({ where: { id: parsed.data } });
-    if (!existing) {
-      return { success: false, message: "Rutina no encontrada" };
-    }
-    if (existing.creadorId !== session.user.id) {
-      return { success: false, message: "No tienes permiso para eliminar esta rutina" };
-    }
+  const existing = await prisma.rutina.findFirst({
+    where: role === "trainer"
+      ? { id: parsed.data, organizationId: activeOrganizationId, creadorId: session.user.id }
+      : { id: parsed.data, organizationId: activeOrganizationId },
+    select: { id: true },
+  });
+  if (!existing) {
+    return { success: false, message: "Rutina no encontrada" };
   }
 
   try {
-    await prisma.rutina.delete({
-      where: { id: parsed.data },
+    await prisma.rutina.deleteMany({
+      where: role === "trainer"
+        ? { id: existing.id, organizationId: activeOrganizationId, creadorId: session.user.id }
+        : { id: existing.id, organizationId: activeOrganizationId },
     });
 
     // Invalidate rutinas cache so homepage reflects changes immediately
@@ -397,6 +404,7 @@ export async function deleteRutinas(
   if (!authCheck.authorized) {
     return { success: false, message: authCheck.message };
   }
+  const { activeOrganizationId } = authCheck;
 
   const idsJson = formData.get("ids");
   if (!idsJson || typeof idsJson !== "string") {
@@ -417,7 +425,7 @@ export async function deleteRutinas(
   try {
     // SINGLE atomic operation - NO loops, NO forEach
     const result = await prisma.rutina.deleteMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, organizationId: activeOrganizationId },
     });
 
     // Invalidate rutinas cache so homepage reflects changes immediately
@@ -564,6 +572,7 @@ export async function createRutinaCompleta(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId } = authCheck;
   if (!session.user.id) {
     return { success: false, message: "Error: ID de usuario no encontrado" };
   }
@@ -596,7 +605,7 @@ export async function createRutinaCompleta(
           // Required FK to User.id
           creadorId: creadorId,
           // Multi-tenant org from session
-          organizationId: session.session.activeOrganizationId!,
+          organizationId: activeOrganizationId,
         },
       });
 
@@ -607,7 +616,7 @@ export async function createRutinaCompleta(
           fromUserId: null,
           toUserId: creadorId,
           // Denormalized org for audit query efficiency
-          organizationId: session.session.activeOrganizationId!,
+          organizationId: activeOrganizationId,
         },
       });
 
@@ -676,6 +685,7 @@ export async function updateRutinaCompleta(
     return { success: false, message: authCheck.message };
   }
   const session = authCheck.session!;
+  const { activeOrganizationId, role } = authCheck;
 
   const id = formData.get("id") as string;
   if (!id) {
@@ -691,15 +701,14 @@ export async function updateRutinaCompleta(
     };
   }
 
-  // TRAINER ownership check: can only update own rutinas
-  if ((session.user as any).role === "TRAINER") {
-    const existing = await prisma.rutina.findUnique({ where: { id: idParsed.data } });
-    if (!existing) {
-      return { success: false, message: "Rutina no encontrada" };
-    }
-    if (existing.creadorId !== session.user.id) {
-      return { success: false, message: "No tienes permiso para modificar esta rutina" };
-    }
+  const existing = await prisma.rutina.findFirst({
+    where: role === "trainer"
+      ? { id: idParsed.data, organizationId: activeOrganizationId, creadorId: session.user.id }
+      : { id: idParsed.data, organizationId: activeOrganizationId },
+    select: { id: true },
+  });
+  if (!existing) {
+    return { success: false, message: "Rutina no encontrada" };
   }
 
   // Parse nested FormData
@@ -721,18 +730,23 @@ export async function updateRutinaCompleta(
   try {
     await prisma.$transaction(async (tx) => {
       // Update the Rutina basic info
-      await tx.rutina.update({
-        where: { id: idParsed.data },
+      const result = await tx.rutina.updateMany({
+        where: role === "trainer"
+          ? { id: existing.id, organizationId: activeOrganizationId, creadorId: session.user.id }
+          : { id: existing.id, organizationId: activeOrganizationId },
         data: {
           nombre: data.nombre,
           tipo: data.tipo,
           descripcion: data.descripcion,
         },
       });
+      if (result.count === 0) {
+        throw new Error("Rutina not found");
+      }
 
       // Get existing days for this rutina
       const existingDias = await tx.dia.findMany({
-        where: { rutinaId: idParsed.data },
+        where: { rutinaId: existing.id },
         include: { ejercicios: true },
       });
 
@@ -745,7 +759,7 @@ export async function updateRutinaCompleta(
 
       // Delete all existing days
       await tx.dia.deleteMany({
-        where: { rutinaId: idParsed.data },
+        where: { rutinaId: existing.id },
       });
 
       // Create new Dias and Ejercicios with sequential orden
@@ -754,7 +768,7 @@ export async function updateRutinaCompleta(
 
         const createdDia = await tx.dia.create({
           data: {
-            rutinaId: idParsed.data,
+            rutinaId: existing.id,
             musculosEnfocados: diaData.musculosEnfocados,
             orden: diaIndex,
           },
