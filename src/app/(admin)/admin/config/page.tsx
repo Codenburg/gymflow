@@ -5,6 +5,7 @@ import { getAdminSession } from "@/lib/admin-session";
 import { getGymDisplayForServerForTenant } from "@/app/actions/gym";
 import { GymConfigManager } from "@/components/admin/GymConfigManager";
 import { PageHeader } from "@/components/admin/page-header";
+import prisma from "@/lib/prisma";
 
 /**
  * /admin/config
@@ -36,6 +37,14 @@ export default async function AdminConfigPage() {
   }
 
   const display = await getGymDisplayForServerForTenant(organizationId);
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { slug: true },
+  });
+
+  if (!organization) {
+    redirect("/admin");
+  }
 
   return (
     <div className="space-y-6">
@@ -54,6 +63,7 @@ export default async function AdminConfigPage() {
           socialInstagram: display?.socialInstagram ?? null,
           socialWhatsapp: display?.socialWhatsapp ?? null,
         }}
+        publicLinkName={organization.slug}
       />
     </div>
   );

@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth, isAdminOrTrainer } from "@/lib/auth";
+import { resolvePublicTenant } from "@/lib/tenants/resolve";
+
+function getPublicTenantSlug(pathname: string): string | null {
+  if (!pathname.startsWith("/g/")) {
+    return null;
+  }
+
+  const [, publicSegment, orgSlug] = pathname.split("/");
+  return publicSegment === "g" && orgSlug ? orgSlug : null;
+}
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -15,6 +25,14 @@ export async function proxy(request: NextRequest) {
   );
 
   if (isPublicPath) {
+    const publicTenantSlug = getPublicTenantSlug(pathname);
+    if (publicTenantSlug) {
+      const tenant = await resolvePublicTenant({ orgSlug: publicTenantSlug });
+      if (!tenant) {
+        return new NextResponse("Not Found", { status: 404 });
+      }
+    }
+
     return NextResponse.next();
   }
 

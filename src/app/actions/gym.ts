@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth, isAdmin } from "@/lib/auth";
+import { buildPublicHref } from "@/lib/tenants/href";
 import {
   type FormState,
   type GymField,
@@ -12,6 +13,14 @@ import {
   gymFieldSchema,
   horarioSemanalSchema,
 } from "@/lib/schemas";
+import {
+  PUBLIC_LINK_NAME_CONFIRM_FIELD,
+  PUBLIC_LINK_NAME_CONFIRM_MESSAGE,
+  PUBLIC_LINK_NAME_FORM_FIELD,
+  PUBLIC_LINK_NAME_TAKEN_MESSAGE,
+  PUBLIC_LINK_NAME_REQUIRED_MESSAGE,
+  publicLinkNameSchema,
+} from "@/lib/tenants/slug";
 
 /**
  * Helper function to verify admin access
@@ -365,6 +374,104 @@ export async function updateGymField(
     return {
       success: false,
       message: "Error al guardar la configuración",
+    };
+  }
+}
+
+function isUniqueConstraintError(error: unknown): error is { code?: string } {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
+}
+
+export async function updateOrganizationSlug(
+  _prevState: FormState<{ oldSlug: string; newSlug: string }>,
+  formData: FormData
+): Promise<FormState<{ oldSlug: string; newSlug: string }>> {
+  const authCheck = await verifyAdmin(await headers());
+  if (!authCheck.authorized) {
+    return { success: false, message: authCheck.message || "No autorizado" };
+  }
+
+  const organizationId = authCheck.activeOrganizationId;
+  if (!organizationId) {
+    return { success: false, message: "No hay organización activa" };
+  }
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { id: true, slug: true },
+  });
+
+  if (!organization) {
+    return { success: false, message: "Organización no encontrada" };
+  }
+
+  const parsed = publicLinkNameSchema.safeParse(formData.get(PUBLIC_LINK_NAME_FORM_FIELD));
+  if (!parsed.success) {
+    return {
+      success: false,
+      errors: {
+        [PUBLIC_LINK_NAME_FORM_FIELD]: [
+          parsed.error.issues[0]?.message || PUBLIC_LINK_NAME_REQUIRED_MESSAGE,
+        ],
+      },
+      message: "Error de validación",
+    };
+  }
+
+  const nextSlug = parsed.data;
+  const confirmed = formData.get(PUBLIC_LINK_NAME_CONFIRM_FIELD) === "true";
+
+  if (nextSlug !== organization.slug && !confirmed) {
+    return {
+      success: false,
+      errors: {
+        [PUBLIC_LINK_NAME_CONFIRM_FIELD]: [PUBLIC_LINK_NAME_CONFIRM_MESSAGE],
+      },
+      message: "Error de validación",
+    };
+  }
+
+  if (nextSlug === organization.slug) {
+    return {
+      success: true,
+      data: { oldSlug: organization.slug, newSlug: nextSlug },
+      message: "Nombre público actualizado",
+    };
+  }
+
+  try {
+    await prisma.organization.update({
+      where: { id: organization.id },
+      data: { slug: nextSlug },
+    });
+
+    revalidateTag(`tenant:${organization.slug}`, "max");
+    revalidateTag(`tenant:${nextSlug}`, "max");
+    revalidateTag(`tenant-org:${organization.id}`, "max");
+    revalidatePath(buildPublicHref(organization.slug));
+    revalidatePath(buildPublicHref(nextSlug));
+
+    return {
+      success: true,
+      data: { oldSlug: organization.slug, newSlug: nextSlug },
+      message: "Nombre público actualizado",
+    };
+  } catch (error) {
+    console.error("[updateOrganizationSlug] failed", error);
+
+    if (isUniqueConstraintError(error)) {
+      return {
+        success: false,
+        errors: {
+          [PUBLIC_LINK_NAME_FORM_FIELD]: [PUBLIC_LINK_NAME_TAKEN_MESSAGE],
+        },
+        message: "Error de validación",
+      };
+    }
+
+    return {
+      success: false,
+      message: "Error al guardar el nombre público",
     };
   }
 }
