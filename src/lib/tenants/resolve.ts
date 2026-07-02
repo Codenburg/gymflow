@@ -34,29 +34,20 @@ export async function resolvePublicTenant(
     return null;
   }
 
-  return unstable_cache(
-    async () => {
-      const organization = await prisma.organization.findUnique({
-        where: { slug: orgSlug },
-        select: { id: true, slug: true },
-      });
+  const organization = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true, slug: true },
+  });
 
-      if (!organization) {
-        return null;
-      }
+  if (!organization) {
+    return null;
+  }
 
-      return {
-        organizationId: organization.id,
-        orgSlug: organization.slug,
-        source: "path" as const,
-      };
-    },
-    ["public-tenant", orgSlug],
-    {
-      revalidate: 300,
-      tags: [`tenant:${orgSlug}`],
-    }
-  )();
+  return {
+    organizationId: organization.id,
+    orgSlug: organization.slug,
+    source: "path" as const,
+  };
 }
 
 /**

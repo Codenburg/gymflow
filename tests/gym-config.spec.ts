@@ -172,11 +172,11 @@ test.describe('Gym Config — Admin flow', () => {
     await expect(page.getByText('Instagram').first()).toBeVisible();
     await expect(page.getByText('WhatsApp').first()).toBeVisible();
 
-    // 5 single-input sub-forms + 1 WeeklyScheduleEditor submit = 6 visible
-    // submit buttons (each form renders a submit; the schedule editor's
-    // submit is also a button[type=submit]).
+    // 5 single-input sub-forms + 1 public-link form + 1 WeeklyScheduleEditor
+    // submit = 7 visible submit buttons (each form renders a submit; the
+    // schedule editor's submit is also a button[type=submit]).
     const saveButtons = page.locator('button[type="submit"]:visible');
-    expect(await saveButtons.count()).toBe(6);
+    expect(await saveButtons.count()).toBe(7);
   });
 
   test('5.1.2 - edit nombre → save → home and /informacion show new name', async ({ page }) => {

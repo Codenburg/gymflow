@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getGymNameForServerForTenant } from "@/app/actions/gym";
-import { getPublicTenantContext } from "@/lib/tenants/resolve";
+import { resolvePublicTenant } from "@/lib/tenants/resolve";
 import { resolveGymNameForTenant } from "@/lib/gym-display";
 
 interface PublicTenantLayoutProps {
@@ -16,7 +16,14 @@ interface PublicTenantLayoutProps {
  */
 export async function generateMetadata({ params }: PublicTenantLayoutProps): Promise<Metadata> {
   const { orgSlug } = await params;
-  const tenant = await getPublicTenantContext(orgSlug);
+  const tenant = await resolvePublicTenant({ orgSlug });
+
+  if (!tenant) {
+    return {
+      title: "Gimnasio no encontrado",
+      description: "El enlace puede haber cambiado o ya no estar disponible.",
+    };
+  }
 
   const dbName = await getGymNameForServerForTenant(tenant.organizationId);
 
@@ -30,10 +37,6 @@ export async function generateMetadata({ params }: PublicTenantLayoutProps): Pro
 
 export default async function PublicTenantLayout({
   children,
-  params,
 }: PublicTenantLayoutProps) {
-  const { orgSlug } = await params;
-  await getPublicTenantContext(orgSlug);
-
   return children;
 }

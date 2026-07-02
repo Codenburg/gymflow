@@ -14,9 +14,7 @@ export async function proxy(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(path),
   );
 
-  if (isPublicPath) {
-    return NextResponse.next();
-  }
+  if (isPublicPath) return NextResponse.next();
 
   if (pathname.startsWith("/admin")) {
     try {

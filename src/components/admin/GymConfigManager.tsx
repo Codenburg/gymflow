@@ -19,12 +19,24 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import { updateGymField, clearGymDisplayField, type ClearableGymField } from "@/app/actions/gym";
+import {
+  clearGymDisplayField,
+  type ClearableGymField,
+  updateGymField,
+  updateOrganizationSlug,
+} from "@/app/actions/gym";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 import { AdminCard } from "@/components/admin/admin-card";
 import { AdminFormField } from "@/components/admin/admin-form-field";
 import { WeeklyScheduleEditor } from "@/components/admin/WeeklyScheduleEditor";
 import type { FormState, GymDisplay, GymField } from "@/lib/schemas";
+import {
+  PUBLIC_LINK_NAME_CONFIRM_FIELD,
+  PUBLIC_LINK_NAME_FORM_FIELD,
+  PUBLIC_LINK_NAME_CONFIRM_MESSAGE,
+  normalizePublicLinkName,
+} from "@/lib/tenants/slug";
+import { buildPublicHref } from "@/lib/tenants/href";
 
 /**
  * Per-field FormState — paired with `updateGymField`.
@@ -41,6 +53,7 @@ type FieldFormState = FormState<{ field: GymField; value: unknown }>;
 
 interface GymConfigManagerProps {
   initial: GymDisplay;
+  publicLinkName: string;
 }
 
 /**
@@ -61,9 +74,10 @@ interface GymConfigManagerProps {
  * which the input uses as `defaultValue` with a `key` so it resyncs
  * after a save without a controlled/uncontrolled dance.
  */
-export function GymConfigManager({ initial }: GymConfigManagerProps) {
+export function GymConfigManager({ initial, publicLinkName }: GymConfigManagerProps) {
   return (
     <div className="space-y-6">
+      <PublicLinkNameForm initialSlug={publicLinkName} />
       <FieldSubForm config={IDENTITY_CONFIG} initialValue={initial.nombre} />
       <WeeklyScheduleEditor initial={initial.horarioJson} />
       <FieldSubForm config={DIRECCION_CONFIG} initialValue={initial.direccion} />
@@ -80,6 +94,128 @@ export function GymConfigManager({ initial }: GymConfigManagerProps) {
         initialValue={initial.socialWhatsapp}
       />
     </div>
+  );
+}
+
+interface PublicLinkNameFormProps {
+  initialSlug: string;
+}
+
+function PublicLinkNameForm({ initialSlug }: PublicLinkNameFormProps) {
+  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(updateOrganizationSlug, {
+    success: false,
+    data: { oldSlug: initialSlug, newSlug: initialSlug },
+  });
+  const [publicLinkName, setPublicLinkName] = useState(initialSlug);
+  const [confirmed, setConfirmed] = useState(false);
+  const wasPendingRef = useRef(false);
+
+  useEffect(() => {
+    setPublicLinkName(initialSlug);
+    setConfirmed(false);
+  }, [initialSlug]);
+
+  const normalizedPublicLinkName = normalizePublicLinkName(publicLinkName);
+  const previewHref = normalizedPublicLinkName
+    ? buildPublicHref(normalizedPublicLinkName)
+    : "/g/…";
+  const hasChanged = normalizedPublicLinkName !== initialSlug;
+  const canSubmit = normalizedPublicLinkName.length > 0 && (!hasChanged || confirmed);
+
+  useEffect(() => {
+    if (wasPendingRef.current && !isPending) {
+      if (state.success) {
+        router.refresh();
+        showSuccess("Nombre público actualizado", { id: "public-link-name" });
+      } else if (state.message && !state.errors) {
+        showError(state.message, { id: "public-link-name" });
+      }
+    }
+    wasPendingRef.current = isPending;
+  }, [isPending, router, state.errors, state.message, state.success]);
+
+  const nameError = state.errors?.[PUBLIC_LINK_NAME_FORM_FIELD]?.[0] ?? null;
+  const confirmError = state.errors?.[PUBLIC_LINK_NAME_CONFIRM_FIELD]?.[0] ?? null;
+
+  return (
+    <AdminCard variant="standard">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+          <Building2 className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Nombre para el enlace público</h3>
+          <p className="text-sm text-muted-foreground">
+            Cambiá el nombre que tus alumnos usan para entrar a tu sitio público.
+          </p>
+        </div>
+      </div>
+
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor={PUBLIC_LINK_NAME_FORM_FIELD} className="text-sm font-medium text-foreground">
+            Nombre para el enlace público
+          </label>
+          <input
+            id={PUBLIC_LINK_NAME_FORM_FIELD}
+            name={PUBLIC_LINK_NAME_FORM_FIELD}
+            value={publicLinkName}
+            onChange={(event) => {
+              setPublicLinkName(event.target.value);
+              setConfirmed(false);
+            }}
+            autoComplete="off"
+            spellCheck={false}
+            className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+            placeholder="Ej: Mi Gimnasio"
+            aria-invalid={!!nameError}
+          />
+          {nameError && (
+            <p className="text-destructive text-xs flex items-center gap-1.5 mt-1" role="alert">
+              <span>{nameError}</span>
+            </p>
+          )}
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Tu sitio público será: <span className="font-medium text-foreground">{previewHref}</span>
+        </p>
+
+        <label className="flex items-start gap-3 rounded-lg border border-border bg-background p-4 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name={PUBLIC_LINK_NAME_CONFIRM_FIELD}
+            value="true"
+            checked={confirmed}
+            onChange={(event) => setConfirmed(event.target.checked)}
+            className="mt-1 size-4 rounded border-border text-primary focus:ring-primary"
+          />
+          <span>
+            Entiendo que el enlace público anterior dejará de funcionar. Si todavía no
+            compartiste ese enlace, no pasa nada.
+          </span>
+        </label>
+        {confirmError && (
+          <p className="text-destructive text-xs flex items-center gap-1.5" role="alert">
+            <span>{confirmError}</span>
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={!canSubmit || isPending}
+            className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isPending ? "Guardando..." : "Guardar nombre público"}
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {hasChanged ? PUBLIC_LINK_NAME_CONFIRM_MESSAGE : "Sin cambios"}
+          </span>
+        </div>
+      </form>
+    </AdminCard>
   );
 }
 

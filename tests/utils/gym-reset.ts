@@ -101,6 +101,38 @@ export async function resetGymDisplayFields(): Promise<void> {
 }
 
 /**
+ * Reset the organization public-link name to the seeded default.
+ */
+export async function resetOrganizationSlug(): Promise<void> {
+  try {
+    const prisma = getPrisma();
+    await prisma.organization.update({
+      where: { id: 'gym' },
+      data: { slug: 'gymflow-default' },
+    });
+  } catch (error) {
+    console.warn('[gym-reset] Failed to reset organization slug:', error);
+  }
+}
+
+/**
+ * Read the current seeded organization slug for verification in Playwright specs.
+ */
+export async function getOrganizationSlug(): Promise<string | null> {
+  try {
+    const prisma = getPrisma();
+    const organization = await prisma.organization.findUnique({
+      where: { id: 'gym' },
+      select: { slug: true },
+    });
+    return organization?.slug ?? null;
+  } catch (error) {
+    console.warn('[gym-reset] Failed to read organization slug:', error);
+    return null;
+  }
+}
+
+/**
  * Set `gym.price` to a known value. Best-effort — never throws.
  * Used by the `descuento-precio-final` E2E scenario to assert the
  * computed final price deterministically. Callers should record the
