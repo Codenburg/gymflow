@@ -62,10 +62,9 @@ export class AuthPage extends BasePage {
     await this.passwordInput.fill(value);
   }
 
-  /** Click the submit button and wait for the /admin redirect. */
+  /** Click the submit button. Callers assert success or failure navigation. */
   async submit(): Promise<void> {
     await this.submitButton.click();
-    await this.page.waitForURL('/admin', { timeout: 30_000 });
   }
 
   /**
@@ -77,6 +76,7 @@ export class AuthPage extends BasePage {
     await this.fillDni(ADMIN_DNI);
     await this.fillPassword(ADMIN_PASSWORD);
     await this.submit();
+    await this.page.waitForURL('/admin', { timeout: 30_000 });
   }
 
   /**

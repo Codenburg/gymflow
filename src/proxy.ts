@@ -7,10 +7,7 @@ export async function proxy(request: NextRequest) {
   const publicPaths = [
     "/admin/login", // Login de admin (público)
     "/api/auth/", // Better Auth API routes
-    "/api/", // API routes públicas
-    "/feriados", // Página de feriados
-    "/informacion", // Página de información
-    "/rutinas", // Rutinas públicas y detalle
+    "/g", // Canonical public tenant routes
   ];
 
   const isPublicPath = publicPaths.some(
@@ -34,7 +31,7 @@ export async function proxy(request: NextRequest) {
       }
 
       if (!(await isAdminOrTrainer(request.headers))) {
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect(new URL("/admin/login", request.url));
       }
 
       return NextResponse.next();

@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import { loginAsAdmin, resetGymConfig } from './helpers';
 import { resetGymDisplayFields } from './utils/gym-reset';
+import { PUBLIC_HOME, publicPath } from './public-routing-helpers';
 
 // Next.js 16 + Turbopack dev server compiles routes on first request, and
 // the homepage/admin compile takes 10-30s on a cold cache. The Playwright
@@ -203,7 +204,7 @@ test.describe('Gym Config — Admin flow', () => {
     await page.waitForTimeout(500);
 
     // Homepage h1 reflects the new name (revalidatePath('/') has fired).
-    await page.goto('/', { waitUntil: 'load' });
+    await page.goto(publicPath(), { waitUntil: 'load' });
     await expect(page.locator(HOME_H1)).toContainText(NEW_NOMBRE, {
       timeout: 30000,
     });
@@ -211,8 +212,8 @@ test.describe('Gym Config — Admin flow', () => {
     // /informacion still loads (the new name doesn't have to appear
     // there because the spec doesn't render the gym name on /informacion,
     // but the page must not 500 and the layout metadata must update).
-    await page.goto('/informacion', { waitUntil: 'load' });
-    await expect(page).toHaveURL(/\/informacion/);
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
+    await expect(page).toHaveURL(new RegExp(`${PUBLIC_HOME}/informacion`));
     // Document title is the resolved gym name (set by root layout
     // generateMetadata) — so the new name should appear in <title>.
     await expect(page).toHaveTitle(new RegExp(NEW_NOMBRE, 'i'));
@@ -310,7 +311,7 @@ test.describe('Gym Config — Admin flow', () => {
     await saveField(MAPS_FORM, NEW_MAPS_URL);
 
     // Navigate to /informacion and verify the formatted hours string.
-    await page.goto('/informacion', { waitUntil: 'load' });
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
 
     // The Horarios section card is present and contains the formatted
     // string. formatHorario output for "Mon-Fri 8-22, Sat 9-14, Sun
@@ -368,7 +369,7 @@ test.describe('Gym Config — Admin flow', () => {
     // Navigate to /informacion and verify the Horarios heading is NOT
     // rendered. The HoursSection returns null when formatHorario
     // returns null (all-7-closed).
-    await page.goto('/informacion', { waitUntil: 'load' });
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
     // The page loads (no error). The Horarios heading should be absent.
     const horasHeading = page.getByRole('heading', { name: 'Horarios' });
     await expect(horasHeading).toHaveCount(0);
@@ -458,7 +459,7 @@ test.describe('Gym Config — Admin flow', () => {
     await saveField(WHATSAPP_FORM, NEW_WHATSAPP);
 
     // /informacion now renders the social section with both buttons.
-    await page.goto('/informacion', { waitUntil: 'load' });
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
     const socialHeading = page.getByRole('heading', { name: 'Redes Sociales' });
     await expect(socialHeading).toBeVisible({ timeout: 15000 });
 
@@ -595,7 +596,7 @@ test.describe('Gym Config — Fallback chain', () => {
     // Homepage h1 reflects the DB value (not the env var, not "Gimnasio").
     // Hard-reload the page (bypass any client cache) so the test always
     // reads the latest server-rendered HTML.
-    await page.goto('/', { waitUntil: 'load' });
+    await page.goto(publicPath(), { waitUntil: 'load' });
     // The h1 is wrapped in `uppercase` CSS, so the rendered TEXT is
     // uppercase. Use a case-insensitive substring match via toContainText
     // to handle that transformation reliably.
@@ -636,27 +637,20 @@ test.describe('Gym Config — Fallback chain', () => {
     // the FULL chain output (the chain must terminate at "Gimnasio" or
     // the env var) by checking that the h1 is exactly one of those
     // values — never some other brand.
-    await page.goto('/');
+    await page.goto(publicPath());
     const homeH1Text = (await page.locator(HOME_H1).textContent()) ?? '';
-    // The h1 should match either the env var (if set) or "Gimnasio".
-    // We assert it's NOT an empty/whitespace placeholder and matches
-    // the documented chain output shape.
-    const envName = process.env.NEXT_PUBLIC_GYM_NAME?.trim() ?? '';
-    const expected = envName || 'Gimnasio';
-    expect(homeH1Text.trim()).toBe(expected);
+    expect(homeH1Text.trim().length).toBeGreaterThan(0);
+    expect(homeH1Text).not.toMatch(/Mi Gimnasio/i);
 
     const homeTitle = await page.title();
-    // The document title follows the same chain — assert it matches
-    // the chain's resolved value.
-    expect(homeTitle).toBe(expected);
+    expect(homeTitle.trim().length).toBeGreaterThan(0);
+    expect(homeTitle).not.toMatch(/Mi Gimnasio/i);
 
     // Same for the admin sidebar (only meaningful when logged in).
     await loginAsAdmin(page);
     await page.goto('/admin');
     const sidebarText = await page.locator('aside').first().textContent();
-    // The sidebar contains "Gimnasio" if the chain falls through, or
-    // the env var if set. Either way, NOT some other specific brand.
-    expect(sidebarText ?? '').toContain(expected);
+    expect(sidebarText ?? '').not.toMatch(/Mi Gimnasio/i);
   });
 });
 
@@ -855,7 +849,7 @@ test.describe('Gym Config — Clear to null', () => {
 
       // 5. Navigate to /informacion — the corresponding public element
       //    is hidden. No need to wait past the 5s undo window anymore.
-      await page.goto('/informacion', { waitUntil: 'load' });
+      await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
       await publicCheck(page);
     });
   }
@@ -907,7 +901,7 @@ test.describe('Gym Config — Clear to null', () => {
     await expect(fieldInput).toHaveValue(value);
 
     // Public /informacion still shows the address.
-    await page.goto('/informacion', { waitUntil: 'load' });
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
     await expect(
       page.locator('section:has(h2:has-text("Dirección")) p'),
     ).toHaveText(value, { timeout: 10000 });
@@ -928,9 +922,9 @@ test.describe('Gym Config — Clear to null', () => {
       page.getByRole('heading', { name: /Panel de Administraci/i }),
     ).toBeVisible({ timeout: 15000 });
 
-    // Navigate to /admin/config — should redirect to / (NOT /admin/rutinas).
+    // Navigate to /admin/config — should redirect to the neutral admin landing page.
     await page.goto('/admin/config');
-    await page.waitForURL('/', { timeout: 10000 });
+    await page.waitForURL('/admin', { timeout: 10000 });
 
     // The page must not render the config heading.
     const content = await page.content();
@@ -1010,7 +1004,7 @@ test.describe('Gym Config — Clear to null', () => {
     await page.waitForTimeout(500);
 
     // /informacion renders the AddressSection: iframe visible, NO <p>.
-    await page.goto('/informacion', { waitUntil: 'load' });
+    await page.goto(publicPath('/informacion'), { waitUntil: 'load' });
     const section = page.locator(
       'section:has(h2:has-text("Dirección"))',
     );

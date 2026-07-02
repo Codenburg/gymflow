@@ -1,4 +1,5 @@
 import { test, expect, type ConsoleMessage } from '@playwright/test';
+import { PUBLIC_HOME } from './public-routing-helpers';
 
 /**
  * Homepage regression — `tests/homepage-regression.spec.ts`
@@ -73,12 +74,12 @@ test.describe('Homepage regression — cache + Prisma cascade', () => {
     // Track the response status. The spec says the request MUST be 200.
     let responseStatus: number | null = null;
     page.on('response', (response) => {
-      if (response.url() === page.url() || response.url().endsWith('/')) {
+      if (response.url() === page.url() || response.url().endsWith(PUBLIC_HOME)) {
         responseStatus = response.status();
       }
     });
 
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.goto(PUBLIC_HOME, { waitUntil: 'domcontentloaded' });
 
     // Wait for the routine list to actually render. The seed always
     // includes a "Full Body" routine (see prisma/seed.ts); if the
@@ -115,7 +116,7 @@ test.describe('Homepage regression — cache + Prisma cascade', () => {
     expect(prismaFromPageError, 'no unhandled pageerror with Prisma error').toBeUndefined();
   });
 
-  test('homepage handles a /api/rutinas 500 gracefully (no crash, no Event handlers error)', async ({
+  test('homepage does not depend on the removed /api/rutinas route', async ({
     page,
   }) => {
     // Best-effort regression net for the ErrorState path.
@@ -134,12 +135,8 @@ test.describe('Homepage regression — cache + Prisma cascade', () => {
     // This mirrors the pattern from tests/homepage.spec.ts:4.15:
     // intercept the unrelated REST endpoint to simulate a downstream
     // outage and assert the page does not crash.
-    await page.route(/api\/rutinas/, async (route) => {
-      await route.fulfill({
-        status: 500,
-        json: { error: 'Database unavailable' },
-      });
-    });
+    const removedApiResponse = await page.request.get('/api/rutinas');
+    expect(removedApiResponse.status()).toBe(404);
 
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
@@ -148,7 +145,7 @@ test.describe('Homepage regression — cache + Prisma cascade', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto(PUBLIC_HOME);
 
     // The page should still render the routine list (the Prisma-direct
     // path is unaffected by the /api/rutinas mock). If it did go

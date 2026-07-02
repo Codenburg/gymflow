@@ -9,6 +9,7 @@ interface ErrorDisplayProps {
   message?: string;
   onRetry?: () => void;
   showHome?: boolean;
+  homeHref?: string;
   className?: string;
 }
 
@@ -16,7 +17,8 @@ export function ErrorDisplay({
   title = "Algo salió mal",
   message = "No pudimos completar la operación. Por favor, intenta de nuevo.",
   onRetry,
-  showHome = true,
+  showHome = false,
+  homeHref,
   className = "",
 }: ErrorDisplayProps) {
   const handleRetry = () => {
@@ -50,9 +52,9 @@ export function ErrorDisplay({
             Reintentar
           </Button>
 
-          {showHome && (
+          {showHome && homeHref && (
             <Link
-              href="/"
+              href={homeHref}
               className="inline-flex items-center justify-center gap-2 px-4 py-2 min-w-[130px] border border-border bg-background hover:bg-muted hover:text-foreground text-muted-foreground rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap"
             >
               <Home className="w-4 h-4" />

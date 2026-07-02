@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { showError } from "@/lib/toast";
 import { authClient } from "@/lib/auth-client";
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
@@ -156,16 +155,6 @@ export default function AdminLoginPage() {
             {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </button>
         </form>
-
-        {/* Back to home */}
-        <div className="text-center">
-          <Link
-            href="/"
-            className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-sm transition-colors"
-          >
-            ← Volver al inicio
-          </Link>
-        </div>
       </div>
     </div>
   );
