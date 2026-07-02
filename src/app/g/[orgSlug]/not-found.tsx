@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
 
 export default function PublicGymNotFound() {
@@ -19,12 +17,9 @@ export default function PublicGymNotFound() {
           </p>
         </div>
 
-        <Link
-          href="/admin/login"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          Ir al inicio de sesión
-        </Link>
+        <p className="text-xs text-muted-foreground">
+          Revisá que el enlace esté escrito correctamente.
+        </p>
       </section>
     </main>
   );
