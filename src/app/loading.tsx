@@ -5,7 +5,7 @@ import { DumbbellSpinner } from "@/components/ui/dumbbell-spinner";
  *
  * Used by Next.js as the LAST-RESORT loading UI for any route that
  * does NOT have a co-located `loading.tsx` (route groups
- * `(public)/loading.tsx` and `(admin)/loading.tsx` override this
+ * nested route loading files override this
  * for their segments). The dumbbell spinner is the generic,
  * page-agnostic fallback.
  */

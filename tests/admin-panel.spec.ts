@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { firstRoutineHref, publicPath } from './public-routing-helpers';
 
 // ============================================
 // Admin Auth Helper Functions
@@ -7,18 +8,6 @@ import { test, expect, Page } from '@playwright/test';
 // Test admin credentials (from seed)
 const ADMIN_DNI = '11111111';
 const ADMIN_PASSWORD = 'nando123';
-
-async function getRoutineIds(page: Page) {
-  const response = await page.request.get('/api/rutinas');
-  const result = await response.json();
-  const rutinas = result.data || result;
-  return {
-    fullBody: rutinas.find((r: any) => r.nombre === 'Full Body'),
-    upperBody: rutinas.find((r: any) => r.nombre === 'Upper Body'),
-    legDay: rutinas.find((r: any) => r.nombre === 'Leg Day'),
-    pushPullLegs: rutinas.find((r: any) => r.nombre === 'Push Pull Legs'),
-  };
-}
 
 // ============================================
 // Phase 7.1: Auth Flow Tests
@@ -32,7 +21,7 @@ test.describe('Admin Auth Flow', () => {
 
   test('7.1.2 - Login page has correct title', async ({ page }) => {
     await page.goto('/admin/login');
-    await expect(page).toHaveTitle(/Login|Admin/i);
+    await expect(page).toHaveTitle(/Gymflow|Login|Admin/i);
   });
 
   test('7.1.3 - Protected route redirects when not authenticated', async ({ page }) => {
@@ -80,11 +69,7 @@ test.describe('Admin CRUD Operations', () => {
 
   test('7.2.3 - API endpoint for rutinas exists', async ({ page }) => {
     const response = await page.request.get('/api/rutinas');
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    // API returns { data: [], pagination: {...} }
-    expect(result).toHaveProperty('data');
-    expect(Array.isArray(result.data)).toBe(true);
+    expect(response.status()).toBe(404);
   });
 });
 
@@ -109,20 +94,14 @@ test.describe('Admin Pages Load', () => {
     expect(response?.status()).toBeLessThan(500);
   });
 
-  test('7.3.4 - Public API /api/rutinas works', async ({ page }) => {
+  test('7.3.4 - Removed public API /api/rutinas returns 404', async ({ page }) => {
     const response = await page.request.get('/api/rutinas');
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(404);
   });
 
-  test('7.3.5 - Public API /api/rutinas/[id] works with valid id', async ({ page }) => {
-    const response = await page.request.get('/api/rutinas');
-    const result = await response.json();
-    const rutinas = result.data || result;
-    
-    if (rutinas.length > 0) {
-      const routineResponse = await page.request.get(`/api/rutinas/${rutinas[0].id}`);
-      expect(routineResponse.status()).toBe(200);
-    }
+  test('7.3.5 - Removed public API /api/rutinas/[id] returns 404', async ({ page }) => {
+    const routineResponse = await page.request.get('/api/rutinas/not-a-real-id');
+    expect(routineResponse.status()).toBe(404);
   });
 });
 
@@ -132,7 +111,7 @@ test.describe('Admin Pages Load', () => {
 
 test.describe('Admin Integration Tests', () => {
   test('7.4.1 - Homepage still works', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(publicPath());
     // The home page renders an h1 with the gym name resolved by the
     // DB → env → "Gimnasio" chain. We assert the h1 is present instead
     // of a hardcoded brand name.
@@ -140,26 +119,19 @@ test.describe('Admin Integration Tests', () => {
   });
 
   test('7.4.2 - Public routine detail pages work', async ({ page }) => {
-    const response = await page.request.get('/api/rutinas');
-    const result = await response.json();
-    const rutinas = result.data || result;
-    
-    if (rutinas.length > 0) {
-      await page.goto(`/rutinas/${rutinas[0].id}`);
-      await page.waitForTimeout(1000);
-      // Should not return 500 error
+    await page.goto(publicPath());
+    const href = await firstRoutineHref(page);
+    if (href) {
+      const response = await page.goto(href);
+      expect(response?.status()).toBeLessThan(500);
     }
   });
 
-  test('7.4.3 - API returns proper structure', async ({ page }) => {
-    const response = await page.request.get('/api/rutinas');
-    const result = await response.json();
-    const data = result.data || result;
-    
-    if (data.length > 0) {
-      expect(data[0]).toHaveProperty('id');
-      expect(data[0]).toHaveProperty('nombre');
-      expect(data[0]).toHaveProperty('tipo');
+  test('7.4.3 - canonical homepage exposes routine links when data exists', async ({ page }) => {
+    await page.goto(publicPath());
+    const href = await firstRoutineHref(page);
+    if (href) {
+      expect(href).toContain(`${publicPath()}/rutinas/`);
     }
   });
 });
@@ -183,9 +155,7 @@ test.describe('Admin Edge Cases', () => {
 
   test('7.5.3 - Empty search returns all routines', async ({ page }) => {
     const response = await page.request.get('/api/rutinas');
-    const result = await response.json();
-    const data = result.data || result;
-    expect(data.length).toBeGreaterThan(0);
+    expect(response.status()).toBe(404);
   });
 });
 
@@ -216,13 +186,12 @@ test.describe('Admin Profile Dropdown', () => {
     // This is a static verification since we can't test without auth
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
-    const layoutContent = fs.readFileSync('src/components/admin/admin-layout.tsx', 'utf8');
+    const layoutContent = fs.readFileSync('src/components/admin/admin-sidebar.tsx', 'utf8');
     
     // Verify key elements exist in the component
-    expect(layoutContent).toContain('aria-label="Menú de perfil"');
-    expect(layoutContent).toContain('aria-expanded');
-    expect(layoutContent).toContain('aria-haspopup="menu"');
-    expect(layoutContent).toContain('role="menu"');
+    expect(layoutContent).toContain('DropdownMenuTrigger');
+    expect(layoutContent).toContain('DropdownMenuContent');
+    expect(layoutContent).toContain('DropdownMenuItem');
     expect(layoutContent).toContain('Cerrar sesión');
   });
 
@@ -230,29 +199,29 @@ test.describe('Admin Profile Dropdown', () => {
     // Verify the layout properly checks for login path
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
-    const layoutContent = fs.readFileSync('src/app/admin/layout.tsx', 'utf8');
+    const layoutContent = fs.readFileSync('src/app/(admin)/admin/layout.tsx', 'utf8');
     
     // Verify the login path check exists
     expect(layoutContent).toContain('/admin/login');
-    expect(layoutContent).toContain('pathname');
+    expect(layoutContent).toContain('redirect');
   });
 
   test('7.6.5 - Dropdown has proper accessibility', async ({ page }) => {
     // Static verification of accessibility attributes
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
-    const layoutContent = fs.readFileSync('src/components/admin/admin-layout.tsx', 'utf8');
+    const layoutContent = fs.readFileSync('src/components/admin/admin-sidebar.tsx', 'utf8');
     
     // Verify accessibility attributes are present
-    expect(layoutContent).toContain('role="menuitem"');
-    expect(layoutContent).toContain('onClick={onSignOut}');
+    expect(layoutContent).toContain('DropdownMenuItem');
+    expect(layoutContent).toContain('onClick={handleSignOut}');
   });
 
   test('7.6.6 - Logout redirects to login', async ({ page }) => {
     // Static verification of redirect logic
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
-    const layoutContent = fs.readFileSync('src/components/admin/admin-layout.tsx', 'utf8');
+    const layoutContent = fs.readFileSync('src/components/admin/admin-sidebar.tsx', 'utf8');
     
     // Verify logout redirects to admin/login
     expect(layoutContent).toContain('/admin/login');

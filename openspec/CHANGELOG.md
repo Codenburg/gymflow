@@ -4,6 +4,16 @@ Todos los cambios significativos del proyecto se documentan aquí.
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [1.1.1] - 2026-07-01
+
+### Fixed
+- **La búsqueda reinicia la página a 1 al cambiar filtros** — `a9e2c64` corrigió el flujo paginado para que cambiar filtros no deje al usuario en una lista vacía de páginas 2+.
+- **La seguridad de la config pública ahora queda scopeada por tenant** — `cdadd3c` ajustó las rutas de config pública/admin y notificaciones para que la visibilidad y las mutaciones de la config del gym respeten el tenant activo.
+
+### Notes
+- Este es un bump **PATCH** por semver: 2 fixes de severidad media acumulados (`a9e2c64` + `cdadd3c`) y el criterio 🟡 quedó cumplido.
+- La tabla de patch en ROADMAP quedó reseteada para el próximo ciclo.
+
 ## [1.1.0] - 2026-06-24
 
 ### Added

@@ -40,7 +40,7 @@ export class TrainerAdminPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.pageHeading = page.getByRole('heading', { name: /Trainers/i }).first();
+    this.pageHeading = page.getByRole('heading', { name: /Entrenadores|Trainers/i }).first();
     this.addButton = page.getByTestId('trainer-add-button');
     this.nameInput = page.getByTestId('trainer-name-input');
     this.dniInput = page.getByTestId('trainer-dni-input');

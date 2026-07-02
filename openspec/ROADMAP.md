@@ -1,6 +1,6 @@
 # Roadmap
 
-_Last updated: 2026-06-28_ | _Version: 1.1.0_
+_Last updated: 2026-07-01_ | _Version: 1.1.1_
 
 > Per docs-guardian v1.2 convention: ROADMAP is **pending-only**. Completed releases live in [`openspec/CHANGELOG.md`](./CHANGELOG.md) as the audit trail (not duplicated here).
 
@@ -52,6 +52,8 @@ _Last updated: 2026-06-28_ | _Version: 1.1.0_
 
 - [ ] **Admin panel responsive — polish mobile pendiente (M2/M4/M5 + 5 issues low)** — el header mobile y los quick wins de la auditoría ya están resueltos (v1.0.0, commits `504210b` + `a1b1990` + `cd2d42c`). Pendiente: tablas → cards en mobile, pagination icon-only, batch actions stack. Audit completo en el commit del audit report.
 - [ ] **E2E test para pause/resume del progress bar del undo toast** — el fix de `src/components/ui/ToastWithProgress.tsx` (commit `dff9616`) se validó manualmente con mouse real, pero no hay test automatizado. El problema: `page.mouse.move` de Playwright no dispara `onMouseEnter` de React consistentemente en portales de sonner. Workaround para el futuro test: usar `dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}))` en el elemento del toast en vez de `mouse.move`. El fix en sí está validado y funciona — el test es nice-to-have, no bloqueante.
+- [ ] **Modernizar suites E2E que todavía usan rutas/APIs públicas legacy** — después del cutover a `/g/[orgSlug]/*`, quedaron suites no relacionadas que siguen apoyándose en `/`, `/api/rutinas`, `/api/feriados/latest`, `/api/search/unified` u otros helpers públicos removidos. Hacer cleanup en change aparte: migrar esas suites a rutas canónicas por slug y/o reemplazar helpers por lecturas server-side o fixtures explícitas. Descubierto durante `public-gym-slug-routing` PR3 verify/apply.
+- [ ] **Investigar full-gate E2E admin/trainers post-cutover** — `pnpm test` full-gate todavía falla fuera del scope de `public-gym-slug-routing`: múltiples timeouts/`net::ERR_ABORTED` en `tests/admin-panel.spec.ts` (solo `7.1.2` coincide con baseline conocido) y `tests/trainers.spec.ts` `S3.T.1` no encuentra el trainer creado en la lista. Clasificado como cambio separado para no mezclar saneamiento público con regresiones ortogonales.
 
 ### Baja Prioridad
 - [ ] Exportación CSV de rutinas
@@ -66,14 +68,13 @@ _Last updated: 2026-06-28_ | _Version: 1.1.0_
 
 Tracking de `fix:` commits. Cada fix se acumula acá hasta que se cumple un criterio de bump (abajo). Al bumpear, los entries se mueven al `openspec/CHANGELOG.md` y la tabla queda vacía (pending only). Los `feat:` siguen criterio aparte (minor bump en batches).
 
-**Criterio de bump** (cualquiera de los 3 gatilla patch bump `1.1.0` → `1.1.1`):
+**Criterio de bump** (cualquiera de los 3 gatilla patch bump `1.1.1` → `1.1.2`):
 
 - 🔴 **1 hotfix** — bug crítico de producción (data loss, security, crash, funcionalidad core caída)
 - 🟡 **2 fixes de severidad media** — bugs de validación, lifecycle, race conditions, UI parcialmente rota
 - 🟢 **3 fixes de severidad baja** — polish UX, copy, accesibilidad, refactors menores
 
-**Estado actual**: Tabla vacía. Esperando el primer `fix:` del próximo ciclo. Los fixes que justificaron el bump v1.1.0 viven en `openspec/CHANGELOG.md` (convención: ROADMAP es pending only, CHANGELOG es el audit trail).
+**Estado actual**: Tabla vacía. Esperando el primer `fix:` del próximo ciclo. Los fixes que justificaron el bump v1.1.1 viven en `openspec/CHANGELOG.md` (convención: ROADMAP es pending only, CHANGELOG es el audit trail).
 
 | # | SHA | Severidad | Descripción |
 | --- | --- | --- | --- |
-| 1 | `a9e2c64` | 🟡 | `fix(search):` reset page=1 al aplicar filtros — user en page 2 con filtro veía lista vacía (page no se reseteaba al cambiar filter). User-validated repro 2026-06-23. |

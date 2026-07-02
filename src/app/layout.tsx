@@ -5,8 +5,6 @@ import "./globals.css";
 import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import { getGymNameForServer } from "@/app/actions/gym";
-import { resolveGymName } from "@/lib/gym-display";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,26 +28,11 @@ const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
 });
 
-/**
- * Dynamic metadata. Resolves the gym name through the
- * `DB → NEXT_PUBLIC_GYM_NAME → "Gimnasio"` chain via `resolveGymName`,
- * so the `<title>` reflects the deployed gym's identity (or the generic
- * last-resort when neither the DB nor the env var is available).
- *
- * Wrapped in try/catch so an outage on `getGymNameForServer` does NOT
- * fail the root render — we fall through to the env/chain default.
- */
-export async function generateMetadata(): Promise<Metadata> {
-  let dbName: string | null = null;
-  try {
-    dbName = await getGymNameForServer();
-  } catch {
-    // Fall through to env/chain default
-  }
-  const name = resolveGymName(dbName);
+export function generateMetadata(): Metadata {
+  const name = "Gymflow";
   return {
     title: name,
-    description: `Explora las mejores rutinas de ${name}`,
+    description: "Explore tenant gym routines on Gymflow",
   };
 }
 
