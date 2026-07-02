@@ -11,7 +11,7 @@ test.afterEach(async () => {
   await resetOrganizationSlug();
 });
 
-test("admin can rename the public link and the old path returns 404", async ({ page }) => {
+test("admin can rename the public link and the old path shows a friendly not-found page", async ({ page }) => {
   const rawName = `Mi Gimnasio ${Date.now()}!`;
   const normalizedName = normalizePublicLinkName(rawName);
 
@@ -41,11 +41,11 @@ test("admin can rename the public link and the old path returns 404", async ({ p
   expect(organizationSlug).toBe(normalizedName);
 
   const cacheBust = Date.now().toString();
-  const oldResponse = await page.request.get(
-    `/g/${DEFAULT_PUBLIC_ORG_SLUG}?bust=${cacheBust}`
-  );
-  expect(oldResponse.status()).toBe(404);
-  expect(await oldResponse.text()).toMatch(/404|No se encontró|not found/i);
+  await page.goto(`/g/${DEFAULT_PUBLIC_ORG_SLUG}?bust=${cacheBust}`);
+  await expect(page.getByRole("heading", { name: "Gimnasio no encontrado" })).toBeVisible();
+  await expect(
+    page.getByText("El enlace puede haber cambiado o ya no estar disponible.")
+  ).toBeVisible();
 
   const newResponse = await page.request.get(`/g/${normalizedName}?bust=${cacheBust}`);
   expect(newResponse.status()).toBe(200);
