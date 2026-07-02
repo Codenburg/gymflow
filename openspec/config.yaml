@@ -5,7 +5,7 @@
 schema: spec-driven
 
 artifact_store:
-  mode: hybrid  # Persist to both Engram and OpenSpec
+  mode: engram  # Persist to Engram only
 
 context: |
   Tech stack: Next.js 16.1.6 + React 19 + TypeScript 5 + Tailwind CSS 4 + Prisma 7 + PostgreSQL 18.3
@@ -260,6 +260,7 @@ ui_state_management:
     - Multiple independent data fetches for the same resource in the same view
     - Mixing error state with visible valid-looking data
 Testing:
+  strict_tdd: false
   stack:
     e2e: Playwright
     unit: Vitest
